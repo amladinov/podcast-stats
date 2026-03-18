@@ -31,7 +31,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-16">
+    <main className="max-w-3xl mx-auto px-4 py-8 sm:py-16">
       <div className="mb-12">
         <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight mb-1">Podcast Stats</h1>
         <p className="text-[#6e6e73] text-[15px]">Агрегатор статистики — Mave, Яндекс, Spotify, VK</p>
@@ -76,38 +76,42 @@ export default function HomePage() {
       {podcasts.length > 0 && (
         <div className="space-y-2">
           {podcasts.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200 cursor-default">
-              {p.imageUrl
-                ? <img src={p.imageUrl} alt={p.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 shadow-sm" /> // eslint-disable-line @next/next/no-img-element
-                : <div className="w-14 h-14 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
-              }
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[#1d1d1f] text-[15px] truncate">{p.title}</p>
-                <p className="text-[#6e6e73] text-[13px] mt-0.5">
-                  {p.episodes.length} эпизодов
-                  {p.uploadedPlatforms.length > 0 && (
-                    <span className="ml-2 text-[#b150e2]">· {p.uploadedPlatforms.map(u => u.platform).join(', ')}</span>
-                  )}
-                </p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                {p.uploadedPlatforms.length > 0 && (
-                  <button onClick={() => router.push(`/${p.id}/dashboard`)} className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] text-white px-3 py-1.5 rounded-lg transition-colors font-medium">
-                    Дашборд
-                  </button>
-                )}
-                <button onClick={() => router.push(`/${p.id}/setup`)} className="text-[13px] bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] px-3 py-1.5 rounded-lg transition-colors">
-                  Данные
-                </button>
+            <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200">
+              {/* Top row: image + title + delete */}
+              <div className="flex items-center gap-3 mb-3">
+                {p.imageUrl
+                  ? <img src={p.imageUrl} alt={p.title} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm" /> // eslint-disable-line @next/next/no-img-element
+                  : <div className="w-12 h-12 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[#1d1d1f] text-[15px] truncate">{p.title}</p>
+                  <p className="text-[#6e6e73] text-[13px] mt-0.5 truncate">
+                    {p.episodes.length} эп.
+                    {p.uploadedPlatforms.length > 0 && (
+                      <span className="ml-1.5 text-[#b150e2]">· {p.uploadedPlatforms.map(u => u.platform).join(', ')}</span>
+                    )}
+                  </p>
+                </div>
                 <button
                   onClick={() => {
                     if (window.confirm(`Удалить «${p.title}»? Это действие нельзя отменить.`)) {
                       removePodcast(p.id)
                     }
                   }}
-                  className="text-[13px] text-[#aeaeb2] hover:text-red-500 px-2 py-1.5 transition-colors"
+                  className="text-[#aeaeb2] hover:text-red-500 p-1.5 transition-colors flex-shrink-0"
                 >
                   ✕
+                </button>
+              </div>
+              {/* Bottom row: action buttons */}
+              <div className="flex gap-2">
+                {p.uploadedPlatforms.length > 0 && (
+                  <button onClick={() => router.push(`/${p.id}/dashboard`)} className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] text-white px-4 py-1.5 rounded-lg transition-colors font-medium">
+                    Дашборд
+                  </button>
+                )}
+                <button onClick={() => router.push(`/${p.id}/setup`)} className="text-[13px] bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] px-4 py-1.5 rounded-lg transition-colors">
+                  + Данные
                 </button>
               </div>
             </div>
