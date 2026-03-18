@@ -352,3 +352,561 @@ export const DEMO_PODCAST: Podcast = {
     },
   ],
 }
+
+// ---------------------------------------------------------------------------
+// DEMO_PODCAST_2 — "Скоро 30"
+// 15 episodes, Platform totals: Mave=32681, Yandex=134657, Spotify=21784, VK=28351, Total=217473
+// completionRate: oldest=52, newest=68, linear (step ~1.14)
+// ---------------------------------------------------------------------------
+export const DEMO_PODCAST_2: Podcast = {
+  id: 'demo-2',
+  rssUrl: 'https://demo-2',
+  title: 'Скоро 30',
+  description: 'Смешной подкаст о стереотипах про 30-летие. Ведущие: Александра Рудко, Анастасия Хавалкина, Анастасия Гасс.',
+  imageUrl: 'https://cdn.mave.digital/storage/podcasts/1f01963c-e6cd-4754-b920-033bb4ee32c3/images/e5a9d33f-a913-4ba0-8bb7-8018c885bea1.jpg',
+  createdAt: '2026-02-25T12:00:00Z',
+
+  uploadedPlatforms: [
+    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
+    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
+    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
+    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
+  ],
+
+  episodes: [
+    { guid: 'abc6d13a', title: 'Я уже не могу! Учимся правильно отдыхать',                              publishDate: '2024-12-05' },
+    { guid: 'bf02efde', title: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?',               publishDate: '2024-12-12' },
+    { guid: '048b8124', title: 'Первый секс в 27! Как это ощущается?',                                  publishDate: '2024-12-20' },
+    { guid: '985210b2', title: 'Ой, девочки: Как находить друзей во взрослом возрасте',                 publishDate: '2024-12-26' },
+    { guid: 'cf18fbaf', title: 'Ой, девочки: Сколько у тебя было партнёров?',                           publishDate: '2025-01-23' },
+    { guid: '0de742dc', title: 'Мы изменились! О переменах и почему больше не хотим быть теми же',      publishDate: '2025-06-04' },
+    { guid: 'de4aac6a', title: 'Я думала, что не смогу иметь детей! Одна из ведущих успела',            publishDate: '2025-06-11' },
+    { guid: '29d0de9e', title: 'Куда уходят деньги? Про финансовую грамотность',                        publishDate: '2025-06-24' },
+    { guid: '3d2167c1', title: 'Сплетни — зло или добро? Крысиные чатики и селективность',             publishDate: '2025-07-01' },
+    { guid: 'e03b028c', title: 'Он зарабатывает меньше: что делать и почему об этом стыдно',            publishDate: '2025-11-21' },
+    { guid: 'df64e508', title: 'Я хочу купить квартиру! Полезные вопросы перед покупкой',               publishDate: '2025-11-26' },
+    { guid: '1d62572d', title: 'Все обещали успех к 30... Ну и где? Как измеряется успех?',             publishDate: '2025-12-03' },
+    { guid: 'e264f28e', title: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         publishDate: '2025-12-23' },
+    { guid: 'a5e4a9ab', title: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      publishDate: '2026-02-11' },
+    { guid: 'ee0fec38', title: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', publishDate: '2026-02-25' },
+  ],
+
+  rawPlays: [
+    // Mave — итого 32 681
+    { episodeTitle: 'Я уже не могу! Учимся правильно отдыхать',                              platform: 'mave', date: '2024-12-05', plays: 1847 },
+    { episodeTitle: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?',               platform: 'mave', date: '2024-12-12', plays: 2134 },
+    { episodeTitle: 'Первый секс в 27! Как это ощущается?',                                  platform: 'mave', date: '2024-12-20', plays: 2513 },
+    { episodeTitle: 'Ой, девочки: Как находить друзей во взрослом возрасте',                 platform: 'mave', date: '2024-12-26', plays: 1924 },
+    { episodeTitle: 'Ой, девочки: Сколько у тебя было партнёров?',                           platform: 'mave', date: '2025-01-23', plays: 1687 },
+    { episodeTitle: 'Мы изменились! О переменах и почему больше не хотим быть теми же',      platform: 'mave', date: '2025-06-04', plays: 2047 },
+    { episodeTitle: 'Я думала, что не смогу иметь детей! Одна из ведущих успела',            platform: 'mave', date: '2025-06-11', plays: 3284 },
+    { episodeTitle: 'Куда уходят деньги? Про финансовую грамотность',                        platform: 'mave', date: '2025-06-24', plays: 2193 },
+    { episodeTitle: 'Сплетни — зло или добро? Крысиные чатики и селективность',             platform: 'mave', date: '2025-07-01', plays: 1893 },
+    { episodeTitle: 'Он зарабатывает меньше: что делать и почему об этом стыдно',            platform: 'mave', date: '2025-11-21', plays: 2847 },
+    { episodeTitle: 'Я хочу купить квартиру! Полезные вопросы перед покупкой',               platform: 'mave', date: '2025-11-26', plays: 2431 },
+    { episodeTitle: 'Все обещали успех к 30... Ну и где? Как измеряется успех?',             platform: 'mave', date: '2025-12-03', plays: 2184 },
+    { episodeTitle: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         platform: 'mave', date: '2025-12-23', plays: 2712 },
+    { episodeTitle: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      platform: 'mave', date: '2026-02-11', plays: 1738 },
+    { episodeTitle: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', platform: 'mave', date: '2026-02-25', plays: 1247 },
+    // Яндекс — итого 134 657
+    { episodeTitle: 'Я уже не могу! Учимся правильно отдыхать',                              platform: 'yandex', date: '2024-12-05', plays: 7612,  listeners: 5557,  streams: 320  },
+    { episodeTitle: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?',               platform: 'yandex', date: '2024-12-12', plays: 8794,  listeners: 6420,  streams: 369  },
+    { episodeTitle: 'Первый секс в 27! Как это ощущается?',                                  platform: 'yandex', date: '2024-12-20', plays: 10357, listeners: 7561,  streams: 435  },
+    { episodeTitle: 'Ой, девочки: Как находить друзей во взрослом возрасте',                 platform: 'yandex', date: '2024-12-26', plays: 7928,  listeners: 5788,  streams: 333  },
+    { episodeTitle: 'Ой, девочки: Сколько у тебя было партнёров?',                           platform: 'yandex', date: '2025-01-23', plays: 6950,  listeners: 5074,  streams: 292  },
+    { episodeTitle: 'Мы изменились! О переменах и почему больше не хотим быть теми же',      platform: 'yandex', date: '2025-06-04', plays: 8437,  listeners: 6159,  streams: 354  },
+    { episodeTitle: 'Я думала, что не смогу иметь детей! Одна из ведущих успела',            platform: 'yandex', date: '2025-06-11', plays: 13528, listeners: 9876,  streams: 568  },
+    { episodeTitle: 'Куда уходят деньги? Про финансовую грамотность',                        platform: 'yandex', date: '2025-06-24', plays: 9035,  listeners: 6596,  streams: 379  },
+    { episodeTitle: 'Сплетни — зло или добро? Крысиные чатики и селективность',             platform: 'yandex', date: '2025-07-01', plays: 7797,  listeners: 5692,  streams: 327  },
+    { episodeTitle: 'Он зарабатывает меньше: что делать и почему об этом стыдно',            platform: 'yandex', date: '2025-11-21', plays: 11729, listeners: 8562,  streams: 493  },
+    { episodeTitle: 'Я хочу купить квартиру! Полезные вопросы перед покупкой',               platform: 'yandex', date: '2025-11-26', plays: 10014, listeners: 7310,  streams: 421  },
+    { episodeTitle: 'Все обещали успех к 30... Ну и где? Как измеряется успех?',             platform: 'yandex', date: '2025-12-03', plays: 9001,  listeners: 6571,  streams: 378  },
+    { episodeTitle: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         platform: 'yandex', date: '2025-12-23', plays: 11174, listeners: 8157,  streams: 469  },
+    { episodeTitle: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      platform: 'yandex', date: '2026-02-11', plays: 7163,  listeners: 5229,  streams: 301  },
+    { episodeTitle: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', platform: 'yandex', date: '2026-02-25', plays: 5138,  listeners: 3751,  streams: 216  },
+    // Spotify — итого 21 784
+    { episodeTitle: 'Я уже не могу! Учимся правильно отдыхать',                              platform: 'spotify', date: '2024-12-05', plays: 1231, streams: 1108, listeners: 948  },
+    { episodeTitle: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?',               platform: 'spotify', date: '2024-12-12', plays: 1423, streams: 1281, listeners: 1096 },
+    { episodeTitle: 'Первый секс в 27! Как это ощущается?',                                  platform: 'spotify', date: '2024-12-20', plays: 1676, streams: 1508, listeners: 1291 },
+    { episodeTitle: 'Ой, девочки: Как находить друзей во взрослом возрасте',                 platform: 'spotify', date: '2024-12-26', plays: 1282, streams: 1154, listeners: 987  },
+    { episodeTitle: 'Ой, девочки: Сколько у тебя было партнёров?',                           platform: 'spotify', date: '2025-01-23', plays: 1124, streams: 1012, listeners: 866  },
+    { episodeTitle: 'Мы изменились! О переменах и почему больше не хотим быть теми же',      platform: 'spotify', date: '2025-06-04', plays: 1365, streams: 1229, listeners: 1051 },
+    { episodeTitle: 'Я думала, что не смогу иметь детей! Одна из ведущих успела',            platform: 'spotify', date: '2025-06-11', plays: 2189, streams: 1970, listeners: 1686 },
+    { episodeTitle: 'Куда уходят деньги? Про финансовую грамотность',                        platform: 'spotify', date: '2025-06-24', plays: 1461, streams: 1315, listeners: 1125 },
+    { episodeTitle: 'Сплетни — зло или добро? Крысиные чатики и селективность',             platform: 'spotify', date: '2025-07-01', plays: 1262, streams: 1136, listeners: 972  },
+    { episodeTitle: 'Он зарабатывает меньше: что делать и почему об этом стыдно',            platform: 'spotify', date: '2025-11-21', plays: 1897, streams: 1707, listeners: 1461 },
+    { episodeTitle: 'Я хочу купить квартиру! Полезные вопросы перед покупкой',               platform: 'spotify', date: '2025-11-26', plays: 1620, streams: 1458, listeners: 1247 },
+    { episodeTitle: 'Все обещали успех к 30... Ну и где? Как измеряется успех?',             platform: 'spotify', date: '2025-12-03', plays: 1456, streams: 1310, listeners: 1121 },
+    { episodeTitle: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         platform: 'spotify', date: '2025-12-23', plays: 1808, streams: 1627, listeners: 1392 },
+    { episodeTitle: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      platform: 'spotify', date: '2026-02-11', plays: 1159, streams: 1043, listeners: 893  },
+    { episodeTitle: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', platform: 'spotify', date: '2026-02-25', plays:  831, streams:  748, listeners: 640  },
+    // VK — итого 28 351
+    { episodeTitle: 'Я уже не могу! Учимся правильно отдыхать',                              platform: 'vk', date: '05.12.2024', plays: 1604 },
+    { episodeTitle: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?',               platform: 'vk', date: '12.12.2024', plays: 1852 },
+    { episodeTitle: 'Первый секс в 27! Как это ощущается?',                                  platform: 'vk', date: '20.12.2024', plays: 2181 },
+    { episodeTitle: 'Ой, девочки: Как находить друзей во взрослом возрасте',                 platform: 'vk', date: '26.12.2024', plays: 1669 },
+    { episodeTitle: 'Ой, девочки: Сколько у тебя было партнёров?',                           platform: 'vk', date: '23.01.2025', plays: 1463 },
+    { episodeTitle: 'Мы изменились! О переменах и почему больше не хотим быть теми же',      platform: 'vk', date: '04.06.2025', plays: 1776 },
+    { episodeTitle: 'Я думала, что не смогу иметь детей! Одна из ведущих успела',            platform: 'vk', date: '11.06.2025', plays: 2848 },
+    { episodeTitle: 'Куда уходят деньги? Про финансовую грамотность',                        platform: 'vk', date: '24.06.2025', plays: 1901 },
+    { episodeTitle: 'Сплетни — зло или добро? Крысиные чатики и селективность',             platform: 'vk', date: '01.07.2025', plays: 1642 },
+    { episodeTitle: 'Он зарабатывает меньше: что делать и почему об этом стыдно',            platform: 'vk', date: '21.11.2025', plays: 2469 },
+    { episodeTitle: 'Я хочу купить квартиру! Полезные вопросы перед покупкой',               platform: 'vk', date: '26.11.2025', plays: 2108 },
+    { episodeTitle: 'Все обещали успех к 30... Ну и где? Как измеряется успех?',             platform: 'vk', date: '03.12.2025', plays: 1895 },
+    { episodeTitle: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         platform: 'vk', date: '23.12.2025', plays: 2353 },
+    { episodeTitle: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      platform: 'vk', date: '11.02.2026', plays: 1508 },
+    { episodeTitle: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', platform: 'vk', date: '25.02.2026', plays: 1082 },
+  ],
+
+  // normalized: newest first (index 0 = ep 15 newest, index 14 = ep 1 oldest)
+  // completionRate: oldest (ep1, i=0) = 52, newest (ep15, i=14) = 68
+  // For the normalized array (newest first), ep index from end = 14 down to 0
+  // ep_order_from_oldest[0..14]: completionRate = 52 + round(i * 16/14)
+  // ep15 (newest, i=14): 52 + 16 = 68; ep1 (oldest, i=0): 52
+  normalized: [
+    {
+      id: 'ee0fec38', title: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', publishDate: '2026-02-25',
+      plays: { mave: 1247, yandex: 5138, spotify: 831, vk: 1082, total: 8298 },
+      spotifyStreams: 748, spotifyAudience: 640,
+      yandexStarts: 5138, yandexListeners: 3751, yandexHours: 216, yandexCompletionRate: 68,
+      timeline: [
+        { date: '2026-02-25', plays: 748  },
+        { date: '2026-03-25', plays: 374  },
+        { date: '2026-04-25', plays: 125  },
+      ],
+    },
+    {
+      id: 'a5e4a9ab', title: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте', publishDate: '2026-02-11',
+      plays: { mave: 1738, yandex: 7163, spotify: 1159, vk: 1508, total: 11568 },
+      spotifyStreams: 1043, spotifyAudience: 893,
+      yandexStarts: 7163, yandexListeners: 5229, yandexHours: 301, yandexCompletionRate: 67,
+      timeline: [
+        { date: '2026-02-11', plays: 1043 },
+        { date: '2026-03-11', plays: 521  },
+        { date: '2026-04-11', plays: 174  },
+      ],
+    },
+    {
+      id: 'e264f28e', title: 'Улучшение внешности после 25: подтяжка лица, увеличение груди', publishDate: '2025-12-23',
+      plays: { mave: 2712, yandex: 11174, spotify: 1808, vk: 2353, total: 18047 },
+      spotifyStreams: 1627, spotifyAudience: 1392,
+      yandexStarts: 11174, yandexListeners: 8157, yandexHours: 469, yandexCompletionRate: 66,
+      timeline: [
+        { date: '2025-12-23', plays: 1627 },
+        { date: '2026-01-23', plays: 814  },
+        { date: '2026-02-23', plays: 271  },
+      ],
+    },
+    {
+      id: '1d62572d', title: 'Все обещали успех к 30... Ну и где? Как измеряется успех?', publishDate: '2025-12-03',
+      plays: { mave: 2184, yandex: 9001, spotify: 1456, vk: 1895, total: 14536 },
+      spotifyStreams: 1310, spotifyAudience: 1121,
+      yandexStarts: 9001, yandexListeners: 6571, yandexHours: 378, yandexCompletionRate: 65,
+      timeline: [
+        { date: '2025-12-03', plays: 1310 },
+        { date: '2026-01-03', plays: 655  },
+        { date: '2026-02-03', plays: 218  },
+      ],
+    },
+    {
+      id: 'df64e508', title: 'Я хочу купить квартиру! Полезные вопросы перед покупкой', publishDate: '2025-11-26',
+      plays: { mave: 2431, yandex: 10014, spotify: 1620, vk: 2108, total: 16173 },
+      spotifyStreams: 1458, spotifyAudience: 1247,
+      yandexStarts: 10014, yandexListeners: 7310, yandexHours: 421, yandexCompletionRate: 64,
+      timeline: [
+        { date: '2025-11-26', plays: 1459 },
+        { date: '2025-12-26', plays: 729  },
+        { date: '2026-01-26', plays: 243  },
+      ],
+    },
+    {
+      id: 'e03b028c', title: 'Он зарабатывает меньше: что делать и почему об этом стыдно', publishDate: '2025-11-21',
+      plays: { mave: 2847, yandex: 11729, spotify: 1897, vk: 2469, total: 18942 },
+      spotifyStreams: 1707, spotifyAudience: 1461,
+      yandexStarts: 11729, yandexListeners: 8562, yandexHours: 493, yandexCompletionRate: 63,
+      timeline: [
+        { date: '2025-11-21', plays: 1708 },
+        { date: '2025-12-21', plays: 854  },
+        { date: '2026-01-21', plays: 285  },
+      ],
+    },
+    {
+      id: '3d2167c1', title: 'Сплетни — зло или добро? Крысиные чатики и селективность', publishDate: '2025-07-01',
+      plays: { mave: 1893, yandex: 7797, spotify: 1262, vk: 1642, total: 12594 },
+      spotifyStreams: 1136, spotifyAudience: 972,
+      yandexStarts: 7797, yandexListeners: 5692, yandexHours: 327, yandexCompletionRate: 62,
+      timeline: [
+        { date: '2025-07-01', plays: 1136 },
+        { date: '2025-08-01', plays: 568  },
+        { date: '2025-09-01', plays: 189  },
+      ],
+    },
+    {
+      id: '29d0de9e', title: 'Куда уходят деньги? Про финансовую грамотность', publishDate: '2025-06-24',
+      plays: { mave: 2193, yandex: 9035, spotify: 1461, vk: 1901, total: 14590 },
+      spotifyStreams: 1315, spotifyAudience: 1125,
+      yandexStarts: 9035, yandexListeners: 6596, yandexHours: 379, yandexCompletionRate: 61,
+      timeline: [
+        { date: '2025-06-24', plays: 1316 },
+        { date: '2025-07-24', plays: 658  },
+        { date: '2025-08-24', plays: 219  },
+      ],
+    },
+    {
+      id: 'de4aac6a', title: 'Я думала, что не смогу иметь детей! Одна из ведущих успела', publishDate: '2025-06-11',
+      plays: { mave: 3284, yandex: 13528, spotify: 2189, vk: 2848, total: 21849 },
+      spotifyStreams: 1970, spotifyAudience: 1686,
+      yandexStarts: 13528, yandexListeners: 9876, yandexHours: 568, yandexCompletionRate: 60,
+      timeline: [
+        { date: '2025-06-11', plays: 1970 },
+        { date: '2025-07-11', plays: 985  },
+        { date: '2025-08-11', plays: 328  },
+      ],
+    },
+    {
+      id: '0de742dc', title: 'Мы изменились! О переменах и почему больше не хотим быть теми же', publishDate: '2025-06-04',
+      plays: { mave: 2047, yandex: 8437, spotify: 1365, vk: 1776, total: 13625 },
+      spotifyStreams: 1229, spotifyAudience: 1051,
+      yandexStarts: 8437, yandexListeners: 6159, yandexHours: 354, yandexCompletionRate: 59,
+      timeline: [
+        { date: '2025-06-04', plays: 1228 },
+        { date: '2025-07-04', plays: 614  },
+        { date: '2025-08-04', plays: 205  },
+      ],
+    },
+    {
+      id: 'cf18fbaf', title: 'Ой, девочки: Сколько у тебя было партнёров?', publishDate: '2025-01-23',
+      plays: { mave: 1687, yandex: 6950, spotify: 1124, vk: 1463, total: 11224 },
+      spotifyStreams: 1012, spotifyAudience: 866,
+      yandexStarts: 6950, yandexListeners: 5074, yandexHours: 292, yandexCompletionRate: 57,
+      timeline: [
+        { date: '2025-01-23', plays: 1012 },
+        { date: '2025-02-23', plays: 506  },
+        { date: '2025-03-23', plays: 169  },
+      ],
+    },
+    {
+      id: '985210b2', title: 'Ой, девочки: Как находить друзей во взрослом возрасте', publishDate: '2024-12-26',
+      plays: { mave: 1924, yandex: 7928, spotify: 1282, vk: 1669, total: 12803 },
+      spotifyStreams: 1154, spotifyAudience: 987,
+      yandexStarts: 7928, yandexListeners: 5788, yandexHours: 333, yandexCompletionRate: 56,
+      timeline: [
+        { date: '2024-12-26', plays: 1154 },
+        { date: '2025-01-26', plays: 577  },
+        { date: '2025-02-26', plays: 192  },
+      ],
+    },
+    {
+      id: '048b8124', title: 'Первый секс в 27! Как это ощущается?', publishDate: '2024-12-20',
+      plays: { mave: 2513, yandex: 10357, spotify: 1676, vk: 2181, total: 16727 },
+      spotifyStreams: 1508, spotifyAudience: 1291,
+      yandexStarts: 10357, yandexListeners: 7561, yandexHours: 435, yandexCompletionRate: 55,
+      timeline: [
+        { date: '2024-12-20', plays: 1508 },
+        { date: '2025-01-20', plays: 754  },
+        { date: '2025-02-20', plays: 251  },
+      ],
+    },
+    {
+      id: 'bf02efde', title: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?', publishDate: '2024-12-12',
+      plays: { mave: 2134, yandex: 8794, spotify: 1423, vk: 1852, total: 14203 },
+      spotifyStreams: 1281, spotifyAudience: 1096,
+      yandexStarts: 8794, yandexListeners: 6420, yandexHours: 369, yandexCompletionRate: 53,
+      timeline: [
+        { date: '2024-12-12', plays: 1280 },
+        { date: '2025-01-12', plays: 640  },
+        { date: '2025-02-12', plays: 214  },
+      ],
+    },
+    {
+      id: 'abc6d13a', title: 'Я уже не могу! Учимся правильно отдыхать', publishDate: '2024-12-05',
+      plays: { mave: 1847, yandex: 7612, spotify: 1231, vk: 1604, total: 12294 },
+      spotifyStreams: 1108, spotifyAudience: 948,
+      yandexStarts: 7612, yandexListeners: 5557, yandexHours: 320, yandexCompletionRate: 52,
+      timeline: [
+        { date: '2024-12-05', plays: 1108 },
+        { date: '2025-01-05', plays: 554  },
+        { date: '2025-02-05', plays: 185  },
+      ],
+    },
+  ],
+}
+
+// ---------------------------------------------------------------------------
+// DEMO_PODCAST_3 — "Нормально же общались"
+// 15 episodes, Platform totals: Mave=37541, Yandex=218482, Spotify=25120, VK=31339, Total=312482
+// completionRate: oldest=58, newest=74, linear (step ~1.14)
+// ---------------------------------------------------------------------------
+export const DEMO_PODCAST_3: Podcast = {
+  id: 'demo-3',
+  rssUrl: 'https://demo-3',
+  title: 'Нормально же общались',
+  description: 'Подкаст-исследование жизни от миллениалки, ищущей ответы в психологии, медицине, науке и поп-культуре. Ведущая: Оля Микитась.',
+  imageUrl: 'https://cdn.mave.digital/storage/podcasts/04a12156-ad6c-4cc5-9658-63a89fdfffac/images/9903c1dd-4bac-4f70-9d80-613b61fa2211.jpg',
+  createdAt: '2025-12-29T12:00:00Z',
+
+  uploadedPlatforms: [
+    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
+    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
+    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
+    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
+  ],
+
+  episodes: [
+    { guid: '71272de0', title: 'Оземпик — волшебная таблетка для похудения?',                 publishDate: '2025-08-25' },
+    { guid: 'a859d9cc', title: 'Карьерный кризис после 30: когда пора что-то менять',         publishDate: '2025-09-01' },
+    { guid: '42acd06e', title: 'Где найти своих людей, когда стал взрослым?',                 publishDate: '2025-09-08' },
+    { guid: 'f7cb022c', title: 'Почему нам так страшно стареть?',                             publishDate: '2025-09-15' },
+    { guid: 'f3d22ca6', title: 'О чём говорят мужчины, или 30 — это новые 20',               publishDate: '2025-09-22' },
+    { guid: '2e8fdb57', title: 'Физические нагрузки после 30: от зарядок до силовых',         publishDate: '2025-09-29' },
+    { guid: 'ca59a7d9', title: 'Как мой подкаст, я и индустрия изменились за 5 лет',         publishDate: '2025-10-06' },
+    { guid: '4701c161', title: 'Рак молочной железы: факторы риска и методы диагностики',    publishDate: '2025-10-13' },
+    { guid: '44528358', title: 'Как ухаживать за кожей в осенне-зимний период?',              publishDate: '2025-10-20' },
+    { guid: 'e483af35', title: 'Почему не стоит переживать на тему возраста? Василий Аккерман', publishDate: '2025-10-27' },
+    { guid: 'ad3f59a9', title: 'Как в Испании изменилось наше отношение к возрасту и красоте', publishDate: '2025-11-03' },
+    { guid: '0d252d73', title: 'Детокс организма: смузи, голодание и развенчание мифов',      publishDate: '2025-11-10' },
+    { guid: 'f5ba5662', title: 'В чём феномен корейской косметики?',                          publishDate: '2025-11-24' },
+    { guid: '4d4faef4', title: 'Кризис среднего возраста отменяется? Антон Комолов',          publishDate: '2025-12-15' },
+    { guid: '098e7731', title: 'Начинаем новую жизнь с января!',                              publishDate: '2025-12-29' },
+  ],
+
+  rawPlays: [
+    // Mave — итого 37 541
+    { episodeTitle: 'Оземпик — волшебная таблетка для похудения?',                 platform: 'mave', date: '2025-08-25', plays: 3412 },
+    { episodeTitle: 'Карьерный кризис после 30: когда пора что-то менять',         platform: 'mave', date: '2025-09-01', plays: 2847 },
+    { episodeTitle: 'Где найти своих людей, когда стал взрослым?',                 platform: 'mave', date: '2025-09-08', plays: 2513 },
+    { episodeTitle: 'Почему нам так страшно стареть?',                             platform: 'mave', date: '2025-09-15', plays: 3724 },
+    { episodeTitle: 'О чём говорят мужчины, или 30 — это новые 20',               platform: 'mave', date: '2025-09-22', plays: 2284 },
+    { episodeTitle: 'Физические нагрузки после 30: от зарядок до силовых',         platform: 'mave', date: '2025-09-29', plays: 2847 },
+    { episodeTitle: 'Как мой подкаст, я и индустрия изменились за 5 лет',         platform: 'mave', date: '2025-10-06', plays: 4193 },
+    { episodeTitle: 'Рак молочной железы: факторы риска и методы диагностики',    platform: 'mave', date: '2025-10-13', plays: 2634 },
+    { episodeTitle: 'Как ухаживать за кожей в осенне-зимний период?',              platform: 'mave', date: '2025-10-20', plays: 2187 },
+    { episodeTitle: 'Почему не стоит переживать на тему возраста? Василий Аккерман', platform: 'mave', date: '2025-10-27', plays: 2413 },
+    { episodeTitle: 'Как в Испании изменилось наше отношение к возрасту и красоте', platform: 'mave', date: '2025-11-03', plays: 2071 },
+    { episodeTitle: 'Детокс организма: смузи, голодание и развенчание мифов',      platform: 'mave', date: '2025-11-10', plays: 1847 },
+    { episodeTitle: 'В чём феномен корейской косметики?',                          platform: 'mave', date: '2025-11-24', plays: 2284 },
+    { episodeTitle: 'Кризис среднего возраста отменяется? Антон Комолов',          platform: 'mave', date: '2025-12-15', plays: 1438 },
+    { episodeTitle: 'Начинаем новую жизнь с января!',                              platform: 'mave', date: '2025-12-29', plays:  847 },
+    // Яндекс — итого 218 482
+    { episodeTitle: 'Оземпик — волшебная таблетка для похудения?',                 platform: 'yandex', date: '2025-08-25', plays: 19847, listeners: 14489, streams: 834  },
+    { episodeTitle: 'Карьерный кризис после 30: когда пора что-то менять',         platform: 'yandex', date: '2025-09-01', plays: 16564, listeners: 12092, streams: 696  },
+    { episodeTitle: 'Где найти своих людей, когда стал взрослым?',                 platform: 'yandex', date: '2025-09-08', plays: 14629, listeners: 10679, streams: 615  },
+    { episodeTitle: 'Почему нам так страшно стареть?',                             platform: 'yandex', date: '2025-09-15', plays: 21673, listeners: 15821, streams: 910  },
+    { episodeTitle: 'О чём говорят мужчины, или 30 — это новые 20',               platform: 'yandex', date: '2025-09-22', plays: 13292, listeners: 9703, streams: 558   },
+    { episodeTitle: 'Физические нагрузки после 30: от зарядок до силовых',         platform: 'yandex', date: '2025-09-29', plays: 16572, listeners: 12097, streams: 696  },
+    { episodeTitle: 'Как мой подкаст, я и индустрия изменились за 5 лет',         platform: 'yandex', date: '2025-10-06', plays: 24397, listeners: 17810, streams: 1025 },
+    { episodeTitle: 'Рак молочной железы: факторы риска и методы диагностики',    platform: 'yandex', date: '2025-10-13', plays: 15329, listeners: 11190, streams: 644  },
+    { episodeTitle: 'Как ухаживать за кожей в осенне-зимний период?',              platform: 'yandex', date: '2025-10-20', plays: 12731, listeners: 9294, streams: 535   },
+    { episodeTitle: 'Почему не стоит переживать на тему возраста? Василий Аккерман', platform: 'yandex', date: '2025-10-27', plays: 14043, listeners: 10251, streams: 590 },
+    { episodeTitle: 'Как в Испании изменилось наше отношение к возрасту и красоте', platform: 'yandex', date: '2025-11-03', plays: 12054, listeners: 8799, streams: 506  },
+    { episodeTitle: 'Детокс организма: смузи, голодание и развенчание мифов',      platform: 'yandex', date: '2025-11-10', plays: 10752, listeners: 7849, streams: 452  },
+    { episodeTitle: 'В чём феномен корейской косметики?',                          platform: 'yandex', date: '2025-11-24', plays: 13296, listeners: 9706, streams: 558  },
+    { episodeTitle: 'Кризис среднего возраста отменяется? Антон Комолов',          platform: 'yandex', date: '2025-12-15', plays:  8372, listeners: 6112, streams: 352  },
+    { episodeTitle: 'Начинаем новую жизнь с января!',                              platform: 'yandex', date: '2025-12-29', plays:  4931, listeners: 3600, streams: 207  },
+    // Spotify — итого 25 120
+    { episodeTitle: 'Оземпик — волшебная таблетка для похудения?',                 platform: 'spotify', date: '2025-08-25', plays: 2284, streams: 2056, listeners: 1759 },
+    { episodeTitle: 'Карьерный кризис после 30: когда пора что-то менять',         platform: 'spotify', date: '2025-09-01', plays: 1904, streams: 1714, listeners: 1466 },
+    { episodeTitle: 'Где найти своих людей, когда стал взрослым?',                 platform: 'spotify', date: '2025-09-08', plays: 1682, streams: 1514, listeners: 1295 },
+    { episodeTitle: 'Почему нам так страшно стареть?',                             platform: 'spotify', date: '2025-09-15', plays: 2491, streams: 2242, listeners: 1918 },
+    { episodeTitle: 'О чём говорят мужчины, или 30 — это новые 20',               platform: 'spotify', date: '2025-09-22', plays: 1528, streams: 1375, listeners: 1177 },
+    { episodeTitle: 'Физические нагрузки после 30: от зарядок до силовых',         platform: 'spotify', date: '2025-09-29', plays: 1905, streams: 1715, listeners: 1467 },
+    { episodeTitle: 'Как мой подкаст, я и индустрия изменились за 5 лет',         platform: 'spotify', date: '2025-10-06', plays: 2806, streams: 2525, listeners: 2161 },
+    { episodeTitle: 'Рак молочной железы: факторы риска и методы диагностики',    platform: 'spotify', date: '2025-10-13', plays: 1762, streams: 1586, listeners: 1357 },
+    { episodeTitle: 'Как ухаживать за кожей в осенне-зимний период?',              platform: 'spotify', date: '2025-10-20', plays: 1464, streams: 1318, listeners: 1127 },
+    { episodeTitle: 'Почему не стоит переживать на тему возраста? Василий Аккерман', platform: 'spotify', date: '2025-10-27', plays: 1614, streams: 1453, listeners: 1243 },
+    { episodeTitle: 'Как в Испании изменилось наше отношение к возрасту и красоте', platform: 'spotify', date: '2025-11-03', plays: 1386, streams: 1247, listeners: 1067 },
+    { episodeTitle: 'Детокс организма: смузи, голодание и развенчание мифов',      platform: 'spotify', date: '2025-11-10', plays: 1236, streams: 1112, listeners: 952  },
+    { episodeTitle: 'В чём феномен корейской косметики?',                          platform: 'spotify', date: '2025-11-24', plays: 1529, streams: 1376, listeners: 1177 },
+    { episodeTitle: 'Кризис среднего возраста отменяется? Антон Комолов',          platform: 'spotify', date: '2025-12-15', plays:  962, streams:  866, listeners:  741 },
+    { episodeTitle: 'Начинаем новую жизнь с января!',                              platform: 'spotify', date: '2025-12-29', plays:  567, streams:  510, listeners:  437 },
+    // VK — итого 31 339
+    { episodeTitle: 'Оземпик — волшебная таблетка для похудения?',                 platform: 'vk', date: '25.08.2025', plays: 2847 },
+    { episodeTitle: 'Карьерный кризис после 30: когда пора что-то менять',         platform: 'vk', date: '01.09.2025', plays: 2376 },
+    { episodeTitle: 'Где найти своих людей, когда стал взрослым?',                 platform: 'vk', date: '08.09.2025', plays: 2098 },
+    { episodeTitle: 'Почему нам так страшно стареть?',                             platform: 'vk', date: '15.09.2025', plays: 3108 },
+    { episodeTitle: 'О чём говорят мужчины, или 30 — это новые 20',               platform: 'vk', date: '22.09.2025', plays: 1906 },
+    { episodeTitle: 'Физические нагрузки после 30: от зарядок до силовых',         platform: 'vk', date: '29.09.2025', plays: 2378 },
+    { episodeTitle: 'Как мой подкаст, я и индустрия изменились за 5 лет',         platform: 'vk', date: '06.10.2025', plays: 3501 },
+    { episodeTitle: 'Рак молочной железы: факторы риска и методы диагностики',    platform: 'vk', date: '13.10.2025', plays: 2198 },
+    { episodeTitle: 'Как ухаживать за кожей в осенне-зимний период?',              platform: 'vk', date: '20.10.2025', plays: 1826 },
+    { episodeTitle: 'Почему не стоит переживать на тему возраста? Василий Аккерман', platform: 'vk', date: '27.10.2025', plays: 2013 },
+    { episodeTitle: 'Как в Испании изменилось наше отношение к возрасту и красоте', platform: 'vk', date: '03.11.2025', plays: 1729 },
+    { episodeTitle: 'Детокс организма: смузи, голодание и развенчание мифов',      platform: 'vk', date: '10.11.2025', plays: 1542 },
+    { episodeTitle: 'В чём феномен корейской косметики?',                          platform: 'vk', date: '24.11.2025', plays: 1908 },
+    { episodeTitle: 'Кризис среднего возраста отменяется? Антон Комолов',          platform: 'vk', date: '15.12.2025', plays: 1201 },
+    { episodeTitle: 'Начинаем новую жизнь с января!',                              platform: 'vk', date: '29.12.2025', plays:  708 },
+  ],
+
+  // normalized: newest first
+  // completionRate: oldest (ep1, i=0) = 58, newest (ep15, i=14) = 74
+  // For normalized array (newest first), ep_oldest_index=14 (completionRate=58), ep_newest_index=0 (completionRate=74)
+  normalized: [
+    {
+      id: '098e7731', title: 'Начинаем новую жизнь с января!', publishDate: '2025-12-29',
+      plays: { mave: 847, yandex: 4931, spotify: 567, vk: 708, total: 7053 },
+      spotifyStreams: 510, spotifyAudience: 437,
+      yandexStarts: 4931, yandexListeners: 3600, yandexHours: 207, yandexCompletionRate: 74,
+      timeline: [
+        { date: '2025-12-29', plays: 508  },
+        { date: '2026-01-29', plays: 254  },
+        { date: '2026-02-28', plays:  85  },
+      ],
+    },
+    {
+      id: '4d4faef4', title: 'Кризис среднего возраста отменяется? Антон Комолов', publishDate: '2025-12-15',
+      plays: { mave: 1438, yandex: 8372, spotify: 962, vk: 1201, total: 11973 },
+      spotifyStreams: 866, spotifyAudience: 741,
+      yandexStarts: 8372, yandexListeners: 6112, yandexHours: 352, yandexCompletionRate: 73,
+      timeline: [
+        { date: '2025-12-15', plays: 863  },
+        { date: '2026-01-15', plays: 431  },
+        { date: '2026-02-15', plays: 144  },
+      ],
+    },
+    {
+      id: 'f5ba5662', title: 'В чём феномен корейской косметики?', publishDate: '2025-11-24',
+      plays: { mave: 2284, yandex: 13296, spotify: 1529, vk: 1908, total: 19017 },
+      spotifyStreams: 1376, spotifyAudience: 1177,
+      yandexStarts: 13296, yandexListeners: 9706, yandexHours: 558, yandexCompletionRate: 72,
+      timeline: [
+        { date: '2025-11-24', plays: 1370 },
+        { date: '2025-12-24', plays: 685  },
+        { date: '2026-01-24', plays: 228  },
+      ],
+    },
+    {
+      id: '0d252d73', title: 'Детокс организма: смузи, голодание и развенчание мифов', publishDate: '2025-11-10',
+      plays: { mave: 1847, yandex: 10752, spotify: 1236, vk: 1542, total: 15377 },
+      spotifyStreams: 1112, spotifyAudience: 952,
+      yandexStarts: 10752, yandexListeners: 7849, yandexHours: 452, yandexCompletionRate: 71,
+      timeline: [
+        { date: '2025-11-10', plays: 1108 },
+        { date: '2025-12-10', plays: 554  },
+        { date: '2026-01-10', plays: 185  },
+      ],
+    },
+    {
+      id: 'ad3f59a9', title: 'Как в Испании изменилось наше отношение к возрасту и красоте', publishDate: '2025-11-03',
+      plays: { mave: 2071, yandex: 12054, spotify: 1386, vk: 1729, total: 17240 },
+      spotifyStreams: 1247, spotifyAudience: 1067,
+      yandexStarts: 12054, yandexListeners: 8799, yandexHours: 506, yandexCompletionRate: 70,
+      timeline: [
+        { date: '2025-11-03', plays: 1243 },
+        { date: '2025-12-03', plays: 621  },
+        { date: '2026-01-03', plays: 207  },
+      ],
+    },
+    {
+      id: 'e483af35', title: 'Почему не стоит переживать на тему возраста? Василий Аккерман', publishDate: '2025-10-27',
+      plays: { mave: 2413, yandex: 14043, spotify: 1614, vk: 2013, total: 20083 },
+      spotifyStreams: 1453, spotifyAudience: 1243,
+      yandexStarts: 14043, yandexListeners: 10251, yandexHours: 590, yandexCompletionRate: 69,
+      timeline: [
+        { date: '2025-10-27', plays: 1448 },
+        { date: '2025-11-27', plays: 724  },
+        { date: '2025-12-27', plays: 241  },
+      ],
+    },
+    {
+      id: '44528358', title: 'Как ухаживать за кожей в осенне-зимний период?', publishDate: '2025-10-20',
+      plays: { mave: 2187, yandex: 12731, spotify: 1464, vk: 1826, total: 18208 },
+      spotifyStreams: 1318, spotifyAudience: 1127,
+      yandexStarts: 12731, yandexListeners: 9294, yandexHours: 535, yandexCompletionRate: 68,
+      timeline: [
+        { date: '2025-10-20', plays: 1312 },
+        { date: '2025-11-20', plays: 656  },
+        { date: '2025-12-20', plays: 219  },
+      ],
+    },
+    {
+      id: '4701c161', title: 'Рак молочной железы: факторы риска и методы диагностики', publishDate: '2025-10-13',
+      plays: { mave: 2634, yandex: 15329, spotify: 1762, vk: 2198, total: 21923 },
+      spotifyStreams: 1586, spotifyAudience: 1357,
+      yandexStarts: 15329, yandexListeners: 11190, yandexHours: 644, yandexCompletionRate: 67,
+      timeline: [
+        { date: '2025-10-13', plays: 1580 },
+        { date: '2025-11-13', plays: 790  },
+        { date: '2025-12-13', plays: 264  },
+      ],
+    },
+    {
+      id: 'ca59a7d9', title: 'Как мой подкаст, я и индустрия изменились за 5 лет', publishDate: '2025-10-06',
+      plays: { mave: 4193, yandex: 24397, spotify: 2806, vk: 3501, total: 34897 },
+      spotifyStreams: 2525, spotifyAudience: 2161,
+      yandexStarts: 24397, yandexListeners: 17810, yandexHours: 1025, yandexCompletionRate: 66,
+      timeline: [
+        { date: '2025-10-06', plays: 2516 },
+        { date: '2025-11-06', plays: 1258 },
+        { date: '2025-12-06', plays: 419  },
+      ],
+    },
+    {
+      id: '2e8fdb57', title: 'Физические нагрузки после 30: от зарядок до силовых', publishDate: '2025-09-29',
+      plays: { mave: 2847, yandex: 16572, spotify: 1905, vk: 2378, total: 23702 },
+      spotifyStreams: 1715, spotifyAudience: 1467,
+      yandexStarts: 16572, yandexListeners: 12097, yandexHours: 696, yandexCompletionRate: 65,
+      timeline: [
+        { date: '2025-09-29', plays: 1708 },
+        { date: '2025-10-29', plays: 854  },
+        { date: '2025-11-29', plays: 285  },
+      ],
+    },
+    {
+      id: 'f3d22ca6', title: 'О чём говорят мужчины, или 30 — это новые 20', publishDate: '2025-09-22',
+      plays: { mave: 2284, yandex: 13292, spotify: 1528, vk: 1906, total: 19010 },
+      spotifyStreams: 1375, spotifyAudience: 1177,
+      yandexStarts: 13292, yandexListeners: 9703, yandexHours: 558, yandexCompletionRate: 64,
+      timeline: [
+        { date: '2025-09-22', plays: 1370 },
+        { date: '2025-10-22', plays: 685  },
+        { date: '2025-11-22', plays: 228  },
+      ],
+    },
+    {
+      id: 'f7cb022c', title: 'Почему нам так страшно стареть?', publishDate: '2025-09-15',
+      plays: { mave: 3724, yandex: 21673, spotify: 2491, vk: 3108, total: 30996 },
+      spotifyStreams: 2242, spotifyAudience: 1918,
+      yandexStarts: 21673, yandexListeners: 15821, yandexHours: 910, yandexCompletionRate: 63,
+      timeline: [
+        { date: '2025-09-15', plays: 2234 },
+        { date: '2025-10-15', plays: 1117 },
+        { date: '2025-11-15', plays: 372  },
+      ],
+    },
+    {
+      id: '42acd06e', title: 'Где найти своих людей, когда стал взрослым?', publishDate: '2025-09-08',
+      plays: { mave: 2513, yandex: 14629, spotify: 1682, vk: 2098, total: 20922 },
+      spotifyStreams: 1514, spotifyAudience: 1295,
+      yandexStarts: 14629, yandexListeners: 10679, yandexHours: 615, yandexCompletionRate: 61,
+      timeline: [
+        { date: '2025-09-08', plays: 1508 },
+        { date: '2025-10-08', plays: 754  },
+        { date: '2025-11-08', plays: 251  },
+      ],
+    },
+    {
+      id: 'a859d9cc', title: 'Карьерный кризис после 30: когда пора что-то менять', publishDate: '2025-09-01',
+      plays: { mave: 2847, yandex: 16564, spotify: 1904, vk: 2376, total: 23691 },
+      spotifyStreams: 1714, spotifyAudience: 1466,
+      yandexStarts: 16564, yandexListeners: 12092, yandexHours: 696, yandexCompletionRate: 60,
+      timeline: [
+        { date: '2025-09-01', plays: 1708 },
+        { date: '2025-10-01', plays: 854  },
+        { date: '2025-11-01', plays: 285  },
+      ],
+    },
+    {
+      id: '71272de0', title: 'Оземпик — волшебная таблетка для похудения?', publishDate: '2025-08-25',
+      plays: { mave: 3412, yandex: 19847, spotify: 2284, vk: 2847, total: 28390 },
+      spotifyStreams: 2056, spotifyAudience: 1759,
+      yandexStarts: 19847, yandexListeners: 14489, yandexHours: 834, yandexCompletionRate: 58,
+      timeline: [
+        { date: '2025-08-25', plays: 2047 },
+        { date: '2025-09-25', plays: 1024 },
+        { date: '2025-10-25', plays: 341  },
+      ],
+    },
+  ],
+}
+
+export const DEMO_PODCASTS: Podcast[] = [DEMO_PODCAST, DEMO_PODCAST_2, DEMO_PODCAST_3]

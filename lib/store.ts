@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Podcast, PlayRecord, RSSEpisode, NormalizedEpisode, UploadedPlatform } from '@/types'
 import { normalizePodcastData } from './matcher'
-import { DEMO_PODCAST } from './demoData'
+import { DEMO_PODCASTS } from './demoData'
 
 interface PodcastStore {
   podcasts: Podcast[]
@@ -62,8 +62,10 @@ export const usePodcastStore = create<PodcastStore>()(
 
       loadDemo: () => {
         set(state => {
-          if (state.podcasts.find(p => p.id === DEMO_PODCAST.id)) return state
-          return { podcasts: [DEMO_PODCAST, ...state.podcasts] }
+          const existingIds = new Set(state.podcasts.map(p => p.id))
+          const toAdd = DEMO_PODCASTS.filter(p => !existingIds.has(p.id))
+          if (toAdd.length === 0) return state
+          return { podcasts: [...toAdd, ...state.podcasts] }
         })
       },
     }),

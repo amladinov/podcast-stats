@@ -41,6 +41,12 @@ export default function HomePage() {
         >
           Смотреть демо →
         </button>
+        <button
+          onClick={() => { loadDemo(); router.push('/compare') }}
+          className="mt-2 inline-flex items-center gap-2 bg-white hover:bg-[#f0f0f5] text-[#b150e2] text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors border border-[#e5e5ea]"
+        >
+          Сравнить подкасты
+        </button>
       </div>
 
       {/* Add podcast card */}
