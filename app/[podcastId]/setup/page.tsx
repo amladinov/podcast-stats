@@ -33,6 +33,7 @@ export default function SetupPage() {
   const [uploading, setUploading] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [previews, setPreviews] = useState<Record<string, number>>({})
+  const [dragOver, setDragOver] = useState<string | null>(null)
 
   const handleFile = useCallback(async (platform: typeof PLATFORMS[number]['key'], file: File) => {
     setUploading(platform)
@@ -97,7 +98,22 @@ export default function SetupPage() {
             const isUploading = uploading === p.key
 
             return (
-              <div key={p.key} className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm">
+              <div
+                key={p.key}
+                className={`bg-white rounded-2xl p-5 border shadow-sm transition-all duration-200 ${
+                  dragOver === p.key
+                    ? 'border-dashed border-[#b150e2] bg-[#b150e2]/5 scale-[1.01]'
+                    : 'border-[#e5e5ea]'
+                }`}
+                onDragOver={e => { e.preventDefault(); setDragOver(p.key) }}
+                onDragLeave={() => setDragOver(null)}
+                onDrop={e => {
+                  e.preventDefault()
+                  setDragOver(null)
+                  const file = e.dataTransfer.files?.[0]
+                  if (file) handleFile(p.key, file)
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: p.dot }} />

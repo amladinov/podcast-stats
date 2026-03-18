@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { NormalizedEpisode } from '@/types'
 
 interface Props {
@@ -13,6 +13,24 @@ export function EpisodeTable({ episodes }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('total')
   const [desc, setDesc] = useState(true)
   const [showAll, setShowAll] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    function check() {
+      if (!el) return
+      setCanScrollRight(el.scrollWidth > el.clientWidth + 2)
+    }
+    check()
+    el.addEventListener('scroll', check)
+    window.addEventListener('resize', check)
+    return () => {
+      el.removeEventListener('scroll', check)
+      window.removeEventListener('resize', check)
+    }
+  }, [episodes])
 
   const sorted = [...episodes].sort((a, b) => {
     let av: number, bv: number
@@ -33,14 +51,22 @@ export function EpisodeTable({ episodes }: Props) {
     else { setSortKey(key); setDesc(true) }
   }
 
-  const Th = ({ k, label }: { k: SortKey; label: string }) => (
-    <th
-      onClick={() => toggleSort(k)}
-      className="text-left text-[11px] text-[#aeaeb2] font-semibold uppercase tracking-wide px-4 py-3 cursor-pointer hover:text-[#6e6e73] select-none whitespace-nowrap transition-colors"
-    >
-      {label} {sortKey === k ? (desc ? '↓' : '↑') : ''}
-    </th>
-  )
+  const Th = ({ k, label }: { k: SortKey; label: string }) => {
+    const active = sortKey === k
+    return (
+      <th
+        onClick={() => toggleSort(k)}
+        className={`text-left text-[11px] font-semibold uppercase tracking-wide px-4 py-3 cursor-pointer select-none whitespace-nowrap transition-colors ${
+          active ? 'text-[#b150e2]' : 'text-[#aeaeb2] hover:text-[#6e6e73]'
+        }`}
+      >
+        {label}
+        {active && (
+          <span className="ml-1 text-[#b150e2]">{desc ? '↓' : '↑'}</span>
+        )}
+      </th>
+    )
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-sm overflow-hidden">
@@ -48,7 +74,14 @@ export function EpisodeTable({ episodes }: Props) {
         <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Эпизоды</h2>
         <span className="text-[12px] text-[#aeaeb2]">{episodes.length} эп.</span>
       </div>
-      <div className="overflow-x-auto">
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto relative"
+        style={canScrollRight ? {
+          maskImage: 'linear-gradient(to right, black calc(100% - 32px), transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 32px), transparent 100%)',
+        } : undefined}
+      >
         <table className="w-full">
           <thead className="border-b border-[#f0f0f0]">
             <tr>

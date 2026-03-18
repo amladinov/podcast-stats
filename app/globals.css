@@ -11,3 +11,38 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d2d2d7 transparent;
+}
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #aeaeb2;
+}
+
+/* Spin animation for AI loader */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-smooth {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+/* Scroll shadow on overflowing table */
+.scroll-shadow-right {
+  background: linear-gradient(to right, white 0%, white calc(100% - 32px), rgba(0,0,0,0.04) 100%);
+}

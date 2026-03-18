@@ -76,7 +76,7 @@ export default function HomePage() {
       {podcasts.length > 0 && (
         <div className="space-y-2">
           {podcasts.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-[#e5e5ea]">
+            <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200 cursor-default">
               {p.imageUrl
                 ? <img src={p.imageUrl} alt={p.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 shadow-sm" /> // eslint-disable-line @next/next/no-img-element
                 : <div className="w-14 h-14 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
@@ -99,7 +99,14 @@ export default function HomePage() {
                 <button onClick={() => router.push(`/${p.id}/setup`)} className="text-[13px] bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] px-3 py-1.5 rounded-lg transition-colors">
                   Данные
                 </button>
-                <button onClick={() => removePodcast(p.id)} className="text-[13px] text-[#aeaeb2] hover:text-red-500 px-2 py-1.5 transition-colors">
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Удалить «${p.title}»? Это действие нельзя отменить.`)) {
+                      removePodcast(p.id)
+                    }
+                  }}
+                  className="text-[13px] text-[#aeaeb2] hover:text-red-500 px-2 py-1.5 transition-colors"
+                >
                   ✕
                 </button>
               </div>
@@ -109,7 +116,11 @@ export default function HomePage() {
       )}
 
       {podcasts.length === 0 && (
-        <p className="text-center text-[#aeaeb2] text-[14px] py-8">Введи RSS-ссылку подкаста, чтобы начать</p>
+        <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-[#d2d2d7]">
+          <div className="text-4xl mb-3">🎙️</div>
+          <p className="text-[#6e6e73] text-[14px] mb-2">Добавь RSS-ссылку подкаста, чтобы начать</p>
+          <p className="text-[#aeaeb2] text-[12px]">Например: <span className="font-mono text-[#b150e2]">https://mave.digital/ep/sovet-direktorov.rss</span></p>
+        </div>
       )}
     </main>
   )

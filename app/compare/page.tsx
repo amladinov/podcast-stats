@@ -28,6 +28,7 @@ function truncate(str: string, max: number): string {
 export default function ComparePage() {
   const router = useRouter()
   const podcasts = usePodcastStore(s => s.podcasts)
+  const loadDemo = usePodcastStore(s => s.loadDemo)
 
   const podcastsWithData = podcasts.filter(p => p.uploadedPlatforms.length > 0)
 
@@ -46,15 +47,25 @@ export default function ComparePage() {
           </div>
         </div>
         <div className="max-w-5xl mx-auto px-6 py-16 text-center">
-          <p className="text-[#6e6e73] text-[15px]">
-            Нужно хотя бы 2 подкаста с данными. Вернитесь на главную и добавьте подкасты.
+          <div className="text-5xl mb-4">📊</div>
+          <p className="text-[#1d1d1f] text-[17px] font-semibold mb-2">Нужно хотя бы 2 подкаста с данными</p>
+          <p className="text-[#6e6e73] text-[14px] mb-6">
+            Добавьте подкасты на главной и загрузите CSV-файлы статистики.
           </p>
-          <button
-            onClick={() => router.push('/')}
-            className="mt-4 text-[#b150e2] text-[14px] font-medium hover:underline"
-          >
-            На главную
-          </button>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => { loadDemo(); router.push('/compare') }}
+              className="bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+            >
+              Смотреть демо →
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="bg-white hover:bg-[#f0f0f5] text-[#1d1d1f] text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors border border-[#e5e5ea]"
+            >
+              На главную
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -111,7 +122,7 @@ export default function ComparePage() {
               <button
                 key={p.id}
                 onClick={() => router.push(`/${p.id}/dashboard`)}
-                className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm text-left hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm text-left hover:border-[#b150e2]/50 hover:shadow-md hover:scale-[1.01] transition-all duration-200"
               >
                 <div className="flex items-center gap-3 mb-4">
                   {p.imageUrl
@@ -218,10 +229,19 @@ export default function ComparePage() {
 
               return (
                 <div key={p.id} className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm">
-                  <p className="text-[13px] font-semibold text-[#1d1d1f] mb-4 truncate">{p.title}</p>
+                  <button
+                    onClick={() => router.push(`/${p.id}/dashboard`)}
+                    className="text-[13px] font-semibold text-[#1d1d1f] mb-4 truncate w-full text-left hover:text-[#b150e2] transition-colors"
+                  >
+                    {p.title}
+                  </button>
                   <div className="space-y-3">
                     {top5.map((ep, rank) => (
-                      <div key={ep.id} className="flex items-start gap-3">
+                      <button
+                        key={ep.id}
+                        onClick={() => router.push(`/${p.id}/dashboard`)}
+                        className="flex items-start gap-3 w-full text-left hover:opacity-70 transition-opacity"
+                      >
                         <span
                           className="text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                           style={{ backgroundColor: color + '22', color }}
@@ -234,7 +254,7 @@ export default function ComparePage() {
                             {formatNumber(ep.plays.total)}
                           </p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>

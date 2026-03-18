@@ -54,8 +54,11 @@ export function AIInsights({ episodes, podcastTitle }: Props) {
       )}
 
       {loading && (
-        <div className="flex items-center gap-2 text-[#6e6e73] text-[13px]">
-          <span className="animate-spin inline-block">⟳</span> Анализирую...
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-[#6e6e73] text-[13px]">
+            <span className="animate-spin-smooth">⟳</span> Анализирую...
+          </div>
+          <p className="text-[11px] text-[#aeaeb2]">Анализ займёт ~10 секунд</p>
         </div>
       )}
 
