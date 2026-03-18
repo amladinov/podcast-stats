@@ -70,7 +70,7 @@ export default function SetupPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
       <div className="bg-white border-b border-[#e5e5ea]">
-        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-4">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
           <button onClick={() => router.push('/')} className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity">
             ← Назад
           </button>
@@ -85,7 +85,7 @@ export default function SetupPage() {
         </div>
       </div>
 
-      <main className="max-w-2xl mx-auto px-6 py-8">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         <p className="text-[#6e6e73] text-[14px] mb-6">
           Загрузи CSV-файлы со статистикой. Можно загрузить один или все источники.
         </p>

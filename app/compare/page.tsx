@@ -89,7 +89,7 @@ export default function ComparePage() {
     <div className="min-h-screen bg-[#f5f5f7]">
       {/* Header */}
       <div className="bg-white border-b border-[#e5e5ea]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
           <button
             onClick={() => router.push('/')}
             className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity"
@@ -100,10 +100,10 @@ export default function ComparePage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8">
 
         {/* Podcast summary cards */}
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(podcastsWithData.length, 3)}, 1fr)` }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {podcastsWithData.map((p, i) => {
             const totalPlays = p.normalized.reduce((sum, ep) => sum + ep.plays.total, 0)
             const maveTotal = p.normalized.reduce((sum, ep) => sum + ep.plays.mave, 0)
@@ -220,7 +220,7 @@ export default function ComparePage() {
         {/* Top episodes */}
         <div>
           <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-4">Топ эпизодов</h2>
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(podcastsWithData.length, 3)}, 1fr)` }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {podcastsWithData.map((p, i) => {
               const color = PODCAST_COLORS[i % PODCAST_COLORS.length]
               const top5 = [...p.normalized]
