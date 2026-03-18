@@ -9,7 +9,7 @@ export const DEMO_PODCAST: Podcast = {
   rssUrl: 'https://demo',
   title: 'Совет директоров',
   description: 'Лайфстайл предпринимателей — о бизнесе, деньгах и жизни без купюр.',
-  imageUrl: 'https://placehold.co/200x200/b150e2/ffffff?text=СД',
+  imageUrl: 'https://cdn.mave.digital/storage/podcasts/2b7705f3-d297-43e6-806e-fbd80e4080eb/images/3b03e2e7-dfdc-41e1-a7b8-ba1a0038f64f.jpg',
   createdAt: '2024-06-05T12:00:00Z',
 
   uploadedPlatforms: [
