@@ -21,7 +21,7 @@ export function StatCards({ episodes, rawPlays }: Props) {
   const pct = (n: number) => total > 0 ? `${Math.round(n / total * 100)}%` : '—'
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
       <div className="bg-[#b150e2] rounded-2xl p-5 text-white col-span-2 md:col-span-1 shadow-sm">
         <p className="text-white/70 text-[12px] font-medium uppercase tracking-wide mb-2">Всего</p>
         <p className="text-[28px] font-bold leading-none mb-1">{fmt(total)}</p>
