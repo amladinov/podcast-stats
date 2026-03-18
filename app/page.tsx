@@ -104,7 +104,7 @@ export default function HomePage() {
                 </button>
               </div>
               {/* Bottom row: action buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 {p.uploadedPlatforms.length > 0 && (
                   <button onClick={() => router.push(`/${p.id}/dashboard`)} className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] text-white px-4 py-1.5 rounded-lg transition-colors font-medium">
                     Дашборд

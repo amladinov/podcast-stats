@@ -64,8 +64,13 @@ export const usePodcastStore = create<PodcastStore>()(
         set(state => {
           const existingIds = new Set(state.podcasts.map(p => p.id))
           const toAdd = DEMO_PODCASTS.filter(p => !existingIds.has(p.id))
-          if (toAdd.length === 0) return state
-          return { podcasts: [...toAdd, ...state.podcasts] }
+          // Update imageUrl for existing demo podcasts (in case cache is stale)
+          const updated = state.podcasts.map(p => {
+            const fresh = DEMO_PODCASTS.find(d => d.id === p.id)
+            return fresh ? { ...p, imageUrl: fresh.imageUrl } : p
+          })
+          if (toAdd.length === 0) return { podcasts: updated }
+          return { podcasts: [...toAdd, ...updated] }
         })
       },
     }),
