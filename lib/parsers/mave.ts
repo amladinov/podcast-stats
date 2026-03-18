@@ -1,0 +1,54 @@
+import Papa from 'papaparse'
+import type { PlayRecord } from '@/types'
+
+// Mave exports a pivot table:
+// Row 1: "Выпуск", date1, date2, ... (DD.MM.YYYY, newest first)
+// Row 2+: episodeTitle, plays_day1, plays_day2, ...
+
+function ddmmyyyyToISO(ddmmyyyy: string): string {
+  const parts = ddmmyyyy.trim().split('.')
+  if (parts.length !== 3) return ddmmyyyy
+  return `${parts[2]}-${parts[1]}-${parts[0]}`
+}
+
+export function parseMave(csvText: string): PlayRecord[] {
+  const result = Papa.parse<string[]>(csvText, {
+    header: false,
+    skipEmptyLines: true,
+  })
+
+  const rows = result.data
+  if (rows.length < 2) return []
+
+  // First row: headers. Index 0 = "Выпуск", rest = dates
+  const headerRow = rows[0]
+  const dates: string[] = headerRow.slice(1).map(d => ddmmyyyyToISO(d.trim()))
+
+  const records: PlayRecord[] = []
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i]
+    if (!row || row.length < 2) continue
+
+    const episodeTitle = row[0].trim()
+    if (!episodeTitle) continue
+
+    for (let j = 1; j < row.length; j++) {
+      const dateISO = dates[j - 1]
+      if (!dateISO) continue
+
+      const raw = (row[j] || '0').toString().replace(/\s/g, '').replace(',', '.')
+      const plays = parseInt(raw, 10)
+      if (isNaN(plays) || plays === 0) continue
+
+      records.push({
+        episodeTitle,
+        platform: 'mave',
+        date: dateISO,
+        plays,
+      })
+    }
+  }
+
+  return records
+}
