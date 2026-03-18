@@ -7,7 +7,7 @@ import type { RSSEpisode } from '@/types'
 
 export default function HomePage() {
   const router = useRouter()
-  const { podcasts, addPodcast, removePodcast } = usePodcastStore()
+  const { podcasts, addPodcast, removePodcast, loadDemo } = usePodcastStore()
   const [rssUrl, setRssUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -35,6 +35,12 @@ export default function HomePage() {
       <div className="mb-12">
         <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight mb-1">Podcast Stats</h1>
         <p className="text-[#6e6e73] text-[15px]">Агрегатор статистики — Mave, Яндекс, Spotify, VK</p>
+        <button
+          onClick={() => { loadDemo(); router.push('/demo/dashboard') }}
+          className="mt-4 inline-flex items-center gap-2 bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+        >
+          Смотреть демо →
+        </button>
       </div>
 
       {/* Add podcast card */}
@@ -97,7 +103,7 @@ export default function HomePage() {
       )}
 
       {podcasts.length === 0 && (
-        <p className="text-center text-[#aeaeb2] text-[14px] py-16">Введи RSS-ссылку подкаста, чтобы начать</p>
+        <p className="text-center text-[#aeaeb2] text-[14px] py-8">Введи RSS-ссылку подкаста, чтобы начать</p>
       )}
     </main>
   )

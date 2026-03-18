@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Podcast, PlayRecord, RSSEpisode, NormalizedEpisode, UploadedPlatform } from '@/types'
 import { normalizePodcastData } from './matcher'
+import { DEMO_PODCAST } from './demoData'
 
 interface PodcastStore {
   podcasts: Podcast[]
@@ -9,6 +10,7 @@ interface PodcastStore {
   uploadPlays: (podcastId: string, plays: PlayRecord[], platform: UploadedPlatform) => void
   removePodcast: (podcastId: string) => void
   getPodcast: (podcastId: string) => Podcast | undefined
+  loadDemo: () => void
 }
 
 export const usePodcastStore = create<PodcastStore>()(
@@ -56,6 +58,13 @@ export const usePodcastStore = create<PodcastStore>()(
 
       getPodcast: (podcastId) => {
         return get().podcasts.find(p => p.id === podcastId)
+      },
+
+      loadDemo: () => {
+        set(state => {
+          if (state.podcasts.find(p => p.id === DEMO_PODCAST.id)) return state
+          return { podcasts: [DEMO_PODCAST, ...state.podcasts] }
+        })
       },
     }),
     { name: 'podcast-stats-store' }
