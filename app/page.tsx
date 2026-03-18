@@ -31,7 +31,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-16">
+    <main className="max-w-3xl mx-auto px-4 py-16">
       <div className="mb-12">
         <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight mb-1">Podcast Stats</h1>
         <p className="text-[#6e6e73] text-[15px]">Агрегатор статистики — Mave, Яндекс, Spotify, VK</p>

@@ -36,7 +36,7 @@ export default function ComparePage() {
     return (
       <div className="min-h-screen bg-[#f5f5f7]">
         <div className="bg-white border-b border-[#e5e5ea]">
-          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
             <button
               onClick={() => router.push('/')}
               className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity"
@@ -46,7 +46,7 @@ export default function ComparePage() {
             <h1 className="text-[17px] font-semibold text-[#1d1d1f]">Сравнение подкастов</h1>
           </div>
         </div>
-        <div className="max-w-5xl mx-auto px-6 py-16 text-center">
+        <div className="max-w-7xl mx-auto px-6 py-16 text-center">
           <div className="text-5xl mb-4">📊</div>
           <p className="text-[#1d1d1f] text-[17px] font-semibold mb-2">Нужно хотя бы 2 подкаста с данными</p>
           <p className="text-[#6e6e73] text-[14px] mb-6">
@@ -89,7 +89,7 @@ export default function ComparePage() {
     <div className="min-h-screen bg-[#f5f5f7]">
       {/* Header */}
       <div className="bg-white border-b border-[#e5e5ea]">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
           <button
             onClick={() => router.push('/')}
             className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity"
@@ -100,7 +100,7 @@ export default function ComparePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
         {/* Podcast summary cards */}
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(podcastsWithData.length, 3)}, 1fr)` }}>
