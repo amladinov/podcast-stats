@@ -105,42 +105,42 @@ export default function HomePage() {
         <div className="space-y-2">
           {podcasts.map(p => (
             <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200">
-              {/* Top row: image + title + delete */}
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3">
                 {p.imageUrl
-                  ? <Image src={p.imageUrl} alt={p.title} width={48} height={48} className="rounded-xl object-cover flex-shrink-0 shadow-sm" />
-                  : <div className="w-12 h-12 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
+                  ? <Image src={p.imageUrl} alt={p.title} width={64} height={64} className="rounded-xl object-cover flex-shrink-0 shadow-sm" />
+                  : <div className="w-16 h-16 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[#1d1d1f] text-[15px] truncate">{p.title}</p>
-                  <p className="text-[#6e6e73] text-[13px] mt-0.5 truncate">
+                  <div className="flex items-start justify-between gap-2 mb-0.5">
+                    <p className="font-semibold text-[#1d1d1f] text-[15px] truncate">{p.title}</p>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Удалить «${p.title}»? Это действие нельзя отменить.`)) {
+                          removePodcast(p.id)
+                        }
+                      }}
+                      className="text-[#aeaeb2] hover:text-red-500 p-1 transition-colors flex-shrink-0 -mt-0.5"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-[#6e6e73] text-[13px] truncate mb-2">
                     {p.episodes.length} эп.
                     {p.uploadedPlatforms.length > 0 && (
                       <span className="ml-1.5 text-[#b150e2]">· {p.uploadedPlatforms.map(u => u.platform).join(', ')}</span>
                     )}
                   </p>
+                  <div className="flex gap-2">
+                    {p.uploadedPlatforms.length > 0 && (
+                      <button onClick={() => router.push(`/${p.id}/dashboard`)} className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] text-white px-3 py-1.5 rounded-lg transition-colors font-medium">
+                        Дашборд
+                      </button>
+                    )}
+                    <button onClick={() => router.push(`/${p.id}/setup`)} className="text-[13px] bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] px-3 py-1.5 rounded-lg transition-colors">
+                      + Данные
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    if (window.confirm(`Удалить «${p.title}»? Это действие нельзя отменить.`)) {
-                      removePodcast(p.id)
-                    }
-                  }}
-                  className="text-[#aeaeb2] hover:text-red-500 p-1.5 transition-colors flex-shrink-0"
-                >
-                  ✕
-                </button>
-              </div>
-              {/* Bottom row: action buttons */}
-              <div className="flex gap-3">
-                {p.uploadedPlatforms.length > 0 && (
-                  <button onClick={() => router.push(`/${p.id}/dashboard`)} className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] text-white px-4 py-1.5 rounded-lg transition-colors font-medium">
-                    Дашборд
-                  </button>
-                )}
-                <button onClick={() => router.push(`/${p.id}/setup`)} className="text-[13px] bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] px-4 py-1.5 rounded-lg transition-colors">
-                  + Данные
-                </button>
               </div>
             </div>
           ))}
