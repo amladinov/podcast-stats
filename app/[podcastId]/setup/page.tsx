@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { usePodcastStore } from '@/lib/store'
@@ -34,9 +35,11 @@ export default function SetupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [previews, setPreviews] = useState<Record<string, number>>({})
   const [dragOver, setDragOver] = useState<string | null>(null)
+  const [lastUploadedKey, setLastUploadedKey] = useState<string | null>(null)
 
   const handleFile = useCallback(async (platform: typeof PLATFORMS[number]['key'], file: File) => {
     setUploading(platform)
+    setLastUploadedKey(null)
     setErrors(prev => ({ ...prev, [platform]: '' }))
     try {
       const text = await file.text()
@@ -49,6 +52,7 @@ export default function SetupPage() {
         uploadedAt: new Date().toISOString(),
       })
       setPreviews(prev => ({ ...prev, [platform]: plays.length }))
+      setLastUploadedKey(platform)
     } catch (e) {
       setErrors(prev => ({ ...prev, [platform]: e instanceof Error ? e.message : 'Ошибка' }))
     } finally {
@@ -66,6 +70,7 @@ export default function SetupPage() {
   }
 
   const uploadedKeys = new Set(podcast.uploadedPlatforms.map(u => u.platform))
+  const anyUploading = uploading !== null
 
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
@@ -75,8 +80,7 @@ export default function SetupPage() {
             ← Назад
           </button>
           {podcast.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={podcast.imageUrl} alt={podcast.title} className="w-9 h-9 rounded-lg object-cover shadow-sm" />
+            <Image src={podcast.imageUrl} alt={podcast.title} width={36} height={36} className="rounded-lg object-cover shadow-sm" />
           )}
           <div className="flex-1 min-w-0">
             <h1 className="text-[16px] font-semibold text-[#1d1d1f] truncate">{podcast.title}</h1>
@@ -96,22 +100,29 @@ export default function SetupPage() {
             const preview = previews[p.key]
             const err = errors[p.key]
             const isUploading = uploading === p.key
+            const isDone = uploadedKeys.has(p.key) || !!preview
+            const isBlocked = anyUploading && !isUploading
+            const showHint = lastUploadedKey === p.key && uploadedKeys.size < PLATFORMS.length && !anyUploading
 
             return (
               <div
                 key={p.key}
                 className={`bg-white rounded-2xl p-5 border shadow-sm transition-all duration-200 ${
-                  dragOver === p.key
-                    ? 'border-dashed border-[#b150e2] bg-[#b150e2]/5 scale-[1.01]'
-                    : 'border-[#e5e5ea]'
+                  isUploading
+                    ? 'border-[#b150e2] animate-pulse'
+                    : dragOver === p.key
+                      ? 'border-dashed border-[#b150e2] bg-[#b150e2]/5 scale-[1.01]'
+                      : 'border-[#e5e5ea]'
                 }`}
-                onDragOver={e => { e.preventDefault(); setDragOver(p.key) }}
+                onDragOver={e => { if (!anyUploading) { e.preventDefault(); setDragOver(p.key) } }}
                 onDragLeave={() => setDragOver(null)}
                 onDrop={e => {
                   e.preventDefault()
                   setDragOver(null)
-                  const file = e.dataTransfer.files?.[0]
-                  if (file) handleFile(p.key, file)
+                  if (!anyUploading) {
+                    const file = e.dataTransfer.files?.[0]
+                    if (file) handleFile(p.key, file)
+                  }
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -120,9 +131,9 @@ export default function SetupPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-[#1d1d1f] text-[15px]">{p.label}</h3>
-                        {(uploaded || preview) && (
+                        {isDone && (
                           <span className="text-[11px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-100">
-                            загружено
+                            ✓ Готово
                           </span>
                         )}
                       </div>
@@ -137,23 +148,44 @@ export default function SetupPage() {
                     </div>
                   </div>
 
-                  <label className="cursor-pointer flex-shrink-0">
-                    <input
-                      type="file"
-                      accept=".csv"
-                      className="hidden"
-                      onChange={e => {
-                        const file = e.target.files?.[0]
-                        if (file) handleFile(p.key, file)
-                        e.target.value = ''
-                      }}
-                      disabled={isUploading}
-                    />
-                    <span className="inline-block text-[13px] bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] px-4 py-2 rounded-xl transition-colors font-medium border border-[#e5e5ea]">
-                      {isUploading ? 'Обрабатываю...' : uploaded ? 'Заменить' : 'Выбрать CSV'}
-                    </span>
-                  </label>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {isDone && !isUploading && (
+                      <span className="animate-pop text-green-500 text-[18px] leading-none">✓</span>
+                    )}
+                    <label className={`flex-shrink-0 ${isBlocked ? 'pointer-events-none' : 'cursor-pointer'}`}>
+                      <input
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFile(p.key, file)
+                          e.target.value = ''
+                        }}
+                        disabled={anyUploading}
+                      />
+                      <span className={`inline-flex items-center gap-1.5 text-[13px] bg-[#f5f5f7] text-[#1d1d1f] px-4 py-2 rounded-xl font-medium border border-[#e5e5ea] transition-all ${
+                        isBlocked
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:bg-[#e5e5ea]'
+                      }`}>
+                        {isUploading ? (
+                          <>
+                            <svg className="animate-spin-smooth w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 16 16" fill="none">
+                              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" />
+                              <path d="M14 8a6 6 0 00-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                            Обрабатываю...
+                          </>
+                        ) : isDone ? 'Заменить' : 'Выбрать CSV'}
+                      </span>
+                    </label>
+                  </div>
                 </div>
+
+                {showHint && (
+                  <p className="text-[#aeaeb2] text-[12px] mt-3">→ Загрузи следующий источник</p>
+                )}
               </div>
             )
           })}

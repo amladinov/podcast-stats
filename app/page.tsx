@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { usePodcastStore } from '@/lib/store'
 import type { RSSEpisode } from '@/types'
@@ -32,21 +33,48 @@ export default function HomePage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 sm:py-16">
-      <div className="mb-12">
-        <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight mb-1">Podcast Stats</h1>
-        <p className="text-[#6e6e73] text-[15px]">Агрегатор статистики — Mave, Яндекс, Spotify, VK</p>
-        <button
-          onClick={() => { loadDemo(); router.push('/demo/dashboard') }}
-          className="mt-4 inline-flex items-center gap-2 bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm"
-        >
-          Смотреть демо →
-        </button>
-        <button
-          onClick={() => { loadDemo(); router.push('/compare') }}
-          className="mt-2 inline-flex items-center gap-2 bg-white hover:bg-[#f0f0f5] text-[#b150e2] text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors border border-[#e5e5ea]"
-        >
-          Сравнить подкасты
-        </button>
+      {/* Hero */}
+      <div className="mb-12 text-center pt-6">
+        <h1 className="text-[30px] sm:text-[38px] font-bold text-[#1d1d1f] tracking-tight mb-3 leading-tight">
+          Полная статистика подкаста<br className="hidden sm:block" /> — в одном месте
+        </h1>
+        <p className="text-[#6e6e73] text-[16px] mb-8 max-w-md mx-auto">
+          Подключи RSS и загрузи CSV с Яндекс Музыки, Spotify и ВКонтакте
+        </p>
+
+        {/* 3 steps */}
+        <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-[#b150e2] text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0">1</span>
+            <span className="text-[#1d1d1f] text-[14px] font-medium">RSS-ссылка</span>
+          </div>
+          <span className="text-[#aeaeb2] text-[16px] font-light select-none">→</span>
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-[#b150e2] text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0">2</span>
+            <span className="text-[#1d1d1f] text-[14px] font-medium">CSV файлы</span>
+          </div>
+          <span className="text-[#aeaeb2] text-[16px] font-light select-none">→</span>
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-[#b150e2] text-white text-[12px] font-bold flex items-center justify-center flex-shrink-0">3</span>
+            <span className="text-[#1d1d1f] text-[14px] font-medium">Аналитика + AI</span>
+          </div>
+        </div>
+
+        {/* CTA buttons */}
+        <div className="flex gap-3 justify-center flex-wrap">
+          <button
+            onClick={() => { loadDemo(); router.push('/demo/dashboard') }}
+            className="inline-flex items-center gap-2 bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+          >
+            Смотреть демо →
+          </button>
+          <button
+            onClick={() => { loadDemo(); router.push('/compare') }}
+            className="inline-flex items-center gap-2 bg-white hover:bg-[#f0f0f5] text-[#b150e2] text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors border border-[#e5e5ea]"
+          >
+            Сравнить подкасты
+          </button>
+        </div>
       </div>
 
       {/* Add podcast card */}
@@ -80,7 +108,7 @@ export default function HomePage() {
               {/* Top row: image + title + delete */}
               <div className="flex items-center gap-3 mb-3">
                 {p.imageUrl
-                  ? <img src={p.imageUrl} alt={p.title} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm" /> // eslint-disable-line @next/next/no-img-element
+                  ? <Image src={p.imageUrl} alt={p.title} width={48} height={48} className="rounded-xl object-cover flex-shrink-0 shadow-sm" />
                   : <div className="w-12 h-12 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
                 }
                 <div className="flex-1 min-w-0">

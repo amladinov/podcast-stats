@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 - Всего прослушиваний: ${totalPlays.toLocaleString('ru')}
 - По платформам: Mave ${mavePlays.toLocaleString('ru')}, Яндекс ${yandexPlays.toLocaleString('ru')}, Spotify ${spotifyPlays.toLocaleString('ru')}, VK ${vkPlays.toLocaleString('ru')}
 - Всего эпизодов: ${episodes.length}
-- Среднее на эпизод: ${Math.round(totalPlays / episodes.length).toLocaleString('ru')}
+- Среднее на эпизод: ${episodes.length > 0 ? Math.round(totalPlays / episodes.length).toLocaleString('ru') : '—'}
 
 Топ-5 эпизодов:
 ${top5.map((e, i) => `${i + 1}. «${e.title}» — ${e.plays.total.toLocaleString('ru')} прослушиваний`).join('\n')}

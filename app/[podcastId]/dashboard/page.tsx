@@ -1,7 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { usePodcastStore } from '@/lib/store'
+import { DEMO_INSIGHTS_MAP } from '@/lib/demoData'
 import { StatCards } from '@/components/dashboard/StatCards'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { PlatformChart } from '@/components/dashboard/PlatformChart'
@@ -33,8 +35,7 @@ export default function DashboardPage() {
             ← Назад
           </button>
           {podcast.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={podcast.imageUrl} alt={podcast.title} className="w-9 h-9 rounded-xl object-cover shadow-sm flex-shrink-0" />
+            <Image src={podcast.imageUrl} alt={podcast.title} width={36} height={36} className="rounded-xl object-cover shadow-sm flex-shrink-0" />
           )}
           <div className="flex-1 min-w-0">
             <h1 className="text-[15px] sm:text-[17px] font-semibold text-[#1d1d1f] truncate">{podcast.title}</h1>
@@ -69,10 +70,14 @@ export default function DashboardPage() {
             <TrendChart episodes={episodes} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="md:col-span-1">
-                <PlatformChart episodes={episodes} rawPlays={podcast.rawPlays} />
+                <PlatformChart rawPlays={podcast.rawPlays} />
               </div>
               <div className="md:col-span-2">
-                <AIInsights episodes={episodes} podcastTitle={podcast.title} />
+                <AIInsights
+                  episodes={episodes}
+                  podcastTitle={podcast.title}
+                  initialInsights={DEMO_INSIGHTS_MAP[podcastId]}
+                />
               </div>
             </div>
             <EpisodeTable episodes={episodes} />

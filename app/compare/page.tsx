@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { usePodcastStore } from '@/lib/store'
 import {
@@ -13,7 +15,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-const PODCAST_COLORS = ['#b150e2', '#ff9f0a', '#0a84ff']
+const PODCAST_COLORS = ['#b150e2', '#ff9f0a', '#0a84ff', '#30d158', '#ff453a', '#64d2ff']
+const MAX_COMPARE = 6
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
@@ -31,6 +34,27 @@ export default function ComparePage() {
   const loadDemo = usePodcastStore(s => s.loadDemo)
 
   const podcastsWithData = podcasts.filter(p => p.uploadedPlatforms.length > 0)
+
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(podcastsWithData.slice(0, MAX_COMPARE).map(p => p.id))
+  )
+
+  const needsSelection = podcastsWithData.length > MAX_COMPARE
+  const podcastsToShow = needsSelection
+    ? podcastsWithData.filter(p => selected.has(p.id))
+    : podcastsWithData
+
+  function togglePodcast(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else if (next.size < MAX_COMPARE) {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   if (podcastsWithData.length < 2) {
     return (
@@ -78,7 +102,7 @@ export default function ComparePage() {
   const barChartData = platforms.map((name, pi) => {
     const key = platformKeys[pi]
     const entry: Record<string, string | number> = { platform: name }
-    podcastsWithData.forEach(p => {
+    podcastsToShow.forEach(p => {
       const total = p.normalized.reduce((sum, ep) => sum + ep.plays[key], 0)
       entry[p.id] = total
     })
@@ -102,9 +126,44 @@ export default function ComparePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-8">
 
+        {/* Selection panel — only when >6 podcasts */}
+        {needsSelection && (
+          <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm">
+            <p className="text-[14px] font-semibold text-[#1d1d1f] mb-1">Выберите до {MAX_COMPARE} подкастов для сравнения</p>
+            <p className="text-[12px] text-[#aeaeb2] mb-4">Выбрано: {selected.size} из {MAX_COMPARE}</p>
+            <div className="flex flex-wrap gap-2">
+              {podcastsWithData.map(p => {
+                const isSelected = selected.has(p.id)
+                const isDisabled = !isSelected && selected.size >= MAX_COMPARE
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => togglePodcast(p.id)}
+                    disabled={isDisabled}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-[13px] font-medium transition-all ${
+                      isSelected
+                        ? 'bg-[#b150e2]/10 border-[#b150e2]/40 text-[#b150e2]'
+                        : isDisabled
+                          ? 'bg-[#f5f5f7] border-[#e5e5ea] text-[#aeaeb2] opacity-50 cursor-not-allowed'
+                          : 'bg-[#f5f5f7] border-[#e5e5ea] text-[#6e6e73] hover:border-[#b150e2]/30'
+                    }`}
+                  >
+                    {p.imageUrl
+                      ? <Image src={p.imageUrl} alt="" width={20} height={20} className="rounded-md object-cover flex-shrink-0" />
+                      : <span className="w-5 h-5 rounded-md bg-[#e5e5ea] flex-shrink-0" />
+                    }
+                    <span className="max-w-[140px] truncate">{p.title}</span>
+                    {isSelected && <span className="text-[10px]">✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Podcast summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {podcastsWithData.map((p, i) => {
+          {podcastsToShow.map((p, i) => {
             const totalPlays = p.normalized.reduce((sum, ep) => sum + ep.plays.total, 0)
             const maveTotal = p.normalized.reduce((sum, ep) => sum + ep.plays.mave, 0)
             const yandexTotal = p.normalized.reduce((sum, ep) => sum + ep.plays.yandex, 0)
@@ -127,8 +186,7 @@ export default function ComparePage() {
                 <div className="flex items-center gap-3 mb-4">
                   {p.imageUrl
                     ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.imageUrl} alt={p.title} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm" />
+                      <Image src={p.imageUrl} alt={p.title} width={48} height={48} className="rounded-xl object-cover flex-shrink-0 shadow-sm" />
                     )
                     : (
                       <div className="w-12 h-12 rounded-xl flex-shrink-0" style={{ backgroundColor: color + '33' }} />
@@ -200,11 +258,11 @@ export default function ComparePage() {
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
                 formatter={(value: string) => {
-                  const p = podcastsWithData.find(pod => pod.id === value)
+                  const p = podcastsToShow.find(pod => pod.id === value)
                   return p ? truncate(p.title, 15) : value
                 }}
               />
-              {podcastsWithData.map((p, i) => (
+              {podcastsToShow.map((p, i) => (
                 <Bar
                   key={p.id}
                   dataKey={p.id}
@@ -221,7 +279,7 @@ export default function ComparePage() {
         <div>
           <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-4">Топ эпизодов</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {podcastsWithData.map((p, i) => {
+            {podcastsToShow.map((p, i) => {
               const color = PODCAST_COLORS[i % PODCAST_COLORS.length]
               const top5 = [...p.normalized]
                 .sort((a, b) => b.plays.total - a.plays.total)

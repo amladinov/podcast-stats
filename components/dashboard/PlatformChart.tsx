@@ -1,7 +1,7 @@
 'use client'
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import type { NormalizedEpisode, PlayRecord } from '@/types'
+import type { PlayRecord } from '@/types'
 
 const PLATFORMS = [
   { key: 'mave' as const, label: 'Mave', color: '#b150e2' },
@@ -11,7 +11,6 @@ const PLATFORMS = [
 ]
 
 interface Props {
-  episodes: NormalizedEpisode[]
   rawPlays: PlayRecord[]
 }
 

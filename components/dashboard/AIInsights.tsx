@@ -6,11 +6,12 @@ import type { NormalizedEpisode } from '@/types'
 interface Props {
   episodes: NormalizedEpisode[]
   podcastTitle: string
+  initialInsights?: string
 }
 
-export function AIInsights({ episodes, podcastTitle }: Props) {
+export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
   const [loading, setLoading] = useState(false)
-  const [insights, setInsights] = useState('')
+  const [insights, setInsights] = useState(initialInsights ?? '')
   const [error, setError] = useState('')
 
   async function analyze() {
@@ -63,8 +64,18 @@ export function AIInsights({ episodes, podcastTitle }: Props) {
       )}
 
       {insights && (
-        <div className="text-[13px] text-[#1d1d1f] leading-[1.6] whitespace-pre-wrap overflow-y-auto flex-1">
-          {insights}
+        <div className="text-[13px] text-[#1d1d1f] leading-[1.6] overflow-y-auto flex-1 space-y-1">
+          {insights.split('\n').map((line, i) => {
+            if (!line.trim()) return <div key={i} className="h-1" />
+            const parts = line.split(/\*\*(.*?)\*\*/g)
+            return (
+              <p key={i}>
+                {parts.map((part, j) =>
+                  j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                )}
+              </p>
+            )
+          })}
         </div>
       )}
     </div>
