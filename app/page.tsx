@@ -107,8 +107,8 @@ export default function HomePage() {
             <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200">
               <div className="flex items-center gap-3">
                 {p.imageUrl
-                  ? <Image src={p.imageUrl} alt={p.title} width={64} height={64} className="rounded-xl object-cover flex-shrink-0 shadow-sm" />
-                  : <div className="w-16 h-16 rounded-xl bg-[#f5f5f7] flex-shrink-0" />
+                  ? <Image src={p.imageUrl} alt={p.title} width={80} height={80} className="rounded object-cover flex-shrink-0" />
+                  : <div className="w-20 h-20 rounded bg-[#f5f5f7] flex-shrink-0" />
                 }
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-0.5">
