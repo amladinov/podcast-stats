@@ -12,6 +12,13 @@ export default function HomePage() {
   const [rssUrl, setRssUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [demoAnimating, setDemoAnimating] = useState(false)
+
+  function handleDemoClick() {
+    loadDemo()
+    setDemoAnimating(true)
+    setTimeout(() => router.push('/demo/dashboard'), 1200)
+  }
 
   async function handleAdd() {
     if (!rssUrl.trim()) return
@@ -63,10 +70,11 @@ export default function HomePage() {
         {/* CTA buttons */}
         <div className="flex gap-3 justify-center flex-wrap">
           <button
-            onClick={() => { loadDemo(); router.push('/demo/dashboard') }}
-            className="inline-flex items-center gap-2 bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+            onClick={handleDemoClick}
+            disabled={demoAnimating}
+            className="inline-flex items-center gap-2 bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm disabled:opacity-70 disabled:cursor-default"
           >
-            Смотреть демо →
+            {demoAnimating ? 'Открываю...' : 'Смотреть демо →'}
           </button>
           <button
             onClick={() => { loadDemo(); router.push('/compare') }}
@@ -103,8 +111,12 @@ export default function HomePage() {
       {/* Podcast list */}
       {podcasts.length > 0 && (
         <div className="space-y-2">
-          {podcasts.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200">
+          {podcasts.map((p, index) => (
+            <div
+              key={p.id}
+              className={`bg-white rounded-2xl p-4 shadow-sm border border-[#e5e5ea] hover:border-[#b150e2]/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200 ${demoAnimating ? 'animate-slide-up' : ''}`}
+              style={demoAnimating ? { animationDelay: `${index * 80}ms` } : undefined}
+            >
               <div className="flex items-center gap-3">
                 {p.imageUrl
                   ? <Image src={p.imageUrl} alt={p.title} width={80} height={80} className="rounded object-cover flex-shrink-0" />
