@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".tmp/matcher-test",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "types": ["node"],
+    "incremental": false
+  },
+  "include": [
+    "lib/matcher.ts",
+    "types/index.ts",
+    "tests/matcher.test.ts"
+  ]
+}

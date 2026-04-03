@@ -14,16 +14,20 @@ export interface RSSPodcast {
   episodes: RSSEpisode[]
 }
 
-// Raw play record after parsing any CSV
+export type Platform = 'mave' | 'yandex' | 'spotify' | 'vk' | 'youtube'
+
+// Raw play record after parsing any CSV or API import
 export interface PlayRecord {
   episodeTitle: string
-  platform: 'mave' | 'yandex' | 'spotify' | 'vk'
+  platform: Platform
   date: string // YYYY-MM-DD — publication date OR play date (Mave)
   plays: number
   // Extra metrics when available
   streams?: number
   listeners?: number
   completionRate?: number
+  likes?: number
+  comments?: number
 }
 
 // Episode with all data merged across platforms
@@ -36,6 +40,7 @@ export interface NormalizedEpisode {
     yandex: number
     spotify: number
     vk: number
+    youtube: number
     total: number
   }
   // Daily timeline from Mave (only Mave provides this)
@@ -48,13 +53,28 @@ export interface NormalizedEpisode {
   // Extra Spotify metrics
   spotifyStreams?: number
   spotifyAudience?: number
+  // Extra YouTube metrics
+  youtubeViews?: number
+  youtubeLikes?: number
+  youtubeComments?: number
 }
 
 export interface UploadedPlatform {
-  platform: 'mave' | 'yandex' | 'spotify' | 'vk'
+  platform: Platform
   fileName: string
   recordsCount: number
   uploadedAt: string
+  periodStart?: string
+  periodEnd?: string
+}
+
+export interface YandexAudience {
+  gender?: { female: number; male: number; unknown: number }
+  age?: Array<{ range: string; count: number }>
+  cities?: Array<{
+    rank: number; city: string; starts: number; streams: number
+    listeners: number; hours: number; avgListening: number; completion: number
+  }>
 }
 
 export interface Podcast {
@@ -67,5 +87,6 @@ export interface Podcast {
   rawPlays: PlayRecord[]
   normalized: NormalizedEpisode[]
   uploadedPlatforms: UploadedPlatform[]
+  yandexAudience?: YandexAudience
   createdAt: string
 }

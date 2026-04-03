@@ -1,9 +1,10 @@
 import type { Podcast } from '@/types'
 
 export const DEMO_ID = 'demo'
+export const DEMO_IDS = new Set(['demo', 'demo-2', 'demo-3'])
 
-// 20 episodes, ~1 072 000 total plays
-// Platform split: Яндекс ~70.8%, Mave ~19.1%, Spotify ~6.2%, VK ~3.8%
+// 20 episodes, ~1 184 000 total plays
+// Platform split: Яндекс ~64%, Mave ~17%, YouTube ~9.5%, Spotify ~5.6%, VK ~3.5%
 export const DEMO_PODCAST: Podcast = {
   id: DEMO_ID,
   rssUrl: 'https://demo',
@@ -13,11 +14,37 @@ export const DEMO_PODCAST: Podcast = {
   createdAt: '2024-06-05T12:00:00Z',
 
   uploadedPlatforms: [
-    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z' },
-    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z' },
-    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z' },
-    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z' },
+    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z', periodStart: '2023-04-12', periodEnd: '2024-06-05' },
+    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z', periodStart: '2023-04-12', periodEnd: '2024-06-05' },
+    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z', periodStart: '2023-04-12', periodEnd: '2024-06-05' },
+    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z', periodStart: '2023-04-12', periodEnd: '2024-06-05' },
+    { platform: 'youtube', fileName: 'YouTube API', recordsCount: 20, uploadedAt: '2024-06-05T12:00:00Z', periodStart: '2023-04-12', periodEnd: '2024-06-05' },
   ],
+
+  yandexAudience: {
+    gender: { female: 61590, male: 81240, unknown: 17193 },
+    age: [
+      { range: '0-17',         count: 1820 },
+      { range: '18-24',        count: 18340 },
+      { range: '25-34',        count: 56696 },
+      { range: '35-44',        count: 43812 },
+      { range: '45-54',        count: 22130 },
+      { range: '55-99',        count: 9840 },
+      { range: 'Не определен', count: 12017 },
+    ],
+    cities: [
+      { rank: 1,  city: 'Москва',           starts: 78418, streams: 42408, listeners: 27072, hours: 15633, avgListening: 55.9, completion: 34.62 },
+      { rank: 2,  city: 'Санкт-Петербург',  starts: 31240, streams: 17320, listeners: 11850, hours: 6140,  avgListening: 53.2, completion: 31.40 },
+      { rank: 3,  city: 'Екатеринбург',     starts: 12810, streams: 6940,  listeners: 4720,  hours: 2480,  avgListening: 51.8, completion: 29.80 },
+      { rank: 4,  city: 'Новосибирск',      starts: 9340,  streams: 5120,  listeners: 3480,  hours: 1820,  avgListening: 50.4, completion: 28.50 },
+      { rank: 5,  city: 'Казань',           starts: 7620,  streams: 4180,  listeners: 2840,  hours: 1490,  avgListening: 49.7, completion: 27.90 },
+      { rank: 6,  city: 'Краснодар',        starts: 6480,  streams: 3540,  listeners: 2410,  hours: 1260,  avgListening: 49.2, completion: 27.30 },
+      { rank: 7,  city: 'Нижний Новгород',  starts: 5840,  streams: 3190,  listeners: 2170,  hours: 1130,  avgListening: 48.8, completion: 26.80 },
+      { rank: 8,  city: 'Ростов-на-Дону',   starts: 4920,  streams: 2680,  listeners: 1820,  hours: 950,   avgListening: 48.1, completion: 26.10 },
+      { rank: 9,  city: 'Уфа',              starts: 4210,  streams: 2290,  listeners: 1560,  hours: 810,   avgListening: 47.6, completion: 25.60 },
+      { rank: 10, city: 'Самара',           starts: 3840,  streams: 2090,  listeners: 1420,  hours: 740,   avgListening: 47.1, completion: 25.10 },
+    ],
+  },
 
   episodes: [
     { guid: 'ep-1',  title: 'Стартап за 100 дней: честный отчёт',          publishDate: '2023-04-12' },
@@ -127,14 +154,36 @@ export const DEMO_PODCAST: Podcast = {
     { episodeTitle: 'ep-18', platform: 'vk', date: '03.04.2024', plays: 3267 },
     { episodeTitle: 'ep-19', platform: 'vk', date: '08.05.2024', plays: 3837 },
     { episodeTitle: 'ep-20', platform: 'vk', date: '05.06.2024', plays: 5298 },
+    // YouTube — итого ~112 000 (просмотры видеоверсий)
+    { episodeTitle: 'Стартап за 100 дней: честный отчёт',       platform: 'youtube', date: '2023-04-12', plays: 1283,  likes: 87,  comments: 12 },
+    { episodeTitle: 'Как найти первых 10 клиентов',              platform: 'youtube', date: '2023-05-03', plays: 1547,  likes: 103, comments: 18 },
+    { episodeTitle: 'Делегирование: почему я боялся',            platform: 'youtube', date: '2023-05-24', plays: 1391,  likes: 94,  comments: 14 },
+    { episodeTitle: 'Деньги в бизнесе: что я понял за 5 лет',   platform: 'youtube', date: '2023-06-14', plays: 1872,  likes: 127, comments: 21 },
+    { episodeTitle: 'Партнёрство: когда это работает',           platform: 'youtube', date: '2023-07-05', plays: 2314,  likes: 158, comments: 27 },
+    { episodeTitle: 'Кризис: взгляд изнутри',                   platform: 'youtube', date: '2023-07-26', plays: 3041,  likes: 207, comments: 35 },
+    { episodeTitle: 'Личный бренд или компания',                 platform: 'youtube', date: '2023-08-16', plays: 2718,  likes: 185, comments: 31 },
+    { episodeTitle: 'Как мы выстроили отдел продаж',             platform: 'youtube', date: '2023-09-06', plays: 3567,  likes: 243, comments: 41 },
+    { episodeTitle: 'Контент-маркетинг: наш опыт',              platform: 'youtube', date: '2023-09-27', plays: 3924,  likes: 267, comments: 45 },
+    { episodeTitle: 'Найм: ошибки которые стоили дорого',        platform: 'youtube', date: '2023-10-18', plays: 4651,  likes: 317, comments: 53 },
+    { episodeTitle: 'Ценообразование: как не продавать дёшево',  platform: 'youtube', date: '2023-11-08', plays: 5382,  likes: 366, comments: 61 },
+    { episodeTitle: 'Личные финансы предпринимателя',            platform: 'youtube', date: '2023-11-29', plays: 4817,  likes: 328, comments: 55 },
+    { episodeTitle: 'Масштаб без хаоса',                         platform: 'youtube', date: '2023-12-20', plays: 6173,  likes: 420, comments: 71 },
+    { episodeTitle: 'Итоги 2023: главные уроки',                 platform: 'youtube', date: '2024-01-10', plays: 7584,  likes: 516, comments: 87 },
+    { episodeTitle: 'Тренды 2024: куда идёт рынок',              platform: 'youtube', date: '2024-01-31', plays: 6912,  likes: 470, comments: 79 },
+    { episodeTitle: 'Команда мечты: как собрать и удержать',     platform: 'youtube', date: '2024-02-21', plays: 7463,  likes: 508, comments: 85 },
+    { episodeTitle: 'Кризис в компании: как мы выжили',          platform: 'youtube', date: '2024-03-13', plays: 6381,  likes: 434, comments: 73 },
+    { episodeTitle: 'Инвестиции в себя: ROI личного развития',   platform: 'youtube', date: '2024-04-03', plays: 8092,  likes: 551, comments: 92 },
+    { episodeTitle: 'Подкаст как бизнес-инструмент',             platform: 'youtube', date: '2024-05-08', plays: 9513,  likes: 647, comments: 108 },
+    { episodeTitle: 'Как выйти на 10 млн: наша история',        platform: 'youtube', date: '2024-06-05', plays: 13142, likes: 894, comments: 149 },
   ],
 
   normalized: [
     {
       id: 'ep-20', title: 'Как выйти на 10 млн: наша история', publishDate: '2024-06-05',
-      plays: { mave: 26418, yandex: 97747, spotify: 8503, vk: 5298, total: 137966 },
+      plays: { mave: 26418, yandex: 97747, spotify: 8503, vk: 5298, youtube: 13142, total: 151108 },
       spotifyStreams: 7653, spotifyAudience: 6547,
       yandexStarts: 97747, yandexListeners: 71355, yandexHours: 4105, yandexCompletionRate: 77,
+      youtubeViews: 13142, youtubeLikes: 894, youtubeComments: 149,
       timeline: [
         { date: '2024-06-05', plays: 15851 },
         { date: '2024-07-05', plays: 7925  },
@@ -143,9 +192,10 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-19', title: 'Подкаст как бизнес-инструмент', publishDate: '2024-05-08',
-      plays: { mave: 19127, yandex: 70769, spotify: 6158, vk: 3837, total: 99891 },
+      plays: { mave: 19127, yandex: 70769, spotify: 6158, vk: 3837, youtube: 9513, total: 109404 },
       spotifyStreams: 5542, spotifyAudience: 4742,
       yandexStarts: 70769, yandexListeners: 51662, yandexHours: 2972, yandexCompletionRate: 73,
+      youtubeViews: 9513, youtubeLikes: 647, youtubeComments: 108,
       timeline: [
         { date: '2024-05-08', plays: 11476 },
         { date: '2024-06-08', plays: 5738  },
@@ -154,7 +204,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-18', title: 'Инвестиции в себя: ROI личного развития', publishDate: '2024-04-03',
-      plays: { mave: 16284, yandex: 60252, spotify: 5243, vk: 3267, total: 85046 },
+      plays: { mave: 16284, yandex: 60252, spotify: 5243, vk: 3267, youtube: 8092, total: 93138 },
+      youtubeViews: 8092, youtubeLikes: 551, youtubeComments: 92,
       spotifyStreams: 4719, spotifyAudience: 4037,
       yandexStarts: 60252, yandexListeners: 43984, yandexHours: 2531, yandexCompletionRate: 71,
       timeline: [
@@ -165,7 +216,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-17', title: 'Кризис в компании: как мы выжили', publishDate: '2024-03-13',
-      plays: { mave: 12843, yandex: 47523, spotify: 4136, vk: 2577, total: 67079 },
+      plays: { mave: 12843, yandex: 47523, spotify: 4136, vk: 2577, youtube: 6381, total: 73460 },
+      youtubeViews: 6381, youtubeLikes: 434, youtubeComments: 73,
       spotifyStreams: 3722, spotifyAudience: 3185,
       yandexStarts: 47523, yandexListeners: 34692, yandexHours: 1996, yandexCompletionRate: 69,
       timeline: [
@@ -176,7 +228,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-16', title: 'Команда мечты: как собрать и удержать', publishDate: '2024-02-21',
-      plays: { mave: 15037, yandex: 55637, spotify: 4841, vk: 3014, total: 78529 },
+      plays: { mave: 15037, yandex: 55637, spotify: 4841, vk: 3014, youtube: 7463, total: 85992 },
+      youtubeViews: 7463, youtubeLikes: 508, youtubeComments: 85,
       spotifyStreams: 4357, spotifyAudience: 3728,
       yandexStarts: 55637, yandexListeners: 40615, yandexHours: 2337, yandexCompletionRate: 70,
       timeline: [
@@ -187,7 +240,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-15', title: 'Тренды 2024: куда идёт рынок', publishDate: '2024-01-31',
-      plays: { mave: 13921, yandex: 51507, spotify: 4483, vk: 2792, total: 72703 },
+      plays: { mave: 13921, yandex: 51507, spotify: 4483, vk: 2792, youtube: 6912, total: 79615 },
+      youtubeViews: 6912, youtubeLikes: 470, youtubeComments: 79,
       spotifyStreams: 4035, spotifyAudience: 3452,
       yandexStarts: 51507, yandexListeners: 37600, yandexHours: 2163, yandexCompletionRate: 68,
       timeline: [
@@ -198,7 +252,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-14', title: 'Итоги 2023: главные уроки', publishDate: '2024-01-10',
-      plays: { mave: 15284, yandex: 56553, spotify: 4921, vk: 3063, total: 79821 },
+      plays: { mave: 15284, yandex: 56553, spotify: 4921, vk: 3063, youtube: 7584, total: 87405 },
+      youtubeViews: 7584, youtubeLikes: 516, youtubeComments: 87,
       spotifyStreams: 4429, spotifyAudience: 3789,
       yandexStarts: 56553, yandexListeners: 41284, yandexHours: 2375, yandexCompletionRate: 75,
       timeline: [
@@ -209,7 +264,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-13', title: 'Масштаб без хаоса', publishDate: '2023-12-20',
-      plays: { mave: 12437, yandex: 46018, spotify: 4003, vk: 2491, total: 64949 },
+      plays: { mave: 12437, yandex: 46018, spotify: 4003, vk: 2491, youtube: 6173, total: 71122 },
+      youtubeViews: 6173, youtubeLikes: 420, youtubeComments: 71,
       spotifyStreams: 3603, spotifyAudience: 3082,
       yandexStarts: 46018, yandexListeners: 33593, yandexHours: 1933, yandexCompletionRate: 67,
       timeline: [
@@ -220,7 +276,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-12', title: 'Личные финансы предпринимателя', publishDate: '2023-11-29',
-      plays: { mave: 9713, yandex: 35938, spotify: 3127, vk: 1947, total: 50725 },
+      plays: { mave: 9713, yandex: 35938, spotify: 3127, vk: 1947, youtube: 4817, total: 55542 },
+      youtubeViews: 4817, youtubeLikes: 328, youtubeComments: 55,
       spotifyStreams: 2814, spotifyAudience: 2408,
       yandexStarts: 35938, yandexListeners: 26235, yandexHours: 1509, yandexCompletionRate: 64,
       timeline: [
@@ -231,7 +288,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-11', title: 'Ценообразование: как не продавать дёшево', publishDate: '2023-11-08',
-      plays: { mave: 10847, yandex: 40134, spotify: 3492, vk: 2173, total: 56646 },
+      plays: { mave: 10847, yandex: 40134, spotify: 3492, vk: 2173, youtube: 5382, total: 62028 },
+      youtubeViews: 5382, youtubeLikes: 366, youtubeComments: 61,
       spotifyStreams: 3143, spotifyAudience: 2689,
       yandexStarts: 40134, yandexListeners: 29298, yandexHours: 1686, yandexCompletionRate: 65,
       timeline: [
@@ -242,7 +300,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-10', title: 'Найм: ошибки которые стоили дорого', publishDate: '2023-10-18',
-      plays: { mave: 9384, yandex: 34721, spotify: 3018, vk: 1876, total: 48999 },
+      plays: { mave: 9384, yandex: 34721, spotify: 3018, vk: 1876, youtube: 4651, total: 53650 },
+      youtubeViews: 4651, youtubeLikes: 317, youtubeComments: 53,
       spotifyStreams: 2716, spotifyAudience: 2324,
       yandexStarts: 34721, yandexListeners: 25346, yandexHours: 1458, yandexCompletionRate: 62,
       timeline: [
@@ -253,7 +312,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-9', title: 'Контент-маркетинг: наш опыт', publishDate: '2023-09-27',
-      plays: { mave: 7912, yandex: 29274, spotify: 2547, vk: 1584, total: 41317 },
+      plays: { mave: 7912, yandex: 29274, spotify: 2547, vk: 1584, youtube: 3924, total: 45241 },
+      youtubeViews: 3924, youtubeLikes: 267, youtubeComments: 45,
       spotifyStreams: 2292, spotifyAudience: 1961,
       yandexStarts: 29274, yandexListeners: 21370, yandexHours: 1229, yandexCompletionRate: 61,
       timeline: [
@@ -264,7 +324,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-8', title: 'Как мы выстроили отдел продаж', publishDate: '2023-09-06',
-      plays: { mave: 7193, yandex: 26617, spotify: 2314, vk: 1438, total: 37562 },
+      plays: { mave: 7193, yandex: 26617, spotify: 2314, vk: 1438, youtube: 3567, total: 41129 },
+      youtubeViews: 3567, youtubeLikes: 243, youtubeComments: 41,
       spotifyStreams: 2083, spotifyAudience: 1782,
       yandexStarts: 26617, yandexListeners: 19430, yandexHours: 1118, yandexCompletionRate: 59,
       timeline: [
@@ -275,7 +336,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-7', title: 'Личный бренд или компания', publishDate: '2023-08-16',
-      plays: { mave: 5483, yandex: 20289, spotify: 1764, vk: 1109, total: 28645 },
+      plays: { mave: 5483, yandex: 20289, spotify: 1764, vk: 1109, youtube: 2718, total: 31363 },
+      youtubeViews: 2718, youtubeLikes: 185, youtubeComments: 31,
       spotifyStreams: 1588, spotifyAudience: 1358,
       yandexStarts: 20289, yandexListeners: 14811, yandexHours: 852, yandexCompletionRate: 57,
       timeline: [
@@ -286,7 +348,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-6', title: 'Кризис: взгляд изнутри', publishDate: '2023-07-26',
-      plays: { mave: 6124, yandex: 22659, spotify: 1983, vk: 1241, total: 32007 },
+      plays: { mave: 6124, yandex: 22659, spotify: 1983, vk: 1241, youtube: 3041, total: 35048 },
+      youtubeViews: 3041, youtubeLikes: 207, youtubeComments: 35,
       spotifyStreams: 1785, spotifyAudience: 1527,
       yandexStarts: 22659, yandexListeners: 16541, yandexHours: 951, yandexCompletionRate: 56,
       timeline: [
@@ -297,7 +360,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-5', title: 'Партнёрство: когда это работает', publishDate: '2023-07-05',
-      plays: { mave: 4736, yandex: 17524, spotify: 1587, vk: 931, total: 24778 },
+      plays: { mave: 4736, yandex: 17524, spotify: 1587, vk: 931, youtube: 2314, total: 27092 },
+      youtubeViews: 2314, youtubeLikes: 158, youtubeComments: 27,
       spotifyStreams: 1428, spotifyAudience: 1222,
       yandexStarts: 17524, yandexListeners: 12792, yandexHours: 736, yandexCompletionRate: 54,
       timeline: [
@@ -308,7 +372,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-4', title: 'Деньги в бизнесе: что я понял за 5 лет', publishDate: '2023-06-14',
-      plays: { mave: 3921, yandex: 14508, spotify: 1284, vk: 817, total: 20530 },
+      plays: { mave: 3921, yandex: 14508, spotify: 1284, vk: 817, youtube: 1872, total: 22402 },
+      youtubeViews: 1872, youtubeLikes: 127, youtubeComments: 21,
       spotifyStreams: 1156, spotifyAudience: 989,
       yandexStarts: 14508, yandexListeners: 10591, yandexHours: 609, yandexCompletionRate: 52,
       timeline: [
@@ -319,7 +384,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-3', title: 'Делегирование: почему я боялся', publishDate: '2023-05-24',
-      plays: { mave: 2843, yandex: 10521, spotify: 962, vk: 574, total: 14900 },
+      plays: { mave: 2843, yandex: 10521, spotify: 962, vk: 574, youtube: 1391, total: 16291 },
+      youtubeViews: 1391, youtubeLikes: 94, youtubeComments: 14,
       spotifyStreams: 866, spotifyAudience: 741,
       yandexStarts: 10521, yandexListeners: 7680, yandexHours: 442, yandexCompletionRate: 51,
       timeline: [
@@ -330,7 +396,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-2', title: 'Как найти первых 10 клиентов', publishDate: '2023-05-03',
-      plays: { mave: 3187, yandex: 11793, spotify: 1041, vk: 647, total: 16668 },
+      plays: { mave: 3187, yandex: 11793, spotify: 1041, vk: 647, youtube: 1547, total: 18215 },
+      youtubeViews: 1547, youtubeLikes: 103, youtubeComments: 18,
       spotifyStreams: 937, spotifyAudience: 802,
       yandexStarts: 11793, yandexListeners: 8609, yandexHours: 495, yandexCompletionRate: 49,
       timeline: [
@@ -341,7 +408,8 @@ export const DEMO_PODCAST: Podcast = {
     },
     {
       id: 'ep-1', title: 'Стартап за 100 дней: честный отчёт', publishDate: '2023-04-12',
-      plays: { mave: 2514, yandex: 9302, spotify: 931, vk: 528, total: 13275 },
+      plays: { mave: 2514, yandex: 9302, spotify: 931, vk: 528, youtube: 1283, total: 14558 },
+      youtubeViews: 1283, youtubeLikes: 87, youtubeComments: 12,
       spotifyStreams: 838, spotifyAudience: 717,
       yandexStarts: 9302, yandexListeners: 6791, yandexHours: 391, yandexCompletionRate: 47,
       timeline: [
@@ -367,11 +435,37 @@ export const DEMO_PODCAST_2: Podcast = {
   createdAt: '2026-02-25T12:00:00Z',
 
   uploadedPlatforms: [
-    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
-    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
-    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
-    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z' },
+    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z', periodStart: '2024-12-31', periodEnd: '2026-02-25' },
+    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z', periodStart: '2024-12-31', periodEnd: '2026-02-25' },
+    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z', periodStart: '2024-12-31', periodEnd: '2026-02-25' },
+    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z', periodStart: '2024-12-31', periodEnd: '2026-02-25' },
+    { platform: 'youtube', fileName: 'YouTube API', recordsCount: 15, uploadedAt: '2026-02-25T12:00:00Z', periodStart: '2024-12-31', periodEnd: '2026-02-25' },
   ],
+
+  yandexAudience: {
+    gender: { female: 89240, male: 21380, unknown: 8140 },
+    age: [
+      { range: '0-17',         count: 480 },
+      { range: '18-24',        count: 21640 },
+      { range: '25-34',        count: 67890 },
+      { range: '35-44',        count: 18320 },
+      { range: '45-54',        count: 4180 },
+      { range: '55-99',        count: 980 },
+      { range: 'Не определен', count: 5280 },
+    ],
+    cities: [
+      { rank: 1,  city: 'Москва',           starts: 41820, streams: 22640, listeners: 15480, hours: 8120, avgListening: 58.2, completion: 39.40 },
+      { rank: 2,  city: 'Санкт-Петербург',  starts: 19340, streams: 10480, listeners: 7160,  hours: 3740, avgListening: 56.4, completion: 37.20 },
+      { rank: 3,  city: 'Екатеринбург',     starts: 6840,  streams: 3700,  listeners: 2520,  hours: 1320, avgListening: 54.1, completion: 35.10 },
+      { rank: 4,  city: 'Краснодар',        starts: 5120,  streams: 2770,  listeners: 1890,  hours: 990,  avgListening: 53.4, completion: 34.50 },
+      { rank: 5,  city: 'Новосибирск',      starts: 4680,  streams: 2530,  listeners: 1720,  hours: 900,  avgListening: 52.8, completion: 33.90 },
+      { rank: 6,  city: 'Казань',           starts: 3840,  streams: 2080,  listeners: 1410,  hours: 740,  avgListening: 52.1, completion: 33.20 },
+      { rank: 7,  city: 'Нижний Новгород',  starts: 3210,  streams: 1740,  listeners: 1180,  hours: 620,  avgListening: 51.5, completion: 32.60 },
+      { rank: 8,  city: 'Ростов-на-Дону',   starts: 2840,  streams: 1540,  listeners: 1040,  hours: 550,  avgListening: 50.9, completion: 32.00 },
+      { rank: 9,  city: 'Уфа',              starts: 2380,  streams: 1290,  listeners: 870,   hours: 460,  avgListening: 50.3, completion: 31.40 },
+      { rank: 10, city: 'Пермь',            starts: 2140,  streams: 1160,  listeners: 780,   hours: 410,  avgListening: 49.8, completion: 30.90 },
+    ],
+  },
 
   episodes: [
     { guid: 'abc6d13a', title: 'Я уже не могу! Учимся правильно отдыхать',                              publishDate: '2024-12-05' },
@@ -456,19 +550,32 @@ export const DEMO_PODCAST_2: Podcast = {
     { episodeTitle: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         platform: 'vk', date: '23.12.2025', plays: 2353 },
     { episodeTitle: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      platform: 'vk', date: '11.02.2026', plays: 1508 },
     { episodeTitle: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', platform: 'vk', date: '25.02.2026', plays: 1082 },
+    // YouTube — итого ~39 400
+    { episodeTitle: 'Я уже не могу! Учимся правильно отдыхать',                              platform: 'youtube', date: '2024-12-05', plays: 1842, likes: 124, comments: 19 },
+    { episodeTitle: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?',               platform: 'youtube', date: '2024-12-12', plays: 2134, likes: 143, comments: 22 },
+    { episodeTitle: 'Первый секс в 27! Как это ощущается?',                                  platform: 'youtube', date: '2024-12-20', plays: 4218, likes: 284, comments: 51 },
+    { episodeTitle: 'Ой, девочки: Как находить друзей во взрослом возрасте',                 platform: 'youtube', date: '2024-12-26', plays: 1923, likes: 129, comments: 20 },
+    { episodeTitle: 'Ой, девочки: Сколько у тебя было партнёров?',                           platform: 'youtube', date: '2025-01-23', plays: 3847, likes: 259, comments: 46 },
+    { episodeTitle: 'Мы изменились! О переменах и почему больше не хотим быть теми же',      platform: 'youtube', date: '2025-06-04', plays: 2041, likes: 137, comments: 21 },
+    { episodeTitle: 'Я думала, что не смогу иметь детей! Одна из ведущих успела',            platform: 'youtube', date: '2025-06-11', plays: 6384, likes: 431, comments: 78 },
+    { episodeTitle: 'Куда уходят деньги? Про финансовую грамотность',                        platform: 'youtube', date: '2025-06-24', plays: 2193, likes: 148, comments: 23 },
+    { episodeTitle: 'Сплетни — зло или добро? Крысиные чатики и селективность',             platform: 'youtube', date: '2025-07-01', plays: 1893, likes: 127, comments: 19 },
+    { episodeTitle: 'Он зарабатывает меньше: что делать и почему об этом стыдно',            platform: 'youtube', date: '2025-11-21', plays: 3847, likes: 259, comments: 47 },
+    { episodeTitle: 'Я хочу купить квартиру! Полезные вопросы перед покупкой',               platform: 'youtube', date: '2025-11-26', plays: 2431, likes: 164, comments: 25 },
+    { episodeTitle: 'Все обещали успех к 30... Ну и где? Как измеряется успех?',             platform: 'youtube', date: '2025-12-03', plays: 2847, likes: 192, comments: 31 },
+    { episodeTitle: 'Улучшение внешности после 25: подтяжка лица, увеличение груди',         platform: 'youtube', date: '2025-12-23', plays: 1931, likes: 130, comments: 20 },
+    { episodeTitle: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте',      platform: 'youtube', date: '2026-02-11', plays: 1394, likes:  94, comments: 14 },
+    { episodeTitle: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', platform: 'youtube', date: '2026-02-25', plays:  475, likes:  32, comments:  5 },
   ],
 
   // normalized: newest first (index 0 = ep 15 newest, index 14 = ep 1 oldest)
-  // completionRate: oldest (ep1, i=0) = 52, newest (ep15, i=14) = 68
-  // For the normalized array (newest first), ep index from end = 14 down to 0
-  // ep_order_from_oldest[0..14]: completionRate = 52 + round(i * 16/14)
-  // ep15 (newest, i=14): 52 + 16 = 68; ep1 (oldest, i=0): 52
   normalized: [
     {
       id: 'ee0fec38', title: 'Стыдные вопросы про заморозку яйцеклеток: разговор с репродуктологом', publishDate: '2026-02-25',
-      plays: { mave: 1247, yandex: 5138, spotify: 831, vk: 1082, total: 8298 },
+      plays: { mave: 1247, yandex: 5138, spotify: 831, vk: 1082, youtube: 475, total: 8773 },
       spotifyStreams: 748, spotifyAudience: 640,
       yandexStarts: 5138, yandexListeners: 3751, yandexHours: 216, yandexCompletionRate: 68,
+      youtubeViews: 475, youtubeLikes: 32, youtubeComments: 5,
       timeline: [
         { date: '2026-02-25', plays: 748  },
         { date: '2026-03-25', plays: 374  },
@@ -477,9 +584,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'a5e4a9ab', title: 'Он старше на 10 лет! Как строить отношения с разницей в возрасте', publishDate: '2026-02-11',
-      plays: { mave: 1738, yandex: 7163, spotify: 1159, vk: 1508, total: 11568 },
+      plays: { mave: 1738, yandex: 7163, spotify: 1159, vk: 1508, youtube: 1394, total: 12962 },
       spotifyStreams: 1043, spotifyAudience: 893,
       yandexStarts: 7163, yandexListeners: 5229, yandexHours: 301, yandexCompletionRate: 67,
+      youtubeViews: 1394, youtubeLikes: 94, youtubeComments: 14,
       timeline: [
         { date: '2026-02-11', plays: 1043 },
         { date: '2026-03-11', plays: 521  },
@@ -488,9 +596,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'e264f28e', title: 'Улучшение внешности после 25: подтяжка лица, увеличение груди', publishDate: '2025-12-23',
-      plays: { mave: 2712, yandex: 11174, spotify: 1808, vk: 2353, total: 18047 },
+      plays: { mave: 2712, yandex: 11174, spotify: 1808, vk: 2353, youtube: 1931, total: 19978 },
       spotifyStreams: 1627, spotifyAudience: 1392,
       yandexStarts: 11174, yandexListeners: 8157, yandexHours: 469, yandexCompletionRate: 66,
+      youtubeViews: 1931, youtubeLikes: 130, youtubeComments: 20,
       timeline: [
         { date: '2025-12-23', plays: 1627 },
         { date: '2026-01-23', plays: 814  },
@@ -499,9 +608,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: '1d62572d', title: 'Все обещали успех к 30... Ну и где? Как измеряется успех?', publishDate: '2025-12-03',
-      plays: { mave: 2184, yandex: 9001, spotify: 1456, vk: 1895, total: 14536 },
+      plays: { mave: 2184, yandex: 9001, spotify: 1456, vk: 1895, youtube: 2847, total: 17383 },
       spotifyStreams: 1310, spotifyAudience: 1121,
       yandexStarts: 9001, yandexListeners: 6571, yandexHours: 378, yandexCompletionRate: 65,
+      youtubeViews: 2847, youtubeLikes: 192, youtubeComments: 31,
       timeline: [
         { date: '2025-12-03', plays: 1310 },
         { date: '2026-01-03', plays: 655  },
@@ -510,9 +620,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'df64e508', title: 'Я хочу купить квартиру! Полезные вопросы перед покупкой', publishDate: '2025-11-26',
-      plays: { mave: 2431, yandex: 10014, spotify: 1620, vk: 2108, total: 16173 },
+      plays: { mave: 2431, yandex: 10014, spotify: 1620, vk: 2108, youtube: 2431, total: 18604 },
       spotifyStreams: 1458, spotifyAudience: 1247,
       yandexStarts: 10014, yandexListeners: 7310, yandexHours: 421, yandexCompletionRate: 64,
+      youtubeViews: 2431, youtubeLikes: 164, youtubeComments: 25,
       timeline: [
         { date: '2025-11-26', plays: 1459 },
         { date: '2025-12-26', plays: 729  },
@@ -521,9 +632,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'e03b028c', title: 'Он зарабатывает меньше: что делать и почему об этом стыдно', publishDate: '2025-11-21',
-      plays: { mave: 2847, yandex: 11729, spotify: 1897, vk: 2469, total: 18942 },
+      plays: { mave: 2847, yandex: 11729, spotify: 1897, vk: 2469, youtube: 3847, total: 22789 },
       spotifyStreams: 1707, spotifyAudience: 1461,
       yandexStarts: 11729, yandexListeners: 8562, yandexHours: 493, yandexCompletionRate: 63,
+      youtubeViews: 3847, youtubeLikes: 259, youtubeComments: 47,
       timeline: [
         { date: '2025-11-21', plays: 1708 },
         { date: '2025-12-21', plays: 854  },
@@ -532,9 +644,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: '3d2167c1', title: 'Сплетни — зло или добро? Крысиные чатики и селективность', publishDate: '2025-07-01',
-      plays: { mave: 1893, yandex: 7797, spotify: 1262, vk: 1642, total: 12594 },
+      plays: { mave: 1893, yandex: 7797, spotify: 1262, vk: 1642, youtube: 1893, total: 14487 },
       spotifyStreams: 1136, spotifyAudience: 972,
       yandexStarts: 7797, yandexListeners: 5692, yandexHours: 327, yandexCompletionRate: 62,
+      youtubeViews: 1893, youtubeLikes: 127, youtubeComments: 19,
       timeline: [
         { date: '2025-07-01', plays: 1136 },
         { date: '2025-08-01', plays: 568  },
@@ -543,9 +656,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: '29d0de9e', title: 'Куда уходят деньги? Про финансовую грамотность', publishDate: '2025-06-24',
-      plays: { mave: 2193, yandex: 9035, spotify: 1461, vk: 1901, total: 14590 },
+      plays: { mave: 2193, yandex: 9035, spotify: 1461, vk: 1901, youtube: 2193, total: 16783 },
       spotifyStreams: 1315, spotifyAudience: 1125,
       yandexStarts: 9035, yandexListeners: 6596, yandexHours: 379, yandexCompletionRate: 61,
+      youtubeViews: 2193, youtubeLikes: 148, youtubeComments: 23,
       timeline: [
         { date: '2025-06-24', plays: 1316 },
         { date: '2025-07-24', plays: 658  },
@@ -554,9 +668,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'de4aac6a', title: 'Я думала, что не смогу иметь детей! Одна из ведущих успела', publishDate: '2025-06-11',
-      plays: { mave: 3284, yandex: 13528, spotify: 2189, vk: 2848, total: 21849 },
+      plays: { mave: 3284, yandex: 13528, spotify: 2189, vk: 2848, youtube: 6384, total: 28233 },
       spotifyStreams: 1970, spotifyAudience: 1686,
       yandexStarts: 13528, yandexListeners: 9876, yandexHours: 568, yandexCompletionRate: 60,
+      youtubeViews: 6384, youtubeLikes: 431, youtubeComments: 78,
       timeline: [
         { date: '2025-06-11', plays: 1970 },
         { date: '2025-07-11', plays: 985  },
@@ -565,9 +680,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: '0de742dc', title: 'Мы изменились! О переменах и почему больше не хотим быть теми же', publishDate: '2025-06-04',
-      plays: { mave: 2047, yandex: 8437, spotify: 1365, vk: 1776, total: 13625 },
+      plays: { mave: 2047, yandex: 8437, spotify: 1365, vk: 1776, youtube: 2041, total: 15666 },
       spotifyStreams: 1229, spotifyAudience: 1051,
       yandexStarts: 8437, yandexListeners: 6159, yandexHours: 354, yandexCompletionRate: 59,
+      youtubeViews: 2041, youtubeLikes: 137, youtubeComments: 21,
       timeline: [
         { date: '2025-06-04', plays: 1228 },
         { date: '2025-07-04', plays: 614  },
@@ -576,9 +692,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'cf18fbaf', title: 'Ой, девочки: Сколько у тебя было партнёров?', publishDate: '2025-01-23',
-      plays: { mave: 1687, yandex: 6950, spotify: 1124, vk: 1463, total: 11224 },
+      plays: { mave: 1687, yandex: 6950, spotify: 1124, vk: 1463, youtube: 3847, total: 15071 },
       spotifyStreams: 1012, spotifyAudience: 866,
       yandexStarts: 6950, yandexListeners: 5074, yandexHours: 292, yandexCompletionRate: 57,
+      youtubeViews: 3847, youtubeLikes: 259, youtubeComments: 46,
       timeline: [
         { date: '2025-01-23', plays: 1012 },
         { date: '2025-02-23', plays: 506  },
@@ -587,9 +704,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: '985210b2', title: 'Ой, девочки: Как находить друзей во взрослом возрасте', publishDate: '2024-12-26',
-      plays: { mave: 1924, yandex: 7928, spotify: 1282, vk: 1669, total: 12803 },
+      plays: { mave: 1924, yandex: 7928, spotify: 1282, vk: 1669, youtube: 1923, total: 14726 },
       spotifyStreams: 1154, spotifyAudience: 987,
       yandexStarts: 7928, yandexListeners: 5788, yandexHours: 333, yandexCompletionRate: 56,
+      youtubeViews: 1923, youtubeLikes: 129, youtubeComments: 20,
       timeline: [
         { date: '2024-12-26', plays: 1154 },
         { date: '2025-01-26', plays: 577  },
@@ -598,9 +716,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: '048b8124', title: 'Первый секс в 27! Как это ощущается?', publishDate: '2024-12-20',
-      plays: { mave: 2513, yandex: 10357, spotify: 1676, vk: 2181, total: 16727 },
+      plays: { mave: 2513, yandex: 10357, spotify: 1676, vk: 2181, youtube: 4218, total: 20945 },
       spotifyStreams: 1508, spotifyAudience: 1291,
       yandexStarts: 10357, yandexListeners: 7561, yandexHours: 435, yandexCompletionRate: 55,
+      youtubeViews: 4218, youtubeLikes: 284, youtubeComments: 51,
       timeline: [
         { date: '2024-12-20', plays: 1508 },
         { date: '2025-01-20', plays: 754  },
@@ -609,9 +728,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'bf02efde', title: 'Ой, девочки: ни карьеры, ни детей — я всё делаю не так?', publishDate: '2024-12-12',
-      plays: { mave: 2134, yandex: 8794, spotify: 1423, vk: 1852, total: 14203 },
+      plays: { mave: 2134, yandex: 8794, spotify: 1423, vk: 1852, youtube: 2134, total: 16337 },
       spotifyStreams: 1281, spotifyAudience: 1096,
       yandexStarts: 8794, yandexListeners: 6420, yandexHours: 369, yandexCompletionRate: 53,
+      youtubeViews: 2134, youtubeLikes: 143, youtubeComments: 22,
       timeline: [
         { date: '2024-12-12', plays: 1280 },
         { date: '2025-01-12', plays: 640  },
@@ -620,9 +740,10 @@ export const DEMO_PODCAST_2: Podcast = {
     },
     {
       id: 'abc6d13a', title: 'Я уже не могу! Учимся правильно отдыхать', publishDate: '2024-12-05',
-      plays: { mave: 1847, yandex: 7612, spotify: 1231, vk: 1604, total: 12294 },
+      plays: { mave: 1847, yandex: 7612, spotify: 1231, vk: 1604, youtube: 1842, total: 14136 },
       spotifyStreams: 1108, spotifyAudience: 948,
       yandexStarts: 7612, yandexListeners: 5557, yandexHours: 320, yandexCompletionRate: 52,
+      youtubeViews: 1842, youtubeLikes: 124, youtubeComments: 19,
       timeline: [
         { date: '2024-12-05', plays: 1108 },
         { date: '2025-01-05', plays: 554  },
@@ -646,11 +767,37 @@ export const DEMO_PODCAST_3: Podcast = {
   createdAt: '2025-12-29T12:00:00Z',
 
   uploadedPlatforms: [
-    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
-    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
-    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
-    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z' },
+    { platform: 'mave',    fileName: 'mave.csv',    recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z', periodStart: '2024-10-07', periodEnd: '2025-12-29' },
+    { platform: 'yandex',  fileName: 'yandex.csv',  recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z', periodStart: '2024-10-07', periodEnd: '2025-12-29' },
+    { platform: 'spotify', fileName: 'spotify.csv', recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z', periodStart: '2024-10-07', periodEnd: '2025-12-29' },
+    { platform: 'vk',      fileName: 'vk.csv',      recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z', periodStart: '2024-10-07', periodEnd: '2025-12-29' },
+    { platform: 'youtube', fileName: 'YouTube API', recordsCount: 15, uploadedAt: '2025-12-29T12:00:00Z', periodStart: '2024-10-07', periodEnd: '2025-12-29' },
   ],
+
+  yandexAudience: {
+    gender: { female: 74180, male: 24630, unknown: 9420 },
+    age: [
+      { range: '0-17',         count: 620 },
+      { range: '18-24',        count: 16840 },
+      { range: '25-34',        count: 54320 },
+      { range: '35-44',        count: 28140 },
+      { range: '45-54',        count: 7480 },
+      { range: '55-99',        count: 1920 },
+      { range: 'Не определен', count: 6910 },
+    ],
+    cities: [
+      { rank: 1,  city: 'Москва',           starts: 49280, streams: 26680, listeners: 18240, hours: 9560, avgListening: 60.1, completion: 41.30 },
+      { rank: 2,  city: 'Санкт-Петербург',  starts: 22140, streams: 11980, listeners: 8180,  hours: 4280, avgListening: 58.4, completion: 39.60 },
+      { rank: 3,  city: 'Екатеринбург',     starts: 7840,  streams: 4240,  listeners: 2890,  hours: 1510, avgListening: 56.2, completion: 37.40 },
+      { rank: 4,  city: 'Новосибирск',      starts: 5960,  streams: 3220,  listeners: 2200,  hours: 1150, avgListening: 55.1, completion: 36.30 },
+      { rank: 5,  city: 'Краснодар',        starts: 4820,  streams: 2610,  listeners: 1780,  hours: 930,  avgListening: 54.3, completion: 35.50 },
+      { rank: 6,  city: 'Казань',           starts: 4140,  streams: 2240,  listeners: 1530,  hours: 800,  avgListening: 53.6, completion: 34.80 },
+      { rank: 7,  city: 'Нижний Новгород',  starts: 3560,  streams: 1930,  listeners: 1310,  hours: 690,  avgListening: 52.9, completion: 34.10 },
+      { rank: 8,  city: 'Ростов-на-Дону',   starts: 3020,  streams: 1640,  listeners: 1110,  hours: 580,  avgListening: 52.2, completion: 33.40 },
+      { rank: 9,  city: 'Самара',           starts: 2680,  streams: 1450,  listeners: 980,   hours: 510,  avgListening: 51.5, completion: 32.70 },
+      { rank: 10, city: 'Уфа',              starts: 2340,  streams: 1270,  listeners: 860,   hours: 450,  avgListening: 50.8, completion: 32.00 },
+    ],
+  },
 
   episodes: [
     { guid: '71272de0', title: 'Оземпик — волшебная таблетка для похудения?',                 publishDate: '2025-08-25' },
@@ -735,17 +882,32 @@ export const DEMO_PODCAST_3: Podcast = {
     { episodeTitle: 'В чём феномен корейской косметики?',                          platform: 'vk', date: '24.11.2025', plays: 1908 },
     { episodeTitle: 'Кризис среднего возраста отменяется? Антон Комолов',          platform: 'vk', date: '15.12.2025', plays: 1201 },
     { episodeTitle: 'Начинаем новую жизнь с января!',                              platform: 'vk', date: '29.12.2025', plays:  708 },
+    // YouTube — итого ~38 700
+    { episodeTitle: 'Оземпик — волшебная таблетка для похудения?',                   platform: 'youtube', date: '2025-08-25', plays: 3412, likes: 229, comments: 41 },
+    { episodeTitle: 'Карьерный кризис после 30: когда пора что-то менять',           platform: 'youtube', date: '2025-09-01', plays: 2847, likes: 192, comments: 34 },
+    { episodeTitle: 'Где найти своих людей, когда стал взрослым?',                   platform: 'youtube', date: '2025-09-08', plays: 2513, likes: 169, comments: 30 },
+    { episodeTitle: 'Почему нам так страшно стареть?',                               platform: 'youtube', date: '2025-09-15', plays: 3724, likes: 251, comments: 45 },
+    { episodeTitle: 'О чём говорят мужчины, или 30 — это новые 20',                 platform: 'youtube', date: '2025-09-22', plays: 2284, likes: 154, comments: 27 },
+    { episodeTitle: 'Физические нагрузки после 30: от зарядок до силовых',           platform: 'youtube', date: '2025-09-29', plays: 2847, likes: 192, comments: 34 },
+    { episodeTitle: 'Как мой подкаст, я и индустрия изменились за 5 лет',           platform: 'youtube', date: '2025-10-06', plays: 4897, likes: 330, comments: 59 },
+    { episodeTitle: 'Рак молочной железы: факторы риска и методы диагностики',      platform: 'youtube', date: '2025-10-13', plays: 3184, likes: 215, comments: 38 },
+    { episodeTitle: 'Как ухаживать за кожей в осенне-зимний период?',                platform: 'youtube', date: '2025-10-20', plays: 2187, likes: 147, comments: 26 },
+    { episodeTitle: 'Почему не стоит переживать на тему возраста? Василий Аккерман', platform: 'youtube', date: '2025-10-27', plays: 2413, likes: 163, comments: 29 },
+    { episodeTitle: 'Как в Испании изменилось наше отношение к возрасту и красоте',  platform: 'youtube', date: '2025-11-03', plays: 2071, likes: 140, comments: 25 },
+    { episodeTitle: 'Детокс организма: смузи, голодание и развенчание мифов',        platform: 'youtube', date: '2025-11-10', plays: 1847, likes: 125, comments: 22 },
+    { episodeTitle: 'В чём феномен корейской косметики?',                            platform: 'youtube', date: '2025-11-24', plays: 2284, likes: 154, comments: 27 },
+    { episodeTitle: 'Кризис среднего возраста отменяется? Антон Комолов',            platform: 'youtube', date: '2025-12-15', plays: 1438, likes:  97, comments: 17 },
+    { episodeTitle: 'Начинаем новую жизнь с января!',                                platform: 'youtube', date: '2025-12-29', plays:  751, likes:  51, comments:  9 },
   ],
 
   // normalized: newest first
-  // completionRate: oldest (ep1, i=0) = 58, newest (ep15, i=14) = 74
-  // For normalized array (newest first), ep_oldest_index=14 (completionRate=58), ep_newest_index=0 (completionRate=74)
   normalized: [
     {
       id: '098e7731', title: 'Начинаем новую жизнь с января!', publishDate: '2025-12-29',
-      plays: { mave: 847, yandex: 4931, spotify: 567, vk: 708, total: 7053 },
+      plays: { mave: 847, yandex: 4931, spotify: 567, vk: 708, youtube: 751, total: 7804 },
       spotifyStreams: 510, spotifyAudience: 437,
       yandexStarts: 4931, yandexListeners: 3600, yandexHours: 207, yandexCompletionRate: 74,
+      youtubeViews: 751, youtubeLikes: 51, youtubeComments: 9,
       timeline: [
         { date: '2025-12-29', plays: 508  },
         { date: '2026-01-29', plays: 254  },
@@ -754,9 +916,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '4d4faef4', title: 'Кризис среднего возраста отменяется? Антон Комолов', publishDate: '2025-12-15',
-      plays: { mave: 1438, yandex: 8372, spotify: 962, vk: 1201, total: 11973 },
+      plays: { mave: 1438, yandex: 8372, spotify: 962, vk: 1201, youtube: 1438, total: 13411 },
       spotifyStreams: 866, spotifyAudience: 741,
       yandexStarts: 8372, yandexListeners: 6112, yandexHours: 352, yandexCompletionRate: 73,
+      youtubeViews: 1438, youtubeLikes: 97, youtubeComments: 17,
       timeline: [
         { date: '2025-12-15', plays: 863  },
         { date: '2026-01-15', plays: 431  },
@@ -765,9 +928,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'f5ba5662', title: 'В чём феномен корейской косметики?', publishDate: '2025-11-24',
-      plays: { mave: 2284, yandex: 13296, spotify: 1529, vk: 1908, total: 19017 },
+      plays: { mave: 2284, yandex: 13296, spotify: 1529, vk: 1908, youtube: 2284, total: 21301 },
       spotifyStreams: 1376, spotifyAudience: 1177,
       yandexStarts: 13296, yandexListeners: 9706, yandexHours: 558, yandexCompletionRate: 72,
+      youtubeViews: 2284, youtubeLikes: 154, youtubeComments: 27,
       timeline: [
         { date: '2025-11-24', plays: 1370 },
         { date: '2025-12-24', plays: 685  },
@@ -776,9 +940,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '0d252d73', title: 'Детокс организма: смузи, голодание и развенчание мифов', publishDate: '2025-11-10',
-      plays: { mave: 1847, yandex: 10752, spotify: 1236, vk: 1542, total: 15377 },
+      plays: { mave: 1847, yandex: 10752, spotify: 1236, vk: 1542, youtube: 1847, total: 17224 },
       spotifyStreams: 1112, spotifyAudience: 952,
       yandexStarts: 10752, yandexListeners: 7849, yandexHours: 452, yandexCompletionRate: 71,
+      youtubeViews: 1847, youtubeLikes: 125, youtubeComments: 22,
       timeline: [
         { date: '2025-11-10', plays: 1108 },
         { date: '2025-12-10', plays: 554  },
@@ -787,9 +952,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'ad3f59a9', title: 'Как в Испании изменилось наше отношение к возрасту и красоте', publishDate: '2025-11-03',
-      plays: { mave: 2071, yandex: 12054, spotify: 1386, vk: 1729, total: 17240 },
+      plays: { mave: 2071, yandex: 12054, spotify: 1386, vk: 1729, youtube: 2071, total: 19311 },
       spotifyStreams: 1247, spotifyAudience: 1067,
       yandexStarts: 12054, yandexListeners: 8799, yandexHours: 506, yandexCompletionRate: 70,
+      youtubeViews: 2071, youtubeLikes: 140, youtubeComments: 25,
       timeline: [
         { date: '2025-11-03', plays: 1243 },
         { date: '2025-12-03', plays: 621  },
@@ -798,9 +964,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'e483af35', title: 'Почему не стоит переживать на тему возраста? Василий Аккерман', publishDate: '2025-10-27',
-      plays: { mave: 2413, yandex: 14043, spotify: 1614, vk: 2013, total: 20083 },
+      plays: { mave: 2413, yandex: 14043, spotify: 1614, vk: 2013, youtube: 2413, total: 22496 },
       spotifyStreams: 1453, spotifyAudience: 1243,
       yandexStarts: 14043, yandexListeners: 10251, yandexHours: 590, yandexCompletionRate: 69,
+      youtubeViews: 2413, youtubeLikes: 163, youtubeComments: 29,
       timeline: [
         { date: '2025-10-27', plays: 1448 },
         { date: '2025-11-27', plays: 724  },
@@ -809,9 +976,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '44528358', title: 'Как ухаживать за кожей в осенне-зимний период?', publishDate: '2025-10-20',
-      plays: { mave: 2187, yandex: 12731, spotify: 1464, vk: 1826, total: 18208 },
+      plays: { mave: 2187, yandex: 12731, spotify: 1464, vk: 1826, youtube: 2187, total: 20395 },
       spotifyStreams: 1318, spotifyAudience: 1127,
       yandexStarts: 12731, yandexListeners: 9294, yandexHours: 535, yandexCompletionRate: 68,
+      youtubeViews: 2187, youtubeLikes: 147, youtubeComments: 26,
       timeline: [
         { date: '2025-10-20', plays: 1312 },
         { date: '2025-11-20', plays: 656  },
@@ -820,9 +988,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '4701c161', title: 'Рак молочной железы: факторы риска и методы диагностики', publishDate: '2025-10-13',
-      plays: { mave: 2634, yandex: 15329, spotify: 1762, vk: 2198, total: 21923 },
+      plays: { mave: 2634, yandex: 15329, spotify: 1762, vk: 2198, youtube: 3184, total: 25107 },
       spotifyStreams: 1586, spotifyAudience: 1357,
       yandexStarts: 15329, yandexListeners: 11190, yandexHours: 644, yandexCompletionRate: 67,
+      youtubeViews: 3184, youtubeLikes: 215, youtubeComments: 38,
       timeline: [
         { date: '2025-10-13', plays: 1580 },
         { date: '2025-11-13', plays: 790  },
@@ -831,9 +1000,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'ca59a7d9', title: 'Как мой подкаст, я и индустрия изменились за 5 лет', publishDate: '2025-10-06',
-      plays: { mave: 4193, yandex: 24397, spotify: 2806, vk: 3501, total: 34897 },
+      plays: { mave: 4193, yandex: 24397, spotify: 2806, vk: 3501, youtube: 4897, total: 39794 },
       spotifyStreams: 2525, spotifyAudience: 2161,
       yandexStarts: 24397, yandexListeners: 17810, yandexHours: 1025, yandexCompletionRate: 66,
+      youtubeViews: 4897, youtubeLikes: 330, youtubeComments: 59,
       timeline: [
         { date: '2025-10-06', plays: 2516 },
         { date: '2025-11-06', plays: 1258 },
@@ -842,9 +1012,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '2e8fdb57', title: 'Физические нагрузки после 30: от зарядок до силовых', publishDate: '2025-09-29',
-      plays: { mave: 2847, yandex: 16572, spotify: 1905, vk: 2378, total: 23702 },
+      plays: { mave: 2847, yandex: 16572, spotify: 1905, vk: 2378, youtube: 2847, total: 26549 },
       spotifyStreams: 1715, spotifyAudience: 1467,
       yandexStarts: 16572, yandexListeners: 12097, yandexHours: 696, yandexCompletionRate: 65,
+      youtubeViews: 2847, youtubeLikes: 192, youtubeComments: 34,
       timeline: [
         { date: '2025-09-29', plays: 1708 },
         { date: '2025-10-29', plays: 854  },
@@ -853,9 +1024,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'f3d22ca6', title: 'О чём говорят мужчины, или 30 — это новые 20', publishDate: '2025-09-22',
-      plays: { mave: 2284, yandex: 13292, spotify: 1528, vk: 1906, total: 19010 },
+      plays: { mave: 2284, yandex: 13292, spotify: 1528, vk: 1906, youtube: 2284, total: 21294 },
       spotifyStreams: 1375, spotifyAudience: 1177,
       yandexStarts: 13292, yandexListeners: 9703, yandexHours: 558, yandexCompletionRate: 64,
+      youtubeViews: 2284, youtubeLikes: 154, youtubeComments: 27,
       timeline: [
         { date: '2025-09-22', plays: 1370 },
         { date: '2025-10-22', plays: 685  },
@@ -864,9 +1036,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'f7cb022c', title: 'Почему нам так страшно стареть?', publishDate: '2025-09-15',
-      plays: { mave: 3724, yandex: 21673, spotify: 2491, vk: 3108, total: 30996 },
+      plays: { mave: 3724, yandex: 21673, spotify: 2491, vk: 3108, youtube: 3724, total: 34720 },
       spotifyStreams: 2242, spotifyAudience: 1918,
       yandexStarts: 21673, yandexListeners: 15821, yandexHours: 910, yandexCompletionRate: 63,
+      youtubeViews: 3724, youtubeLikes: 251, youtubeComments: 45,
       timeline: [
         { date: '2025-09-15', plays: 2234 },
         { date: '2025-10-15', plays: 1117 },
@@ -875,9 +1048,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '42acd06e', title: 'Где найти своих людей, когда стал взрослым?', publishDate: '2025-09-08',
-      plays: { mave: 2513, yandex: 14629, spotify: 1682, vk: 2098, total: 20922 },
+      plays: { mave: 2513, yandex: 14629, spotify: 1682, vk: 2098, youtube: 2513, total: 23435 },
       spotifyStreams: 1514, spotifyAudience: 1295,
       yandexStarts: 14629, yandexListeners: 10679, yandexHours: 615, yandexCompletionRate: 61,
+      youtubeViews: 2513, youtubeLikes: 169, youtubeComments: 30,
       timeline: [
         { date: '2025-09-08', plays: 1508 },
         { date: '2025-10-08', plays: 754  },
@@ -886,9 +1060,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: 'a859d9cc', title: 'Карьерный кризис после 30: когда пора что-то менять', publishDate: '2025-09-01',
-      plays: { mave: 2847, yandex: 16564, spotify: 1904, vk: 2376, total: 23691 },
+      plays: { mave: 2847, yandex: 16564, spotify: 1904, vk: 2376, youtube: 2847, total: 26538 },
       spotifyStreams: 1714, spotifyAudience: 1466,
       yandexStarts: 16564, yandexListeners: 12092, yandexHours: 696, yandexCompletionRate: 60,
+      youtubeViews: 2847, youtubeLikes: 192, youtubeComments: 34,
       timeline: [
         { date: '2025-09-01', plays: 1708 },
         { date: '2025-10-01', plays: 854  },
@@ -897,9 +1072,10 @@ export const DEMO_PODCAST_3: Podcast = {
     },
     {
       id: '71272de0', title: 'Оземпик — волшебная таблетка для похудения?', publishDate: '2025-08-25',
-      plays: { mave: 3412, yandex: 19847, spotify: 2284, vk: 2847, total: 28390 },
+      plays: { mave: 3412, yandex: 19847, spotify: 2284, vk: 2847, youtube: 3412, total: 31802 },
       spotifyStreams: 2056, spotifyAudience: 1759,
       yandexStarts: 19847, yandexListeners: 14489, yandexHours: 834, yandexCompletionRate: 58,
+      youtubeViews: 3412, youtubeLikes: 229, youtubeComments: 41,
       timeline: [
         { date: '2025-08-25', plays: 2047 },
         { date: '2025-09-25', plays: 1024 },

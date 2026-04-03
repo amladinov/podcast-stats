@@ -9,79 +9,220 @@ function normalize(str: string): string {
     .trim()
 }
 
-function similarity(a: string, b: string): number {
-  const na = normalize(a)
-  const nb = normalize(b)
-  if (na === nb) return 1
+type IndexedEpisode = {
+  episode: RSSEpisode
+  normalizedTitle: string
+  tokens: Set<string>
+  publishTimestamp: number
+  order: number
+}
+
+type EpisodeIndex = {
+  exactTitle: Map<string, IndexedEpisode[]>
+  publishDate: Map<string, IndexedEpisode[]>
+  tokenIndex: Map<string, IndexedEpisode[]>
+  ordered: IndexedEpisode[]
+}
+
+function getTokens(normalized: string): Set<string> {
+  return new Set(normalized.split(' ').filter(word => word.length > 3))
+}
+
+function similarity(
+  queryNormalized: string,
+  queryTokens: Set<string>,
+  candidate: IndexedEpisode
+): number {
+  if (queryNormalized === candidate.normalizedTitle) return 1
 
   // Check if one contains the other (partial match)
-  if (na.includes(nb) || nb.includes(na)) return 0.85
+  if (
+    queryNormalized.includes(candidate.normalizedTitle) ||
+    candidate.normalizedTitle.includes(queryNormalized)
+  ) {
+    return 0.85
+  }
 
-  // Word overlap
-  const wordsA = new Set(na.split(' ').filter(w => w.length > 3))
-  const wordsB = new Set(nb.split(' ').filter(w => w.length > 3))
-  if (wordsA.size === 0 || wordsB.size === 0) return 0
+  if (queryTokens.size === 0 || candidate.tokens.size === 0) return 0
 
   let overlap = 0
-  for (const w of wordsA) {
-    if (wordsB.has(w)) overlap++
+  for (const token of queryTokens) {
+    if (candidate.tokens.has(token)) overlap++
   }
-  return overlap / Math.max(wordsA.size, wordsB.size)
+
+  return overlap / Math.max(queryTokens.size, candidate.tokens.size)
 }
 
-function findEpisodeByTitle(episodes: RSSEpisode[], title: string): RSSEpisode | null {
-  let best: RSSEpisode | null = null
-  let bestScore = 0.6 // minimum threshold
+function toTimestamp(isoDate: string): number {
+  const timestamp = new Date(isoDate).getTime()
+  return Number.isNaN(timestamp) ? NaN : timestamp
+}
 
-  for (const ep of episodes) {
-    const score = similarity(ep.title, title)
-    if (score > bestScore) {
-      bestScore = score
-      best = ep
+function buildEpisodeIndex(episodes: RSSEpisode[]): EpisodeIndex {
+  const exactTitle = new Map<string, IndexedEpisode[]>()
+  const publishDate = new Map<string, IndexedEpisode[]>()
+  const tokenIndex = new Map<string, IndexedEpisode[]>()
+  const ordered = episodes.map((episode, order) => {
+    const normalizedTitle = normalize(episode.title)
+    const tokens = getTokens(normalizedTitle)
+    const indexed: IndexedEpisode = {
+      episode,
+      normalizedTitle,
+      tokens,
+      publishTimestamp: toTimestamp(episode.publishDate),
+      order,
+    }
+
+    const byTitle = exactTitle.get(normalizedTitle)
+    if (byTitle) byTitle.push(indexed)
+    else exactTitle.set(normalizedTitle, [indexed])
+
+    const byDate = publishDate.get(episode.publishDate)
+    if (byDate) byDate.push(indexed)
+    else publishDate.set(episode.publishDate, [indexed])
+
+    for (const token of tokens) {
+      const bucket = tokenIndex.get(token)
+      if (bucket) bucket.push(indexed)
+      else tokenIndex.set(token, [indexed])
+    }
+
+    return indexed
+  })
+
+  return { exactTitle, publishDate, tokenIndex, ordered }
+}
+
+function chooseBestCandidate(
+  candidates: IndexedEpisode[],
+  targetTimestamp?: number
+): IndexedEpisode | null {
+  if (candidates.length === 0) return null
+  if (targetTimestamp === undefined || Number.isNaN(targetTimestamp)) return candidates[0]
+
+  const exact = candidates.find(candidate => candidate.publishTimestamp === targetTimestamp)
+  if (exact) return exact
+
+  let best: IndexedEpisode | null = null
+  let minDiff = Infinity
+
+  for (const candidate of candidates) {
+    if (Number.isNaN(candidate.publishTimestamp)) continue
+    const diff = Math.abs(candidate.publishTimestamp - targetTimestamp)
+    const days = diff / (1000 * 60 * 60 * 24)
+    if (days <= 2 && diff < minDiff) {
+      minDiff = diff
+      best = candidate
     }
   }
-  return best
+
+  return best ?? candidates[0]
 }
 
-function findEpisodeByDate(episodes: RSSEpisode[], date: string): RSSEpisode | null {
+function findEpisodeByTitle(
+  index: EpisodeIndex,
+  title: string,
+  isoDate?: string
+): RSSEpisode | null {
+  const normalizedTitle = normalize(title)
+  if (!normalizedTitle) return null
+
+  const targetTimestamp = isoDate ? toTimestamp(isoDate) : undefined
+  const exactMatches = index.exactTitle.get(normalizedTitle)
+  if (exactMatches?.length) {
+    return chooseBestCandidate(exactMatches, targetTimestamp)?.episode ?? null
+  }
+
+  const queryTokens = getTokens(normalizedTitle)
+  const narrowed = new Map<string, IndexedEpisode>()
+
+  for (const token of queryTokens) {
+    for (const candidate of index.tokenIndex.get(token) ?? []) {
+      narrowed.set(candidate.episode.guid, candidate)
+    }
+  }
+
+  const candidatePool = narrowed.size > 0 ? Array.from(narrowed.values()) : index.ordered
+  let best: IndexedEpisode | null = null
+  let bestScore = 0.6 // minimum threshold
+
+  for (const candidate of candidatePool) {
+    const score = similarity(normalizedTitle, queryTokens, candidate)
+    if (score > bestScore) {
+      bestScore = score
+      best = candidate
+      continue
+    }
+
+    if (
+      best &&
+      score === bestScore &&
+      targetTimestamp !== undefined &&
+      !Number.isNaN(targetTimestamp)
+    ) {
+      const currentDiff = Number.isNaN(candidate.publishTimestamp)
+        ? Infinity
+        : Math.abs(candidate.publishTimestamp - targetTimestamp)
+      const bestDiff = Number.isNaN(best.publishTimestamp)
+        ? Infinity
+        : Math.abs(best.publishTimestamp - targetTimestamp)
+
+      if (currentDiff < bestDiff) {
+        best = candidate
+      }
+    }
+  }
+
+  return best?.episode ?? null
+}
+
+function findEpisodeByDate(index: EpisodeIndex, date: string): RSSEpisode | null {
   // date is DD.MM.YYYY — convert to YYYY-MM-DD
   const parts = date.split('.')
   if (parts.length !== 3) return null
   const iso = `${parts[2]}-${parts[1]}-${parts[0]}`
 
-  // Exact match first
-  const exact = episodes.find(ep => ep.publishDate === iso)
-  if (exact) return exact
+  return findEpisodeByISODate(index, iso)
+}
 
-  // Within ±2 days
-  const target = new Date(iso).getTime()
-  let closest: RSSEpisode | null = null
+function findEpisodeByISODate(index: EpisodeIndex, isoDate: string): RSSEpisode | null {
+  const exact = index.publishDate.get(isoDate)
+  if (exact?.length) return exact[0].episode
+
+  const target = toTimestamp(isoDate)
+  if (Number.isNaN(target)) return null
+
+  let closest: IndexedEpisode | null = null
   let minDiff = Infinity
 
-  for (const ep of episodes) {
-    const diff = Math.abs(new Date(ep.publishDate).getTime() - target)
+  for (const candidate of index.ordered) {
+    if (Number.isNaN(candidate.publishTimestamp)) continue
+    const diff = Math.abs(candidate.publishTimestamp - target)
     const days = diff / (1000 * 60 * 60 * 24)
     if (days <= 2 && diff < minDiff) {
       minDiff = diff
-      closest = ep
+      closest = candidate
     }
   }
-  return closest
+
+  return closest?.episode ?? null
 }
 
 export function normalizePodcastData(
   episodes: RSSEpisode[],
   plays: PlayRecord[]
 ): NormalizedEpisode[] {
+  const index = buildEpisodeIndex(episodes)
   // Build map keyed by episode guid
   const map = new Map<string, NormalizedEpisode>()
 
-  for (const ep of episodes) {
-    map.set(ep.guid, {
-      id: ep.guid,
-      title: ep.title,
-      publishDate: ep.publishDate,
-      plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, total: 0 },
+  for (const indexed of index.ordered) {
+    const { episode } = indexed
+    map.set(episode.guid, {
+      id: episode.guid,
+      title: episode.title,
+      publishDate: episode.publishDate,
+      plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, youtube: 0, total: 0 },
       timeline: [],
     })
   }
@@ -91,9 +232,15 @@ export function normalizePodcastData(
 
     if (record.platform === 'vk') {
       // VK has no title — match by date
-      episode = findEpisodeByDate(episodes, record.date)
+      episode = findEpisodeByDate(index, record.date)
+    } else if (record.platform === 'youtube') {
+      // YouTube: try title first, fallback to date ±2 days
+      episode = findEpisodeByTitle(index, record.episodeTitle, record.date)
+      if (!episode && record.date) {
+        episode = findEpisodeByISODate(index, record.date)
+      }
     } else {
-      episode = findEpisodeByTitle(episodes, record.episodeTitle)
+      episode = findEpisodeByTitle(index, record.episodeTitle)
     }
 
     if (!episode) continue
@@ -116,13 +263,18 @@ export function normalizePodcastData(
       norm.spotifyAudience = record.listeners
     } else if (record.platform === 'vk') {
       norm.plays.vk += record.plays
+    } else if (record.platform === 'youtube') {
+      norm.plays.youtube = record.plays
+      norm.youtubeViews = record.plays
+      norm.youtubeLikes = record.likes
+      norm.youtubeComments = record.comments
     }
   }
 
   // Recalculate totals and sort timeline
   for (const norm of map.values()) {
     norm.plays.total =
-      norm.plays.mave + norm.plays.yandex + norm.plays.spotify + norm.plays.vk
+      norm.plays.mave + norm.plays.yandex + norm.plays.spotify + norm.plays.vk + norm.plays.youtube
     norm.timeline.sort((a, b) => a.date.localeCompare(b.date))
   }
 

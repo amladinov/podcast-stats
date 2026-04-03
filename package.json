@@ -6,11 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:matcher": "tsc -p tsconfig.matcher-test.json && node --test .tmp/matcher-test/tests/matcher.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0",
-    "@xmldom/xmldom": "^0.8.11",
+    "@xmldom/xmldom": "^0.8.12",
     "next": "16.1.7",
     "papaparse": "^5.5.3",
     "react": "19.2.3",

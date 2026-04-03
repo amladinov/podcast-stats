@@ -1,0 +1,60 @@
+# Podcast Stats — агрегатор статистики подкастов
+
+## О проекте
+Веб-приложение для сбора статистики подкастов с разных платформ в единый дашборд. RSS + CSV-загрузка из Яндекс Музыки, Spotify, ВК, Mave. AI-инсайты через Codex.
+
+## Стек
+- **Next.js 16** (App Router) + React 19 + TypeScript
+- **Tailwind CSS 4**
+- **Zustand** (стейт, persist в localStorage)
+- **Recharts** (графики, D3-based)
+- **Anthropic Codex SDK** (haiku-4-5, для AI-инсайтов)
+- **PapaParse** (CSV) + @xmldom/xmldom (RSS)
+- **Деплой:** Vercel (проект `podcast-stats`)
+
+## Структура
+```
+app/
+  page.tsx                — главная (список подкастов, добавление)
+  [podcastId]/
+    setup/page.tsx        — мастер загрузки CSV по платформам
+    dashboard/page.tsx    — аналитический дашборд с графиками
+  compare/page.tsx        — сравнение подкастов
+  api/
+    rss/route.ts          — парсинг RSS-ленты
+    ai/route.ts           — генерация инсайтов через Codex
+    youtube/
+      auth/route.ts       — YouTube OAuth redirect
+      callback/route.ts   — OAuth callback, обмен code на token
+      videos/route.ts     — получение видео с канала через API
+
+lib/
+  store.ts                — Zustand (добавление подкастов, загрузка прослушиваний)
+  demoData.ts             — демо-подкасты (Совет Директоров, Скоро 30, НЖО)
+  matcher.ts              — мэтчинг эпизодов, нормализация данных
+  parsers/
+    yandex.ts, spotify.ts, vk.ts, mave.ts — парсеры CSV для каждой платформы
+```
+
+## Ключевое
+- Данные хранятся в localStorage (нет БД)
+- Демо-режим с предзагруженными данными
+- AI-инсайты на русском (топ-5 эпизодов, аутлаеры, 4-5 рекомендаций)
+
+## Env-переменные (`.env.local`)
+- `ANTHROPIC_API_KEY` - Codex AI инсайты
+- `GOOGLE_CLIENT_ID` - YouTube OAuth 2.0
+- `GOOGLE_CLIENT_SECRET` - YouTube OAuth 2.0
+- `GOOGLE_REDIRECT_URI` - `http://localhost:3000/api/youtube/callback`
+
+## YouTube интеграция
+- OAuth 2.0 через Google (scope: `youtube.readonly`)
+- Тестовый режим (до 100 пользователей в Google Cloud Console)
+- Токен хранится в httpOnly cookie (5 мин TTL), не в localStorage
+- API роуты: `app/api/youtube/{auth,callback,videos}/route.ts`
+- Refresh token не сохраняется - каждый импорт = новый логин
+
+## Текущий статус
+- Основной функционал работает: RSS, загрузка CSV, YouTube OAuth, дашборд, сравнение, AI-инсайты
+- 5 платформ: Mave, Яндекс Музыка, Spotify, VK (CSV), YouTube (OAuth)
+

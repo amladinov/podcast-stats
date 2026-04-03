@@ -1,24 +1,29 @@
 'use client'
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import type { PlayRecord } from '@/types'
+import type { NormalizedEpisode, PlayRecord } from '@/types'
+import { getPlatformTotals } from '@/lib/podcastMetrics'
 
 const PLATFORMS = [
   { key: 'mave' as const, label: 'Mave', color: '#b150e2' },
   { key: 'yandex' as const, label: 'Яндекс', color: '#ff9f0a' },
   { key: 'spotify' as const, label: 'Spotify', color: '#30d158' },
   { key: 'vk' as const, label: 'VK', color: '#0a84ff' },
+  { key: 'youtube' as const, label: 'YouTube', color: '#ff0000' },
 ]
 
 interface Props {
+  episodes: NormalizedEpisode[]
   rawPlays: PlayRecord[]
 }
 
-export function PlatformChart({ rawPlays }: Props) {
+export function PlatformChart({ episodes, rawPlays }: Props) {
+  const totals = getPlatformTotals(episodes, rawPlays)
+
   const data = PLATFORMS
     .map(p => ({
       name: p.label,
-      value: rawPlays.filter(r => r.platform === p.key).reduce((s, r) => s + r.plays, 0),
+      value: totals[p.key],
       color: p.color,
     }))
     .filter(d => d.value > 0)
@@ -28,9 +33,9 @@ export function PlatformChart({ rawPlays }: Props) {
   const total = data.reduce((s, d) => s + d.value, 0)
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm h-full">
+    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm h-full print:shadow-none">
       <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-4">Платформы</h2>
-      <ResponsiveContainer width="100%" height={160}>
+      <ResponsiveContainer width="100%" height={180}>
         <PieChart>
           <Pie
             data={data}
@@ -40,6 +45,8 @@ export function PlatformChart({ rawPlays }: Props) {
             outerRadius={70}
             paddingAngle={2}
             dataKey="value"
+            activeShape={false}
+            rootTabIndex={-1}
           >
             {data.map((entry, i) => (
               <Cell key={i} fill={entry.color} />

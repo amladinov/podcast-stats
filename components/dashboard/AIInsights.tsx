@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { NormalizedEpisode } from '@/types'
 
+const AI_INSIGHTS_ENABLED = process.env.NEXT_PUBLIC_AI_INSIGHTS_ENABLED === 'true'
+
 interface Props {
   episodes: NormalizedEpisode[]
   podcastTitle: string
@@ -15,6 +17,8 @@ export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
   const [error, setError] = useState('')
 
   async function analyze() {
+    if (!AI_INSIGHTS_ENABLED) return
+
     setLoading(true)
     setError('')
     try {
@@ -34,27 +38,55 @@ export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm h-full flex flex-col print:shadow-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-[15px] font-semibold text-[#1d1d1f]">AI-аналитика</h2>
         <button
           onClick={analyze}
-          disabled={loading}
-          className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] disabled:opacity-40 text-white px-4 py-1.5 rounded-lg transition-colors font-medium"
+          disabled={loading || !AI_INSIGHTS_ENABLED}
+          className="text-[13px] bg-[#b150e2] hover:bg-[#9a3fd1] disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 sm:py-1.5 rounded-lg transition-colors font-medium w-full sm:w-auto print:hidden"
         >
-          {loading ? 'Анализирую...' : insights ? 'Обновить' : 'Анализировать'}
+          {loading ? 'Анализирую...' : AI_INSIGHTS_ENABLED ? (insights ? 'Обновить' : 'Анализировать') : 'Скоро'}
         </button>
       </div>
 
       {error && <p className="text-red-500 text-[13px] mb-2">{error}</p>}
 
-      {!insights && !loading && (
+      {!AI_INSIGHTS_ENABLED && (
+        <p className="text-[#aeaeb2] text-[13px] leading-relaxed">
+          AI-анализ показан как часть продукта, но в публичной версии временно отключён, чтобы тестовые пользователи не расходовали токены.
+        </p>
+      )}
+
+      {!AI_INSIGHTS_ENABLED && !insights && (
+        <p className="hidden print:block text-[#6e6e73] text-[13px] leading-relaxed">
+          AI-анализ временно недоступен в публичной версии сервиса.
+        </p>
+      )}
+
+      {!AI_INSIGHTS_ENABLED && insights && (
+        <div className="text-[13px] text-[#1d1d1f] leading-[1.6] overflow-y-auto flex-1 space-y-1 mt-3 print:overflow-visible">
+          {insights.split('\n').map((line, i) => {
+            if (!line.trim()) return <div key={i} className="h-1" />
+            const parts = line.split(/\*\*(.*?)\*\*/g)
+            return (
+              <p key={i}>
+                {parts.map((part, j) =>
+                  j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                )}
+              </p>
+            )
+          })}
+        </div>
+      )}
+
+      {!insights && !loading && AI_INSIGHTS_ENABLED && (
         <p className="text-[#aeaeb2] text-[13px] leading-relaxed">
           Claude проанализирует данные и даст конкретные инсайты по-русски — какие эпизоды работают лучше и почему.
         </p>
       )}
 
-      {loading && (
+      {loading && AI_INSIGHTS_ENABLED && (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-[#6e6e73] text-[13px]">
             <span className="animate-spin-smooth">⟳</span> Анализирую...
@@ -63,8 +95,8 @@ export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
         </div>
       )}
 
-      {insights && (
-        <div className="text-[13px] text-[#1d1d1f] leading-[1.6] overflow-y-auto flex-1 space-y-1">
+      {insights && AI_INSIGHTS_ENABLED && (
+        <div className="text-[13px] text-[#1d1d1f] leading-[1.6] overflow-y-auto flex-1 space-y-1 print:overflow-visible">
           {insights.split('\n').map((line, i) => {
             if (!line.trim()) return <div key={i} className="h-1" />
             const parts = line.split(/\*\*(.*?)\*\*/g)

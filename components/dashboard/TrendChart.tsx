@@ -33,16 +33,16 @@ export function TrendChart({ episodes }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-6 mb-4 border border-[#e5e5ea] shadow-sm text-center">
+      <div className="bg-white rounded-2xl p-6 mb-4 border border-[#e5e5ea] shadow-sm text-center print:shadow-none print:break-inside-avoid-page">
         <p className="text-[#aeaeb2] text-[14px]">Нет данных для графика. Загрузи CSV от Mave.</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 mb-4 border border-[#e5e5ea] shadow-sm">
+    <div className="bg-white rounded-2xl p-6 mb-4 border border-[#e5e5ea] shadow-sm print:shadow-none print:mb-3">
       <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-5">Динамика прослушиваний</h2>
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={170}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="playsGrad" x1="0" y1="0" x2="0" y2="1">
@@ -64,6 +64,7 @@ export function TrendChart({ episodes }: Props) {
             width={40}
           />
           <Tooltip
+            cursor={false}
             contentStyle={{ background: '#fff', border: '1px solid #e5e5ea', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
             labelStyle={{ color: '#1d1d1f', fontSize: 12, fontWeight: 600 }}
             itemStyle={{ color: '#b150e2' }}
@@ -76,7 +77,7 @@ export function TrendChart({ episodes }: Props) {
             strokeWidth={2}
             fill="url(#playsGrad)"
             dot={false}
-            activeDot={{ r: 4, fill: '#b150e2', strokeWidth: 0 }}
+            activeDot={false}
           />
         </AreaChart>
       </ResponsiveContainer>

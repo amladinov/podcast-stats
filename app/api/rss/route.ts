@@ -1,8 +1,196 @@
 import { NextRequest, NextResponse } from 'next/server'
+import dns from 'node:dns/promises'
+import net from 'node:net'
 import { DOMParser } from '@xmldom/xmldom'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyNode = any
+
+const FETCH_TIMEOUT_MS = 8_000
+const MAX_XML_BYTES = 2 * 1024 * 1024
+const MAX_REDIRECTS = 3
+
+function parseAndValidateUrl(raw: string): URL {
+  let url: URL
+
+  try {
+    url = new URL(raw)
+  } catch {
+    throw new Error('Некорректный URL RSS')
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('Поддерживаются только http/https RSS-ссылки')
+  }
+
+  if (url.username || url.password) {
+    throw new Error('RSS-ссылка не должна содержать логин или пароль')
+  }
+
+  if (!url.hostname) {
+    throw new Error('У RSS-ссылки должен быть валидный хост')
+  }
+
+  return url
+}
+
+function isPrivateIPv4(ip: string): boolean {
+  const parts = ip.split('.').map(Number)
+  if (parts.length !== 4 || parts.some(Number.isNaN)) return true
+
+  if (parts[0] === 10) return true
+  if (parts[0] === 127) return true
+  if (parts[0] === 169 && parts[1] === 254) return true
+  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true
+  if (parts[0] === 192 && parts[1] === 168) return true
+  if (parts[0] === 0) return true
+  if (parts[0] >= 224) return true
+
+  return false
+}
+
+function expandIPv6(input: string): string[] | null {
+  const [headRaw, tailRaw] = input.toLowerCase().split('::')
+  if (input.split('::').length > 2) return null
+
+  const head = headRaw ? headRaw.split(':').filter(Boolean) : []
+  const tail = tailRaw ? tailRaw.split(':').filter(Boolean) : []
+
+  if (tail.length > 0) {
+    const last = tail[tail.length - 1]
+    if (last.includes('.')) {
+      const mapped = last.split('.').map(Number)
+      if (mapped.length !== 4 || mapped.some(Number.isNaN)) return null
+      tail.splice(
+        tail.length - 1,
+        1,
+        ((mapped[0] << 8) | mapped[1]).toString(16),
+        ((mapped[2] << 8) | mapped[3]).toString(16)
+      )
+    }
+  }
+
+  if (!input.includes('::')) {
+    const full = input.split(':')
+    return full.length === 8 ? full : null
+  }
+
+  const missing = 8 - (head.length + tail.length)
+  if (missing < 0) return null
+
+  return [...head, ...Array.from({ length: missing }, () => '0'), ...tail]
+}
+
+function isPrivateIPv6(ip: string): boolean {
+  const normalized = ip.toLowerCase()
+  if (normalized === '::1') return true
+  if (normalized.startsWith('fe80:')) return true
+  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true
+
+  const expanded = expandIPv6(normalized)
+  if (!expanded) return true
+
+  if (expanded.slice(0, 5).every(part => part === '0') && expanded[5] === 'ffff') {
+    const ipv4Hex = expanded.slice(6)
+    const octets = ipv4Hex.flatMap(part => {
+      const num = parseInt(part, 16)
+      return [(num >> 8) & 255, num & 255]
+    })
+
+    return isPrivateIPv4(octets.join('.'))
+  }
+
+  return false
+}
+
+function isPrivateAddress(ip: string): boolean {
+  const version = net.isIP(ip)
+  if (version === 4) return isPrivateIPv4(ip)
+  if (version === 6) return isPrivateIPv6(ip)
+  return true
+}
+
+async function assertPublicHostname(hostname: string) {
+  const lower = hostname.toLowerCase()
+
+  if (lower === 'localhost' || lower.endsWith('.localhost') || lower.endsWith('.local')) {
+    throw new Error('Локальные адреса запрещены')
+  }
+
+  const literalVersion = net.isIP(hostname)
+  if (literalVersion !== 0) {
+    if (isPrivateAddress(hostname)) {
+      throw new Error('Приватные IP-адреса запрещены')
+    }
+    return
+  }
+
+  const records = await dns.lookup(hostname, { all: true, verbatim: true })
+  if (records.length === 0) {
+    throw new Error('Не удалось разрешить адрес RSS-хоста')
+  }
+
+  if (records.some(record => isPrivateAddress(record.address))) {
+    throw new Error('RSS-хост указывает на приватный адрес и запрещён')
+  }
+}
+
+async function readTextWithLimit(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) {
+    throw new Error('Пустой ответ RSS')
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let received = 0
+  let text = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (!value) continue
+
+    received += value.byteLength
+    if (received > maxBytes) {
+      throw new Error('RSS-файл слишком большой')
+    }
+
+    text += decoder.decode(value, { stream: true })
+  }
+
+  text += decoder.decode()
+  return text
+}
+
+async function fetchFeed(url: URL, redirectCount = 0): Promise<Response> {
+  if (redirectCount > MAX_REDIRECTS) {
+    throw new Error('Слишком много редиректов при загрузке RSS')
+  }
+
+  await assertPublicHostname(url.hostname)
+
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'PodcastStats/1.0',
+      'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.1',
+    },
+    redirect: 'manual',
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    next: { revalidate: 3600 },
+  })
+
+  if (res.status >= 300 && res.status < 400) {
+    const location = res.headers.get('location')
+    if (!location) {
+      throw new Error('RSS-редирект без location header')
+    }
+
+    const nextUrl = parseAndValidateUrl(new URL(location, url).toString())
+    return fetchFeed(nextUrl, redirectCount + 1)
+  }
+
+  return res
+}
 
 function getFirstEl(parent: AnyNode, tag: string): AnyNode | null {
   const list = parent.getElementsByTagName(tag)
@@ -28,17 +216,25 @@ function toISO(dateStr: string): string {
 }
 
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.searchParams.get('url')
-  if (!url) return NextResponse.json({ error: 'Missing url' }, { status: 400 })
+  const rawUrl = req.nextUrl.searchParams.get('url')
+  if (!rawUrl) return NextResponse.json({ error: 'Missing url' }, { status: 400 })
 
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'PodcastStats/1.0' },
-      next: { revalidate: 3600 },
-    })
+    const url = parseAndValidateUrl(rawUrl)
+    const res = await fetchFeed(url)
     if (!res.ok) throw new Error(`Feed returned ${res.status}`)
 
-    const xml = await res.text()
+    const contentType = res.headers.get('content-type')?.toLowerCase() ?? ''
+    if (
+      contentType &&
+      !contentType.includes('xml') &&
+      !contentType.includes('rss') &&
+      !contentType.includes('atom')
+    ) {
+      throw new Error('Ответ не похож на RSS/XML')
+    }
+
+    const xml = await readTextWithLimit(res, MAX_XML_BYTES)
     const doc = new DOMParser().parseFromString(xml, 'text/xml')
 
     const channel = getFirstEl(doc, 'channel')
