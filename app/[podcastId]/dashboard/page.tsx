@@ -1040,7 +1040,7 @@ export default function DashboardPage() {
                   ))}
               </div>
               <PrintTrendChart episodes={episodes} />
-              <div className="w-full max-w-[320px]">
+              <div className="w-full max-w-[320px] print:break-inside-avoid-page">
                 <PrintPlatformChart episodes={episodes} rawPlays={rawPlays} />
               </div>
             </div>
@@ -1052,29 +1052,29 @@ export default function DashboardPage() {
             platformLabels={activePlatformLabels}
             last={!audience}
           >
-            <section className="bg-white rounded-2xl border border-[#e5e5ea] overflow-hidden">
+            <section className="bg-white rounded-2xl border border-[#e5e5ea] overflow-visible">
               <div className="px-5 pt-5 pb-3 flex items-center justify-between">
                 <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Топ-10 эпизодов</h2>
                 <span className="text-[12px] text-[#8e8e93]">по суммарным прослушиваниям</span>
               </div>
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[11px]">
                 <thead className="border-y border-[#f0f0f0]">
-                  <tr className="text-[#8e8e93] text-[11px] uppercase tracking-wide">
-                    <th className="text-left px-5 py-3 font-medium">#</th>
-                    <th className="text-left px-4 py-3 font-medium">Эпизод</th>
-                    <th className="text-right px-4 py-3 font-medium">Дата</th>
-                    <th className="text-right px-4 py-3 font-medium">Итого</th>
-                    <th className="text-right px-4 py-3 font-medium">Яндекс</th>
-                    <th className="text-right px-4 py-3 font-medium">Mave</th>
-                    <th className="text-right px-5 py-3 font-medium">YouTube</th>
+                  <tr className="text-[#8e8e93] text-[10px] uppercase tracking-wide">
+                    <th className="text-left px-3 py-2 font-medium w-[24px]">#</th>
+                    <th className="text-left px-2 py-2 font-medium">Эпизод</th>
+                    <th className="text-right px-2 py-2 font-medium">Дата</th>
+                    <th className="text-right px-2 py-2 font-medium">Итого</th>
+                    <th className="text-right px-2 py-2 font-medium">Яндекс</th>
+                    <th className="text-right px-2 py-2 font-medium">Mave</th>
+                    <th className="text-right px-3 py-2 font-medium">YouTube</th>
                   </tr>
                 </thead>
                 <tbody>
                   {printTopEpisodes.map((episode, index) => (
                     <tr key={episode.id} className="border-b border-[#f5f5f7]">
-                      <td className="px-5 py-3 text-[#8e8e93]">{index + 1}</td>
-                      <td className="px-4 py-3 text-[#1d1d1f]">{episode.title}</td>
-                      <td className="px-4 py-3 text-right text-[#8e8e93] whitespace-nowrap">
+                      <td className="px-3 py-2 text-[#8e8e93]">{index + 1}</td>
+                      <td className="px-2 py-2 text-[#1d1d1f]">{episode.title}</td>
+                      <td className="px-2 py-2 text-right text-[#8e8e93] whitespace-nowrap">
                         {episode.publishDate
                           ? new Date(episode.publishDate).toLocaleDateString('ru', {
                               day: 'numeric',
@@ -1083,12 +1083,12 @@ export default function DashboardPage() {
                             })
                           : '—'}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-[#b150e2] whitespace-nowrap">
+                      <td className="px-2 py-2 text-right font-semibold text-[#b150e2] whitespace-nowrap">
                         {episode.plays.total.toLocaleString('ru')}
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">{episode.plays.yandex.toLocaleString('ru')}</td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">{episode.plays.mave.toLocaleString('ru')}</td>
-                      <td className="px-5 py-3 text-right whitespace-nowrap">{episode.plays.youtube.toLocaleString('ru')}</td>
+                      <td className="px-2 py-2 text-right whitespace-nowrap">{episode.plays.yandex.toLocaleString('ru')}</td>
+                      <td className="px-2 py-2 text-right whitespace-nowrap">{episode.plays.mave.toLocaleString('ru')}</td>
+                      <td className="px-3 py-2 text-right whitespace-nowrap">{episode.plays.youtube.toLocaleString('ru')}</td>
                     </tr>
                   ))}
                 </tbody>
