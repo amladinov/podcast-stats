@@ -789,7 +789,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
       <div
-        className="md:hidden mobile-viewport-shell bg-[#f5f5f7]"
+        className="md:hidden mobile-viewport-shell bg-[#f5f5f7] print:hidden"
         onTouchStart={handleMobileTouchStart}
         onTouchEnd={handleMobileTouchEnd}
         style={{ touchAction: 'manipulation', height: mobileViewportHeight || undefined }}
@@ -901,7 +901,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden md:block print:!block">
         <div className="bg-white border-b border-[#e5e5ea] print:hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-start sm:items-center gap-3">
             <button onClick={() => router.push('/')} className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity flex-shrink-0">
