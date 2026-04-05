@@ -58,6 +58,7 @@ export function parseMave(csvText: string): PlayRecord[] {
         platform: 'mave',
         date: monthISO,
         plays,
+        sourceKind: 'csv',
       })
     }
   }

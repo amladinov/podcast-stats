@@ -6,6 +6,7 @@ export function getPlatformTotals(
   episodes: NormalizedEpisode[],
   rawPlays: PlayRecord[]
 ): PlatformTotals {
+  const hasMaveSnapshot = rawPlays.some(record => record.platform === 'mave' && record.sourceKind === 'paste')
   const rawTotals: PlatformTotals = {
     mave: 0,
     yandex: 0,
@@ -20,7 +21,7 @@ export function getPlatformTotals(
 
   if (rawPlays.length > 0) {
     return {
-      mave: rawTotals.mave > 0 ? rawTotals.mave : sumEpisodePlays(episodes, 'mave'),
+      mave: hasMaveSnapshot ? sumEpisodePlays(episodes, 'mave') : (rawTotals.mave > 0 ? rawTotals.mave : sumEpisodePlays(episodes, 'mave')),
       yandex: rawTotals.yandex > 0 ? rawTotals.yandex : sumEpisodePlays(episodes, 'yandex'),
       spotify: rawTotals.spotify > 0 ? rawTotals.spotify : sumEpisodePlays(episodes, 'spotify'),
       vk: rawTotals.vk > 0 ? rawTotals.vk : sumEpisodePlays(episodes, 'vk'),

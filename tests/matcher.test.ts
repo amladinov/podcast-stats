@@ -161,3 +161,41 @@ test('mixed imports preserve totals, youtube date fallback and sorted mave timel
   assert.equal(ep2.youtubeLikes, 4)
   assert.equal(ep2.youtubeComments, 2)
 })
+
+test('mave snapshot overrides mave totals without polluting timeline', () => {
+  const plays: PlayRecord[] = [
+    {
+      episodeTitle: 'Привет, мир!',
+      platform: 'mave',
+      date: '2024-01-01',
+      plays: 3,
+      sourceKind: 'csv',
+    },
+    {
+      episodeTitle: 'Привет, мир!',
+      platform: 'mave',
+      date: '2024-03-01',
+      plays: 7,
+      sourceKind: 'csv',
+    },
+    {
+      episodeTitle: 'Привет, мир!',
+      platform: 'mave',
+      date: '2024-01-10',
+      plays: 40,
+      sourceKind: 'paste',
+      videoViews: 5,
+    },
+  ]
+
+  const normalized = normalizePodcastData(episodes, plays)
+  const ep1 = normalized.find(item => item.id === 'ep-1')
+
+  assert.ok(ep1)
+  assert.equal(ep1.plays.mave, 40)
+  assert.equal(ep1.maveVideoViews, 5)
+  assert.deepEqual(ep1.timeline, [
+    { date: '2024-01-01', plays: 3 },
+    { date: '2024-03-01', plays: 7 },
+  ])
+})

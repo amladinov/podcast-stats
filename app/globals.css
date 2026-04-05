@@ -12,6 +12,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
 /* Thin scrollbars */
 * {
   scrollbar-width: thin;
@@ -64,6 +73,367 @@ body {
 }
 .animate-slide-up {
   animation: slideUp 0.35s ease-out both;
+}
+
+@keyframes buttonGlowPulse {
+  0%, 100% {
+    box-shadow:
+      0 18px 34px rgba(164, 71, 223, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 22px 42px rgba(164, 71, 223, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+}
+
+@keyframes buttonPressBounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(7px) scale(0.975);
+  }
+  62% {
+    transform: translateY(-1px) scale(1.008);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-button-glow {
+  animation: buttonGlowPulse 2.8s ease-in-out infinite;
+}
+
+.animate-button-press {
+  animation: buttonPressBounce 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes buttonShimmerSweep {
+  0% {
+    transform: translateX(-135%) skewX(-18deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(145%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes buttonSignalSweep {
+  0% {
+    transform: translateX(0) skewX(-18deg) scaleY(0.96);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.18;
+  }
+  48% {
+    opacity: 0.72;
+  }
+  100% {
+    transform: translateX(420%) skewX(-18deg) scaleY(1.03);
+    opacity: 0;
+  }
+}
+
+@keyframes buttonPressSoft {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  32% {
+    transform: translateY(7px) scale(1.012, 0.972);
+  }
+  68% {
+    transform: translateY(-1px) scale(0.998, 1.003);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes buttonPressSnappy {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  38% {
+    transform: translateY(5px) scale(0.988, 0.978);
+  }
+  62% {
+    transform: translateY(-2px) scale(1.006, 1.004);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes buttonPressGel {
+  0% {
+    transform: translateY(0) scale(1, 1);
+    border-radius: 24px;
+  }
+  28% {
+    transform: translateY(8px) scale(1.022, 0.948);
+    border-radius: 26px;
+  }
+  58% {
+    transform: translateY(-1px) scale(0.994, 1.018);
+    border-radius: 23px;
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+    border-radius: 24px;
+  }
+}
+
+.animate-button-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  width: 32%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08));
+  filter: blur(2px);
+  animation: buttonShimmerSweep 560ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.animate-button-signal-sweep {
+  animation: buttonSignalSweep 220ms cubic-bezier(0.22, 0.8, 0.2, 1) forwards;
+}
+
+.animate-button-press-soft {
+  animation: buttonPressSoft 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-button-press-snappy {
+  animation: buttonPressSnappy 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-button-press-gel {
+  animation: buttonPressGel 520ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.mobile-viewport-shell {
+  height: 100vh;
+  height: 100svh;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@supports (height: 100dvh) {
+  .mobile-viewport-shell {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+@keyframes buttonMorphSoft {
+  0% {
+    width: min(100%, 336px);
+    border-radius: 24px;
+    transform: translateY(0) scale(1);
+  }
+  34% {
+    width: 196px;
+    border-radius: 28px;
+    transform: translateY(-1px) scale(0.985);
+  }
+  100% {
+    width: 92px;
+    border-radius: 999px;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes buttonMorphSnappy {
+  0% {
+    width: min(100%, 336px);
+    border-radius: 24px;
+    transform: translateY(0) scale(1);
+  }
+  38% {
+    width: 170px;
+    border-radius: 999px;
+    transform: translateY(-2px) scale(0.972);
+  }
+  100% {
+    width: 92px;
+    border-radius: 999px;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes buttonMorphGel {
+  0% {
+    width: min(100%, 336px);
+    border-radius: 24px;
+    transform: translateY(0) scale(1, 1);
+  }
+  24% {
+    width: 242px;
+    border-radius: 30px;
+    transform: translateY(2px) scale(1.025, 0.955);
+  }
+  56% {
+    width: 132px;
+    border-radius: 999px;
+    transform: translateY(-1px) scale(0.972, 1.03);
+  }
+  100% {
+    width: 92px;
+    border-radius: 999px;
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes buttonResetSoft {
+  0% {
+    width: 92px;
+    border-radius: 999px;
+    transform: scale(1);
+  }
+  42% {
+    width: 222px;
+    border-radius: 30px;
+    transform: scale(1.01);
+  }
+  100% {
+    width: min(100%, 336px);
+    border-radius: 24px;
+    transform: scale(1);
+  }
+}
+
+@keyframes buttonResetSnappy {
+  0% {
+    width: 92px;
+    border-radius: 999px;
+    transform: scale(1);
+  }
+  48% {
+    width: 220px;
+    border-radius: 28px;
+    transform: scale(1.025);
+  }
+  100% {
+    width: min(100%, 336px);
+    border-radius: 24px;
+    transform: scale(1);
+  }
+}
+
+@keyframes buttonResetGel {
+  0% {
+    width: 92px;
+    border-radius: 999px;
+    transform: scale(1, 1);
+  }
+  35% {
+    width: 154px;
+    border-radius: 999px;
+    transform: scale(1.02, 0.98);
+  }
+  72% {
+    width: 286px;
+    border-radius: 28px;
+    transform: scale(0.985, 1.02);
+  }
+  100% {
+    width: min(100%, 336px);
+    border-radius: 24px;
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes checkPopSoft {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  78% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkPopSnappy {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) rotate(-12deg);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.08) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes checkPopGel {
+  0% {
+    opacity: 0;
+    transform: scale(0.28) rotate(-18deg);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1.18) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.button-demo {
+  will-change: width, border-radius, transform, box-shadow, background;
+}
+
+.animate-button-morph-soft {
+  animation: buttonMorphSoft 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-button-morph-snappy {
+  animation: buttonMorphSnappy 380ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-button-morph-gel {
+  animation: buttonMorphGel 560ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.animate-button-reset-soft {
+  animation: buttonResetSoft 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-button-reset-snappy {
+  animation: buttonResetSnappy 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-button-reset-gel {
+  animation: buttonResetGel 460ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.animate-check-pop-soft {
+  animation: checkPopSoft 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-check-pop-snappy {
+  animation: checkPopSnappy 180ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-check-pop-gel {
+  animation: checkPopGel 320ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
 }
 
 .print-only {

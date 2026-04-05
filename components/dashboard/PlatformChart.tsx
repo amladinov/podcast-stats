@@ -15,9 +15,10 @@ const PLATFORMS = [
 interface Props {
   episodes: NormalizedEpisode[]
   rawPlays: PlayRecord[]
+  compact?: boolean
 }
 
-export function PlatformChart({ episodes, rawPlays }: Props) {
+export function PlatformChart({ episodes, rawPlays, compact = false }: Props) {
   const totals = getPlatformTotals(episodes, rawPlays)
 
   const data = PLATFORMS
@@ -33,16 +34,16 @@ export function PlatformChart({ episodes, rawPlays }: Props) {
   const total = data.reduce((s, d) => s + d.value, 0)
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm h-full print:shadow-none">
-      <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-4">Платформы</h2>
-      <ResponsiveContainer width="100%" height={180}>
+    <div className={`bg-white rounded-2xl border border-[#e5e5ea] shadow-sm print:shadow-none ${compact ? 'p-4' : 'p-5'}`}>
+      <h2 className={`font-semibold text-[#1d1d1f] ${compact ? 'text-[14px] mb-3' : 'text-[15px] mb-4'}`}>Платформы</h2>
+      <ResponsiveContainer width="100%" height={compact ? 146 : 180}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={45}
-            outerRadius={70}
+            innerRadius={compact ? 38 : 45}
+            outerRadius={compact ? 60 : 70}
             paddingAngle={2}
             dataKey="value"
             activeShape={false}
@@ -58,14 +59,14 @@ export function PlatformChart({ episodes, rawPlays }: Props) {
           />
         </PieChart>
       </ResponsiveContainer>
-      <div className="space-y-2 mt-2">
+      <div className={`${compact ? 'space-y-1.5 mt-1' : 'space-y-2 mt-2'}`}>
         {data.map(d => (
           <div key={d.name} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
-              <span className="text-[13px] text-[#1d1d1f]">{d.name}</span>
+              <span className={`${compact ? 'text-[12px]' : 'text-[13px]'} text-[#1d1d1f]`}>{d.name}</span>
             </div>
-            <span className="text-[13px] text-[#6e6e73]">{Math.round(d.value / total * 100)}%</span>
+            <span className={`${compact ? 'text-[12px]' : 'text-[13px]'} text-[#6e6e73]`}>{Math.round(d.value / total * 100)}%</span>
           </div>
         ))}
       </div>

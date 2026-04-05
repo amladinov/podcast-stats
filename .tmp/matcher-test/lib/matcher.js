@@ -174,6 +174,7 @@ function normalizePodcastData(episodes, plays) {
             publishDate: episode.publishDate,
             plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, youtube: 0, total: 0 },
             timeline: [],
+            maveVideoViews: undefined,
         });
     }
     for (const record of plays) {
@@ -198,9 +199,15 @@ function normalizePodcastData(episodes, plays) {
         if (!norm)
             continue;
         if (record.platform === 'mave') {
-            // Mave provides per-day records — accumulate into timeline
-            norm.plays.mave += record.plays;
-            norm.timeline.push({ date: record.date, plays: record.plays });
+            if (record.sourceKind === 'paste') {
+                norm.plays.mave = record.plays;
+                norm.maveVideoViews = record.videoViews;
+            }
+            else {
+                // Mave CSV provides per-day records — accumulate into timeline.
+                norm.plays.mave += record.plays;
+                norm.timeline.push({ date: record.date, plays: record.plays });
+            }
         }
         else if (record.platform === 'yandex') {
             norm.plays.yandex = record.plays; // total starts

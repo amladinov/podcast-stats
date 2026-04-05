@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SafePodcastImage } from '@/components/SafePodcastImage'
+import { getCtaClasses } from '@/lib/ctaStyles'
 import { usePodcastStore } from '@/lib/store'
 import { getPlatformTotals, getTotalPlays } from '@/lib/podcastMetrics'
 import {
@@ -114,13 +115,13 @@ export default function ComparePage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => { loadDemo(); router.push('/compare') }}
-              className="bg-[#b150e2] hover:bg-[#9a3fd1] text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors shadow-sm w-full sm:w-auto"
+              className={getCtaClasses({ tone: 'primary', fullWidth: true })}
             >
               Смотреть демо →
             </button>
             <button
               onClick={() => router.push('/')}
-              className="bg-white hover:bg-[#f0f0f5] text-[#1d1d1f] text-[14px] font-medium px-5 py-2.5 rounded-xl transition-colors border border-[#e5e5ea] w-full sm:w-auto"
+              className={getCtaClasses({ tone: 'secondary', fullWidth: true })}
             >
               На главную
             </button>

@@ -41,7 +41,20 @@ export const usePodcastStore = create<PodcastStore>()(
         set(state => ({
           podcasts: state.podcasts.map(p => {
             if (p.id !== podcastId) return p
-            const filtered = p.rawPlays.filter(r => r.platform !== platformInfo.platform)
+            const filtered = p.rawPlays.filter(r => {
+              if (r.platform !== platformInfo.platform) return true
+
+              if (platformInfo.platform !== 'mave') {
+                return false
+              }
+
+              if (platformInfo.sourceKind === 'csv') {
+                return false
+              }
+
+              const recordSourceKind = r.sourceKind ?? 'csv'
+              return recordSourceKind !== (platformInfo.sourceKind ?? 'csv')
+            })
             const allPlays = [...filtered, ...newPlays]
             const freshNormalized = normalizePodcastData(p.episodes, allPlays)
 
@@ -59,7 +72,12 @@ export const usePodcastStore = create<PodcastStore>()(
               plays.total = plays.mave + plays.yandex + plays.spotify + plays.vk + plays.youtube
 
               const platformFields =
-                platform === 'mave' ? { timeline: ep.timeline } :
+                platform === 'mave' ? {
+                  timeline: platformInfo.sourceKind === 'paste' && existing.timeline.length > 0
+                    ? existing.timeline
+                    : ep.timeline,
+                  maveVideoViews: ep.maveVideoViews,
+                } :
                 platform === 'yandex' ? {
                   yandexStarts: ep.yandexStarts,
                   yandexListeners: ep.yandexListeners,

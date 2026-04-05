@@ -15,6 +15,7 @@ export interface RSSPodcast {
 }
 
 export type Platform = 'mave' | 'yandex' | 'spotify' | 'vk' | 'youtube'
+export type MaveSourceKind = 'csv' | 'paste'
 
 // Raw play record after parsing any CSV or API import
 export interface PlayRecord {
@@ -22,6 +23,8 @@ export interface PlayRecord {
   platform: Platform
   date: string // YYYY-MM-DD — publication date OR play date (Mave)
   plays: number
+  sourceKind?: MaveSourceKind
+  videoViews?: number
   // Extra metrics when available
   streams?: number
   listeners?: number
@@ -45,6 +48,7 @@ export interface NormalizedEpisode {
   }
   // Daily timeline from Mave (only Mave provides this)
   timeline: Array<{ date: string; plays: number }>
+  maveVideoViews?: number
   // Extra Yandex metrics
   yandexStarts?: number
   yandexListeners?: number
@@ -64,6 +68,8 @@ export interface UploadedPlatform {
   fileName: string
   recordsCount: number
   uploadedAt: string
+  sourceKind?: MaveSourceKind | 'api'
+  timelineSourceKind?: 'csv'
   periodStart?: string
   periodEnd?: string
 }
@@ -89,4 +95,14 @@ export interface Podcast {
   uploadedPlatforms: UploadedPlatform[]
   yandexAudience?: YandexAudience
   createdAt: string
+}
+
+export interface MavePasteEpisode {
+  seasonLabel?: string
+  episodeNumber?: number
+  publishDate: string
+  title: string
+  durationLabel?: string
+  plays: number
+  videoViews: number
 }

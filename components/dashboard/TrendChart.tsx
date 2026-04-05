@@ -13,9 +13,10 @@ import type { NormalizedEpisode } from '@/types'
 
 interface Props {
   episodes: NormalizedEpisode[]
+  compact?: boolean
 }
 
-export function TrendChart({ episodes }: Props) {
+export function TrendChart({ episodes, compact = false }: Props) {
   const monthMap = new Map<string, number>()
   for (const ep of episodes) {
     for (const { date, plays } of ep.timeline) {
@@ -33,16 +34,16 @@ export function TrendChart({ episodes }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-6 mb-4 border border-[#e5e5ea] shadow-sm text-center print:shadow-none print:break-inside-avoid-page">
+      <div className={`bg-white rounded-2xl border border-[#e5e5ea] shadow-sm text-center print:shadow-none print:break-inside-avoid-page ${compact ? 'p-4 mb-0' : 'p-6 mb-4'}`}>
         <p className="text-[#aeaeb2] text-[14px]">Нет данных для графика. Загрузи CSV от Mave.</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 mb-4 border border-[#e5e5ea] shadow-sm print:shadow-none print:mb-3">
-      <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-5">Динамика прослушиваний</h2>
-      <ResponsiveContainer width="100%" height={170}>
+    <div className={`bg-white rounded-2xl border border-[#e5e5ea] shadow-sm print:shadow-none ${compact ? 'p-4 mb-0' : 'p-6 mb-4 print:mb-3'}`}>
+      <h2 className={`font-semibold text-[#1d1d1f] ${compact ? 'text-[14px] mb-3' : 'text-[15px] mb-5'}`}>Динамика прослушиваний</h2>
+      <ResponsiveContainer width="100%" height={compact ? 128 : 170}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="playsGrad" x1="0" y1="0" x2="0" y2="1">
@@ -53,15 +54,15 @@ export function TrendChart({ episodes }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
           <XAxis
             dataKey="month"
-            tick={{ fill: '#aeaeb2', fontSize: 11 }}
+            tick={{ fill: '#aeaeb2', fontSize: compact ? 10 : 11 }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
-            tick={{ fill: '#aeaeb2', fontSize: 11 }}
+            tick={{ fill: '#aeaeb2', fontSize: compact ? 10 : 11 }}
             tickLine={false}
             axisLine={false}
-            width={40}
+            width={compact ? 34 : 40}
           />
           <Tooltip
             cursor={false}

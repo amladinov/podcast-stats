@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:matcher": "tsc -p tsconfig.matcher-test.json && node --test .tmp/matcher-test/tests/matcher.test.js"
+    "test:matcher": "tsc -p tsconfig.matcher-test.json && node --test .tmp/matcher-test/tests/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0",

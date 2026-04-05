@@ -9,12 +9,14 @@ interface Props {
   episodes: NormalizedEpisode[]
   podcastTitle: string
   initialInsights?: string
+  compact?: boolean
 }
 
 export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
   const [loading, setLoading] = useState(false)
   const [insights, setInsights] = useState(initialInsights ?? '')
   const [error, setError] = useState('')
+  const hasPreviewInsights = !AI_INSIGHTS_ENABLED && Boolean(insights)
 
   async function analyze() {
     if (!AI_INSIGHTS_ENABLED) return
@@ -52,9 +54,9 @@ export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
 
       {error && <p className="text-red-500 text-[13px] mb-2">{error}</p>}
 
-      {!AI_INSIGHTS_ENABLED && (
+      {!AI_INSIGHTS_ENABLED && !hasPreviewInsights && (
         <p className="text-[#aeaeb2] text-[13px] leading-relaxed">
-          AI-анализ показан как часть продукта, но в публичной версии временно отключён, чтобы тестовые пользователи не расходовали токены.
+          AI-аналитика скоро будет доступна в этой версии сервиса. Здесь появятся ключевые инсайты, аномалии и рекомендации по выпускам.
         </p>
       )}
 
@@ -65,19 +67,24 @@ export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
       )}
 
       {!AI_INSIGHTS_ENABLED && insights && (
-        <div className="text-[13px] text-[#1d1d1f] leading-[1.6] overflow-y-auto flex-1 space-y-1 mt-3 print:overflow-visible">
-          {insights.split('\n').map((line, i) => {
-            if (!line.trim()) return <div key={i} className="h-1" />
-            const parts = line.split(/\*\*(.*?)\*\*/g)
-            return (
-              <p key={i}>
-                {parts.map((part, j) =>
-                  j % 2 === 1 ? <strong key={j}>{part}</strong> : part
-                )}
-              </p>
-            )
-          })}
-        </div>
+        <>
+          <p className="text-[#6e6e73] text-[13px] leading-relaxed">
+            В публичной версии AI-аналитика скоро будет доступна. Ниже показан пример того, как может выглядеть этот блок в продукте.
+          </p>
+          <div className="text-[13px] text-[#1d1d1f] leading-[1.6] overflow-y-auto flex-1 space-y-1 mt-3 print:overflow-visible">
+            {insights.split('\n').map((line, i) => {
+              if (!line.trim()) return <div key={i} className="h-1" />
+              const parts = line.split(/\*\*(.*?)\*\*/g)
+              return (
+                <p key={i}>
+                  {parts.map((part, j) =>
+                    j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                  )}
+                </p>
+              )
+            })}
+          </div>
+        </>
       )}
 
       {!insights && !loading && AI_INSIGHTS_ENABLED && (

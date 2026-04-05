@@ -149,3 +149,38 @@ const episodes = [
     strict_1.default.equal(ep2.youtubeLikes, 4);
     strict_1.default.equal(ep2.youtubeComments, 2);
 });
+(0, node_test_1.default)('mave snapshot overrides mave totals without polluting timeline', () => {
+    const plays = [
+        {
+            episodeTitle: 'Привет, мир!',
+            platform: 'mave',
+            date: '2024-01-01',
+            plays: 3,
+            sourceKind: 'csv',
+        },
+        {
+            episodeTitle: 'Привет, мир!',
+            platform: 'mave',
+            date: '2024-03-01',
+            plays: 7,
+            sourceKind: 'csv',
+        },
+        {
+            episodeTitle: 'Привет, мир!',
+            platform: 'mave',
+            date: '2024-01-10',
+            plays: 40,
+            sourceKind: 'paste',
+            videoViews: 5,
+        },
+    ];
+    const normalized = (0, matcher_1.normalizePodcastData)(episodes, plays);
+    const ep1 = normalized.find(item => item.id === 'ep-1');
+    strict_1.default.ok(ep1);
+    strict_1.default.equal(ep1.plays.mave, 40);
+    strict_1.default.equal(ep1.maveVideoViews, 5);
+    strict_1.default.deepEqual(ep1.timeline, [
+        { date: '2024-01-01', plays: 3 },
+        { date: '2024-03-01', plays: 7 },
+    ]);
+});

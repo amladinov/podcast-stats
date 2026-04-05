@@ -11,7 +11,9 @@
   },
   "include": [
     "lib/matcher.ts",
+    "lib/parsers/mavePaste.ts",
     "types/index.ts",
-    "tests/matcher.test.ts"
+    "tests/matcher.test.ts",
+    "tests/mavePaste.test.ts"
   ]
 }

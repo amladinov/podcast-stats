@@ -78,6 +78,7 @@ function sanitizeEpisodes(input: unknown): NormalizedEpisode[] {
         total: safeNumber(plays?.total),
       },
       timeline: [],
+      maveVideoViews: safeNumber(episode.maveVideoViews) || undefined,
       yandexStarts: safeNumber(episode.yandexStarts) || undefined,
       yandexListeners: safeNumber(episode.yandexListeners) || undefined,
       yandexHours: safeNumber(episode.yandexHours) || undefined,
