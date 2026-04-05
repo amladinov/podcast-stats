@@ -887,7 +887,7 @@ export default function DashboardPage() {
                     ref={element => { mobileSceneContentRefs.current[index] = element }}
                     className={[
                       'h-full overscroll-contain pb-[max(env(safe-area-inset-bottom),12px)]',
-                      scene.id === 'episodes' || scene.id === 'episode-detail' || (scene.id === 'cities' && citiesExpanded)
+                      scene.id === 'overview' || scene.id === 'episodes' || scene.id === 'episode-detail' || (scene.id === 'cities' && citiesExpanded)
                         ? 'overflow-y-auto'
                         : 'overflow-hidden',
                     ].join(' ')}
