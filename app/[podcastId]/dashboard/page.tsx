@@ -99,7 +99,7 @@ function PrintPage({
           <div className="print-page-brand">
             <p className="print-page-eyebrow">Сделано</p>
             <img
-              src="/brand/mono.png"
+              src="/brand/mark-square.png"
               alt="Podcast Stats"
               className="print-page-brand-logo"
             />

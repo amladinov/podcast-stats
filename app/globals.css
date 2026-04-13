@@ -541,9 +541,9 @@ body {
 
   .print-page-brand-logo {
     display: block;
-    height: 4.2mm;
-    width: auto;
-    max-width: 42mm;
+    width: 4.8mm;
+    height: 4.8mm;
+    object-fit: contain;
   }
 
   .print-page-title {
