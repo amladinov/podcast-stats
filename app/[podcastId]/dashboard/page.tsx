@@ -6,12 +6,13 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { SafePodcastImage } from '@/components/SafePodcastImage'
 import { usePodcastStore } from '@/lib/store'
 import { DEMO_IDS, DEMO_INSIGHTS_MAP } from '@/lib/demoData'
-import { getPlatformTotals, getTotalPlays } from '@/lib/podcastMetrics'
+import { getFilteredEpisodes, getPlatformTotals, getTotalPlays } from '@/lib/podcastMetrics'
 import { StatCards } from '@/components/dashboard/StatCards'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { PlatformChart } from '@/components/dashboard/PlatformChart'
 import { EpisodeTable } from '@/components/dashboard/EpisodeTable'
 import { AIInsights } from '@/components/dashboard/AIInsights'
+import { PlatformFilters } from '@/components/dashboard/PlatformFilters'
 import { YandexAudienceSection } from '@/components/dashboard/YandexAudienceSection'
 import { getCtaClasses } from '@/lib/ctaStyles'
 import {
@@ -37,6 +38,7 @@ const GENDER_COLORS: Record<string, string> = {
 }
 
 const AGE_COLORS = ['#b150e2', '#0a84ff', '#ff9f0a', '#30d158', '#ff6b9d', '#ff453a', '#aeaeb2']
+const PDF_EPISODE_LIMIT = 15
 
 type EpisodeSortKey = 'total' | 'publishDate' | Platform
 
@@ -55,6 +57,17 @@ function sanitizePrintTitle(title: string): string {
     .trim()
 
   return sanitized || 'Podcast Stats'
+}
+
+function formatPrintTimestamp(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day}_${hours}-${minutes}`
 }
 
 function formatShortDate(date: string | undefined): string {
@@ -157,36 +170,75 @@ export default function DashboardPage() {
   const router = useRouter()
   const podcast = usePodcastStore(s => s.getPodcast(podcastId))
   const comparablePodcastCount = usePodcastStore(s => s.podcasts.filter(item => item.uploadedPlatforms.length > 0).length)
+  const isDemo = podcast ? DEMO_IDS.has(podcastId) : false
+  const podcastTitle = podcast?.title ?? ''
+  const podcastImageUrl = podcast?.imageUrl ?? ''
+  const episodes = useMemo(() => podcast?.normalized ?? [], [podcast?.normalized])
+  const rawPlays = useMemo(() => podcast?.rawPlays ?? [], [podcast?.rawPlays])
+  const uploadedPlatformsArray = useMemo(
+    () => podcast?.uploadedPlatforms ?? [],
+    [podcast?.uploadedPlatforms]
+  )
+  const uploadedPlatformKeys = useMemo(
+    () => uploadedPlatformsArray.map(platform => platform.platform),
+    [uploadedPlatformsArray]
+  )
+  const uploadedPlatforms = useMemo(
+    () => new Set(uploadedPlatformKeys),
+    [uploadedPlatformKeys]
+  )
 
   const [dashboardSceneIndex, setDashboardSceneIndex] = useState(0)
   const [mobileViewportHeight, setMobileViewportHeight] = useState(0)
   const [mobileChromeHeight, setMobileChromeHeight] = useState(0)
   const [episodeSortKey, setEpisodeSortKey] = useState<EpisodeSortKey>('total')
+  const [episodeSortDesc, setEpisodeSortDesc] = useState(true)
   const [episodeListMode, setEpisodeListMode] = useState<'top' | 'all'>('top')
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null)
   const [citiesExpanded, setCitiesExpanded] = useState(false)
+  const [enabledPlatforms, setEnabledPlatforms] = useState<Set<Platform>>(
+    () => new Set(uploadedPlatformKeys)
+  )
   const mobileChromeRef = useRef<HTMLDivElement | null>(null)
   const mobileSceneContentRefs = useRef<Array<HTMLDivElement | null>>([])
   const mobileTouchStartRef = useRef<{ x: number; y: number } | null>(null)
-
-  const isDemo = podcast ? DEMO_IDS.has(podcastId) : false
-  const podcastTitle = podcast?.title ?? ''
-  const podcastImageUrl = podcast?.imageUrl ?? ''
-  const episodes = podcast?.normalized ?? []
-  const rawPlays = podcast?.rawPlays ?? []
-  const uploadedPlatformsArray = podcast?.uploadedPlatforms ?? []
-  const uploadedPlatformKeys = uploadedPlatformsArray.map(platform => platform.platform)
-  const uploadedPlatforms = new Set(uploadedPlatformKeys)
+  const previousPodcastIdRef = useRef<string | null>(null)
   const exportDate = formatExportDate()
-  const activePlatformLabels = DASHBOARD_PLATFORMS
+
+  const uploadedPlatformLabels = DASHBOARD_PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key))
     .map(platform => platform.label)
-  const printTopEpisodes = [...episodes]
+  const activePlatformLabels = DASHBOARD_PLATFORMS
+    .filter(platform => uploadedPlatforms.has(platform.key) && enabledPlatforms.has(platform.key))
+    .map(platform => platform.label)
+  const topEpisodes = [...episodes]
     .sort((a, b) => b.plays.total - a.plays.total)
     .slice(0, 10)
-  const printTotals = getPlatformTotals(episodes, rawPlays)
-  const printTotal = getTotalPlays(episodes)
-  const averagePerEpisode = episodes.length > 0 ? Math.round(printTotal / episodes.length) : 0
+  const totals = getPlatformTotals(episodes, rawPlays)
+  const total = getTotalPlays(episodes)
+  const averagePerEpisode = episodes.length > 0 ? Math.round(total / episodes.length) : 0
+  const filteredEpisodes = getFilteredEpisodes(episodes, enabledPlatforms)
+  const filteredTotals = getPlatformTotals(episodes, rawPlays, enabledPlatforms)
+  const filteredTotal = getTotalPlays(filteredEpisodes)
+  const sortedFilteredEpisodesForPdf = [...filteredEpisodes].sort((a, b) => {
+    if (episodeSortKey === 'publishDate') {
+      const av = new Date(a.publishDate).getTime()
+      const bv = new Date(b.publishDate).getTime()
+      return episodeSortDesc ? bv - av : av - bv
+    }
+
+    const av = a.plays[episodeSortKey]
+    const bv = b.plays[episodeSortKey]
+    return episodeSortDesc ? bv - av : av - bv
+  })
+  const filteredTopEpisodes = sortedFilteredEpisodesForPdf.slice(0, PDF_EPISODE_LIMIT)
+  const filteredAveragePerEpisode = episodes.length > 0 ? Math.round(filteredTotal / episodes.length) : 0
+  const filterActive = uploadedPlatformKeys.some(platform => !enabledPlatforms.has(platform))
+  const disabledPlatformLabels = DASHBOARD_PLATFORMS
+    .filter(platform => uploadedPlatforms.has(platform.key) && !enabledPlatforms.has(platform.key))
+    .map(platform => platform.label)
+  const printTablePlatforms = DASHBOARD_PLATFORMS
+    .filter(platform => uploadedPlatforms.has(platform.key) && enabledPlatforms.has(platform.key))
   const canCompare = comparablePodcastCount >= 2
 
   const statCardMeta = Object.fromEntries(
@@ -235,29 +287,22 @@ export default function DashboardPage() {
   const mobilePlatformCards = DASHBOARD_PLATFORMS
     .map(platform => ({
       ...platform,
-      value: printTotals[platform.key],
-      pct: printTotal > 0 ? Math.round(printTotals[platform.key] / printTotal * 100) : 0,
+      value: totals[platform.key],
+      pct: total > 0 ? Math.round(totals[platform.key] / total * 100) : 0,
       meta: statCardMeta[platform.key],
     }))
     .filter(platform => platform.value > 0)
 
-  const episodeSortOptions = [
-    { key: 'total' as const, label: 'Итого' },
-    { key: 'publishDate' as const, label: 'Дата' },
-    ...DASHBOARD_PLATFORMS.filter(platform => uploadedPlatforms.has(platform.key)).map(platform => ({
-      key: platform.key,
-      label: platform.label,
-    })),
-  ]
-
   const sortedEpisodes = [...episodes].sort((a, b) => {
     if (episodeSortKey === 'publishDate') {
-      return new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
+      const av = new Date(a.publishDate).getTime()
+      const bv = new Date(b.publishDate).getTime()
+      return episodeSortDesc ? bv - av : av - bv
     }
 
     const aValue = episodeSortKey === 'total' ? a.plays.total : a.plays[episodeSortKey]
     const bValue = episodeSortKey === 'total' ? b.plays.total : b.plays[episodeSortKey]
-    return bValue - aValue
+    return episodeSortDesc ? bValue - aValue : aValue - bValue
   })
 
   const visibleEpisodes = episodeListMode === 'top' ? sortedEpisodes.slice(0, 10) : sortedEpisodes
@@ -337,11 +382,54 @@ export default function DashboardPage() {
     }
   }, [dashboardTotalScenes, uploadedPlatformKeys.length, isDemo, podcastTitle, episodes.length])
 
+  useEffect(() => {
+    setEnabledPlatforms(prev => {
+      if (previousPodcastIdRef.current !== podcastId) {
+        previousPodcastIdRef.current = podcastId
+        return new Set(uploadedPlatformKeys)
+      }
+
+      let changed = false
+      const next = new Set(prev)
+      for (const platform of uploadedPlatformKeys) {
+        if (!next.has(platform)) {
+          next.add(platform)
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [podcastId, uploadedPlatformKeys])
+
+  function handleTogglePlatform(platform: Platform) {
+    setEnabledPlatforms(prev => {
+      if (!uploadedPlatforms.has(platform)) {
+        return prev
+      }
+
+      const enabledUploadedCount = uploadedPlatformKeys.reduce((count, key) => {
+        return prev.has(key) ? count + 1 : count
+      }, 0)
+
+      if (prev.has(platform) && enabledUploadedCount <= 1) {
+        return prev
+      }
+
+      const next = new Set(prev)
+      if (next.has(platform)) {
+        next.delete(platform)
+      } else {
+        next.add(platform)
+      }
+      return next
+    })
+  }
+
   const handlePrintPdf = () => {
     if (typeof window === 'undefined') return
 
     const originalTitle = document.title
-    const printTitle = sanitizePrintTitle(podcastTitle)
+    const printTitle = `${sanitizePrintTitle(podcastTitle)}_${formatPrintTimestamp()}`
     let restored = false
 
     const restoreTitle = () => {
@@ -404,7 +492,7 @@ export default function DashboardPage() {
           <h2 className="mt-3 text-[25px] font-bold leading-[0.95] tracking-tight text-[#1d1d1f]">
             Вся картина
             <br /> по подкасту
-            <br /> на 7 экранах
+            <br /> на {dashboardTotalScenes} экранах
           </h2>
           <p className="mt-2.5 max-w-[280px] text-[13px] leading-snug text-[#4a4a52]">
             Свайпай вверх: сводка, графики, эпизоды.
@@ -412,10 +500,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-1 flex-col justify-center">
-          {printTotal > 0 ? (
+          {total > 0 ? (
             <div className="rounded-[22px] bg-gradient-to-br from-[#7b57c8] to-[#9b6fe3] px-5 py-5 text-center shadow-[0_12px_28px_rgba(123,87,200,0.25)]">
               <p className="text-[11px] uppercase tracking-[0.14em] text-white/70">Всего прослушиваний</p>
-              <p className="mt-2 text-[40px] font-bold leading-none text-white">{printTotal.toLocaleString('ru')}</p>
+              <p className="mt-2 text-[40px] font-bold leading-none text-white">{total.toLocaleString('ru')}</p>
               <p className="mt-1.5 text-[13px] text-white/60">ср. {averagePerEpisode.toLocaleString('ru')} / эп.</p>
             </div>
           ) : (
@@ -434,8 +522,8 @@ export default function DashboardPage() {
           </div>
           <div className="rounded-[22px] border border-[#efe5ff] bg-white/82 px-4 py-3 shadow-[0_10px_24px_rgba(177,80,226,0.05)]">
             <p className="text-[11px] uppercase tracking-[0.12em] text-[#8e8e93]">Платформы</p>
-            <p className="mt-1.5 text-[22px] font-semibold leading-none text-[#1d1d1f]">{activePlatformLabels.length}</p>
-            <p className="mt-1 truncate text-[11px] text-[#8e8e93]">{activePlatformLabels.join(', ') || '—'}</p>
+            <p className="mt-1.5 text-[22px] font-semibold leading-none text-[#1d1d1f]">{uploadedPlatformLabels.length}</p>
+            <p className="mt-1 truncate text-[11px] text-[#8e8e93]">{uploadedPlatformLabels.join(', ') || '—'}</p>
           </div>
         </div>
 
@@ -481,7 +569,7 @@ export default function DashboardPage() {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/60">Всего</p>
-            <p className="mt-1 text-[32px] font-bold leading-none">{printTotal.toLocaleString('ru')}</p>
+            <p className="mt-1 text-[32px] font-bold leading-none">{total.toLocaleString('ru')}</p>
           </div>
           <div className="text-right">
             <p className="text-[12px] text-white/60">ср. {averagePerEpisode.toLocaleString('ru')} / эп.</p>
@@ -510,11 +598,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Топ эпизоды — заполняет остаток */}
-      {printTopEpisodes.length > 0 && (
+      {topEpisodes.length > 0 && (
         <div className="flex flex-1 flex-col rounded-2xl border border-[#e5e5ea] bg-white shadow-sm">
           <p className="px-4 pt-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6e6e73]">Топ эпизоды</p>
           <div className="flex flex-1 flex-col">
-            {printTopEpisodes.slice(0, 3).map((episode, index) => (
+            {topEpisodes.slice(0, 3).map((episode, index) => (
               <div key={episode.id} className={`flex items-center gap-3 px-4 py-2.5 ${index < 2 ? 'border-b border-[#f0f0f0]' : ''}`}>
                 <span className="text-[13px] font-semibold text-[#b150e2]">{index + 1}</span>
                 <p className="flex-1 truncate text-[13px] text-[#1d1d1f]">{episode.title}</p>
@@ -555,7 +643,10 @@ export default function DashboardPage() {
             {(['total', 'publishDate'] as const).map(key => (
               <button
                 key={key}
-                onClick={() => setEpisodeSortKey(key)}
+                onClick={() => {
+                  setEpisodeSortKey(key)
+                  setEpisodeSortDesc(true)
+                }}
                 className={[
                   'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
                   episodeSortKey === key
@@ -802,29 +893,41 @@ export default function DashboardPage() {
             className="px-4 pb-3"
             style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
           >
-            {isOverviewScene ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <button onClick={() => router.push('/')} className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity">
-                    ← Назад
-                  </button>
-                  {isDemo && (
-                    <span className="rounded-md border border-[#b150e2]/20 bg-[#b150e2]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#b150e2]">
-                      ДЕМО
-                    </span>
-                  )}
+            <div
+              className={[
+                'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                isOverviewScene ? 'max-h-[140px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1',
+              ].join(' ')}
+              aria-hidden={!isOverviewScene}
+            >
+              <div className="flex items-center justify-between">
+                <button onClick={() => router.push('/')} className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity">
+                  ← Назад
+                </button>
+                {isDemo && (
+                  <span className="rounded-md border border-[#b150e2]/20 bg-[#b150e2]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#b150e2]">
+                    ДЕМО
+                  </span>
+                )}
+              </div>
+              <div className="mt-2.5 flex items-center gap-3">
+                {podcastImageUrl && (
+                  <SafePodcastImage src={podcastImageUrl} alt={podcastTitle} width={36} height={36} className="rounded-xl object-cover shadow-sm" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <h1 className="truncate text-[16px] font-semibold text-[#1d1d1f]">{podcastTitle}</h1>
+                  <p className="mt-0.5 text-[12px] text-[#6e6e73]">{episodes.length} эпизодов</p>
                 </div>
-                <div className="mt-2.5 flex items-center gap-3">
-                  {podcastImageUrl && (
-                    <SafePodcastImage src={podcastImageUrl} alt={podcastTitle} width={36} height={36} className="rounded-xl object-cover shadow-sm" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-[16px] font-semibold text-[#1d1d1f]">{podcastTitle}</h1>
-                    <p className="mt-0.5 text-[12px] text-[#6e6e73]">{episodes.length} эпизодов</p>
-                  </div>
-                </div>
-              </>
-            ) : (
+              </div>
+            </div>
+
+            <div
+              className={[
+                'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                isOverviewScene ? 'max-h-0 opacity-0 translate-y-1' : 'max-h-[52px] opacity-100 translate-y-0',
+              ].join(' ')}
+              aria-hidden={isOverviewScene}
+            >
               <div className="flex items-center justify-between gap-3">
                 <button onClick={() => router.push('/')} className="text-[#b150e2] text-[13px] font-medium hover:opacity-70 transition-opacity">
                   ← Назад
@@ -834,10 +937,13 @@ export default function DashboardPage() {
                 </div>
                 <div className="w-[56px]" />
               </div>
-            )}
+            </div>
 
             {episodes.length > 0 && (
-              <div className={`${isOverviewScene ? 'mt-4' : 'mt-3'} flex justify-center`}>
+              <div
+                className="flex justify-center transition-[margin-top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ marginTop: isOverviewScene ? 16 : 12 }}
+              >
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 shadow-[inset_0_0_0_1px_rgba(229,229,234,1)]">
                   {mobileDashboardRenderScenes.map((scene, index) => (
                     <span
@@ -988,22 +1094,44 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
-              <StatCards episodes={episodes} rawPlays={rawPlays} platformMeta={statCardMeta} />
-              <TrendChart episodes={episodes} />
+              <PlatformFilters
+                uploadedPlatforms={uploadedPlatformKeys}
+                enabledPlatforms={enabledPlatforms}
+                onToggle={handleTogglePlatform}
+              />
+              <StatCards
+                episodes={episodes}
+                rawPlays={rawPlays}
+                platformMeta={statCardMeta}
+                enabledPlatforms={enabledPlatforms}
+              />
+              <TrendChart episodes={filteredEpisodes} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 print:grid-cols-3 print:gap-3">
                 <div className="md:col-span-1 print:col-span-1">
-                  <PlatformChart episodes={episodes} rawPlays={rawPlays} />
+                  <PlatformChart episodes={episodes} rawPlays={rawPlays} enabledPlatforms={enabledPlatforms} />
                 </div>
                 <div className="md:col-span-2 print:col-span-2">
                   <AIInsights
                     episodes={episodes}
                     podcastTitle={podcastTitle}
                     initialInsights={DEMO_INSIGHTS_MAP[podcastId]}
+                    filterActive={filterActive}
+                    disabledPlatformLabels={disabledPlatformLabels}
                   />
                 </div>
               </div>
-              <EpisodeTable episodes={episodes} />
-              {audience && (
+              <EpisodeTable
+                key={printTablePlatforms.map(platform => platform.key).join(',')}
+                episodes={filteredEpisodes}
+                enabledPlatforms={enabledPlatforms}
+                sortKey={episodeSortKey}
+                desc={episodeSortDesc}
+                onSortChange={(key, desc) => {
+                  setEpisodeSortKey(key)
+                  setEpisodeSortDesc(desc)
+                }}
+              />
+              {audience && enabledPlatforms.has('yandex') && (
                 <YandexAudienceSection audience={audience} />
               )}
             </>
@@ -1022,26 +1150,30 @@ export default function DashboardPage() {
               <div className="print-summary-grid">
                 <div className="print-summary-card print-summary-card--total">
                   <p className="print-summary-label">Всего</p>
-                  <p className="print-summary-value">{printTotal.toLocaleString('ru')}</p>
-                  <p className="print-summary-subvalue">ср. {averagePerEpisode.toLocaleString('ru')} / эп.</p>
+                  <p className="print-summary-value">{filteredTotal.toLocaleString('ru')}</p>
+                  <p className="print-summary-subvalue">ср. {filteredAveragePerEpisode.toLocaleString('ru')} / эп.</p>
                 </div>
-                {DASHBOARD_PLATFORMS
-                  .filter(platform => printTotals[platform.key] > 0)
+                {printTablePlatforms
+                  .filter(platform => filteredTotals[platform.key] > 0)
                   .map(platform => (
                     <div key={platform.key} className="print-summary-card">
                       <p className="print-summary-label">{platform.label}</p>
                       <p className="print-summary-value text-[#1d1d1f]">
-                        {printTotals[platform.key].toLocaleString('ru')}
+                        {filteredTotals[platform.key].toLocaleString('ru')}
                       </p>
                       <p className="print-summary-subvalue">
-                        {printTotal > 0 ? Math.round(printTotals[platform.key] / printTotal * 100) : 0}%
+                        {filteredTotal > 0 ? Math.round(filteredTotals[platform.key] / filteredTotal * 100) : 0}%
                       </p>
                     </div>
                   ))}
               </div>
-              <PrintTrendChart episodes={episodes} />
+              <PrintTrendChart episodes={filteredEpisodes} />
               <div className="w-full max-w-[320px] print:break-inside-avoid-page">
-                <PrintPlatformChart episodes={episodes} rawPlays={rawPlays} />
+                <PrintPlatformChart
+                  episodes={episodes}
+                  rawPlays={rawPlays}
+                  enabledPlatforms={enabledPlatforms}
+                />
               </div>
             </div>
           </PrintPage>
@@ -1050,12 +1182,16 @@ export default function DashboardPage() {
             title={podcastTitle}
             exportDate={exportDate}
             platformLabels={activePlatformLabels}
-            last={!audience}
+            last={!audience || !enabledPlatforms.has('yandex')}
           >
             <section className="bg-white rounded-2xl border border-[#e5e5ea] overflow-visible">
               <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-                <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Топ-10 эпизодов</h2>
-                <span className="text-[12px] text-[#8e8e93]">по суммарным прослушиваниям</span>
+                <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Топ-{PDF_EPISODE_LIMIT} эпизодов</h2>
+                <span className="text-[12px] text-[#8e8e93]">
+                  {episodeSortKey === 'total' && 'по суммарным прослушиваниям'}
+                  {episodeSortKey === 'publishDate' && (episodeSortDesc ? 'по дате публикации (новые сверху)' : 'по дате публикации (старые сверху)')}
+                  {episodeSortKey !== 'total' && episodeSortKey !== 'publishDate' && `по платформе ${DASHBOARD_PLATFORMS.find(platform => platform.key === episodeSortKey)?.label ?? episodeSortKey}`}
+                </span>
               </div>
               <table className="w-full text-[11px]">
                 <thead className="border-y border-[#f0f0f0]">
@@ -1064,13 +1200,15 @@ export default function DashboardPage() {
                     <th className="text-left px-2 py-2 font-medium">Эпизод</th>
                     <th className="text-right px-2 py-2 font-medium">Дата</th>
                     <th className="text-right px-2 py-2 font-medium">Итого</th>
-                    <th className="text-right px-2 py-2 font-medium">Яндекс</th>
-                    <th className="text-right px-2 py-2 font-medium">Mave</th>
-                    <th className="text-right px-3 py-2 font-medium">YouTube</th>
+                    {printTablePlatforms.map(platform => (
+                        <th key={platform.key} className="text-right px-2 py-2 font-medium">
+                          {platform.label}
+                        </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {printTopEpisodes.map((episode, index) => (
+                  {filteredTopEpisodes.map((episode, index) => (
                     <tr key={episode.id} className="border-b border-[#f5f5f7]">
                       <td className="px-3 py-2 text-[#8e8e93]">{index + 1}</td>
                       <td className="px-2 py-2 text-[#1d1d1f]">{episode.title}</td>
@@ -1086,9 +1224,11 @@ export default function DashboardPage() {
                       <td className="px-2 py-2 text-right font-semibold text-[#b150e2] whitespace-nowrap">
                         {episode.plays.total.toLocaleString('ru')}
                       </td>
-                      <td className="px-2 py-2 text-right whitespace-nowrap">{episode.plays.yandex.toLocaleString('ru')}</td>
-                      <td className="px-2 py-2 text-right whitespace-nowrap">{episode.plays.mave.toLocaleString('ru')}</td>
-                      <td className="px-3 py-2 text-right whitespace-nowrap">{episode.plays.youtube.toLocaleString('ru')}</td>
+                      {printTablePlatforms.map(platform => (
+                        <td key={platform.key} className="px-2 py-2 text-right whitespace-nowrap">
+                          {episode.plays[platform.key] > 0 ? episode.plays[platform.key].toLocaleString('ru') : '—'}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -1096,7 +1236,7 @@ export default function DashboardPage() {
             </section>
           </PrintPage>
 
-          {audience && (
+          {audience && enabledPlatforms.has('yandex') && (
             <PrintPage
               title={podcastTitle}
               exportDate={exportDate}
