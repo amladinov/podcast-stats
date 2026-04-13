@@ -97,9 +97,8 @@ function PrintPage({
       <header className="print-page-header">
         <div>
           <div className="print-page-brand">
-            <p className="print-page-eyebrow">Сделано</p>
             <img
-              src="/brand/mark-square.png"
+              src="/brand/mono.png"
               alt="Podcast Stats"
               className="print-page-brand-logo"
             />
