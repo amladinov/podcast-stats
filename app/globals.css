@@ -529,7 +529,21 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: #7a7a85;
+    margin: 0;
+  }
+
+  .print-page-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.2mm;
     margin: 0 0 3mm;
+  }
+
+  .print-page-brand-logo {
+    display: block;
+    height: 4.2mm;
+    width: auto;
+    max-width: 42mm;
   }
 
   .print-page-title {

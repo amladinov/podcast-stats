@@ -96,7 +96,14 @@ function PrintPage({
     <section className={`print-page ${last ? 'print-page-last' : ''}`}>
       <header className="print-page-header">
         <div>
-          <p className="print-page-eyebrow">Сделано в Podcast Stats</p>
+          <div className="print-page-brand">
+            <p className="print-page-eyebrow">Сделано</p>
+            <img
+              src="/brand/mono.png"
+              alt="Podcast Stats"
+              className="print-page-brand-logo"
+            />
+          </div>
           <h1 className="print-page-title">{title}</h1>
         </div>
         <div className="print-page-meta">
@@ -895,7 +902,7 @@ export default function DashboardPage() {
           >
             <div
               className={[
-                'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                'overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
                 isOverviewScene ? 'max-h-[140px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1',
               ].join(' ')}
               aria-hidden={!isOverviewScene}
@@ -923,7 +930,7 @@ export default function DashboardPage() {
 
             <div
               className={[
-                'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                'overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
                 isOverviewScene ? 'max-h-0 opacity-0 translate-y-1' : 'max-h-[52px] opacity-100 translate-y-0',
               ].join(' ')}
               aria-hidden={isOverviewScene}
@@ -941,7 +948,7 @@ export default function DashboardPage() {
 
             {episodes.length > 0 && (
               <div
-                className="flex justify-center transition-[margin-top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                className="flex justify-center transition-[margin-top] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
                 style={{ marginTop: isOverviewScene ? 16 : 12 }}
               >
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 shadow-[inset_0_0_0_1px_rgba(229,229,234,1)]">
@@ -992,11 +999,16 @@ export default function DashboardPage() {
                   <div
                     ref={element => { mobileSceneContentRefs.current[index] = element }}
                     className={[
-                      'h-full overscroll-contain pb-[max(env(safe-area-inset-bottom),12px)]',
+                      'h-full overscroll-contain',
                       scene.id === 'overview' || scene.id === 'episodes' || scene.id === 'episode-detail' || (scene.id === 'cities' && citiesExpanded)
                         ? 'overflow-y-auto'
                         : 'overflow-hidden',
                     ].join(' ')}
+                    style={{
+                      paddingBottom: scene.id === 'episodes' || scene.id === 'episode-detail'
+                        ? 'max(env(safe-area-inset-bottom), 92px)'
+                        : 'max(env(safe-area-inset-bottom), 16px)',
+                    }}
                   >
                     {renderMobileScene(scene.id)}
                   </div>
