@@ -5,10 +5,11 @@ import type { PlayRecord } from '@/types'
 // releaseDate is already ISO YYYY-MM-DD
 
 export function parseSpotify(csvText: string): PlayRecord[] {
-  const result = Papa.parse<Record<string, string>>(csvText, {
+  const cleaned = csvText.replace(/^﻿/, '')
+  const result = Papa.parse<Record<string, string>>(cleaned, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (h: string) => h.trim(),
+    transformHeader: (h: string) => h.trim().replace(/^﻿/, ''),
   })
 
   return (result.data as Record<string, string>[])

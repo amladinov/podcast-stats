@@ -65,7 +65,11 @@ export function TrendChart({ episodes, compact = false }: Props) {
             width={compact ? 34 : 40}
           />
           <Tooltip
-            cursor={false}
+            cursor={{
+              stroke: '#d1d1d6',
+              strokeWidth: 1,
+              strokeDasharray: '4 4',
+            }}
             contentStyle={{ background: '#fff', border: '1px solid #e5e5ea', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
             labelStyle={{ color: '#1d1d1f', fontSize: 12, fontWeight: 600 }}
             itemStyle={{ color: '#b150e2' }}

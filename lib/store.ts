@@ -2,7 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Podcast, PlayRecord, RSSEpisode, UploadedPlatform, YandexAudience } from '@/types'
 import { normalizePodcastData } from './matcher'
-import { DEMO_PODCASTS, DEMO_IDS } from './demoData'
+import { DEMO_PODCASTS } from './demoData'
+import { resolvePodcastCoverUrl } from './podcastCover'
+import { deserializeStoreFromStorage, getStorageVersion, serializeStoreForStorage, type PersistedStoreV2 } from './storePersist'
 
 interface PodcastStore {
   podcasts: Podcast[]
@@ -21,12 +23,18 @@ export const usePodcastStore = create<PodcastStore>()(
 
       addPodcast: (rssUrl, title, description, imageUrl, episodes) => {
         const id = crypto.randomUUID()
+        const resolvedImageUrl = resolvePodcastCoverUrl({
+          title,
+          rssUrl,
+          imageUrl,
+          episodes,
+        })
         const podcast: Podcast = {
           id,
           rssUrl,
           title,
           description,
-          imageUrl,
+          imageUrl: resolvedImageUrl,
           episodes,
           rawPlays: [],
           normalized: [],
@@ -138,15 +146,20 @@ export const usePodcastStore = create<PodcastStore>()(
     }),
     {
       name: 'podcast-stats-store',
-      partialize: (state) => ({
-        podcasts: state.podcasts
-          .filter(p => !DEMO_IDS.has(p.id))
-          .map(p => ({
-            ...p,
-            // Raw play rows from large CSVs (especially Mave daily exports) quickly exceed localStorage quota.
-            // Persist only normalized UI data and keep raw rows in memory for the active session.
-            rawPlays: [],
-          })),
+      version: getStorageVersion(),
+      partialize: (state): PersistedStoreV2 => serializeStoreForStorage(state),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...(() => {
+          const restored = deserializeStoreFromStorage(persistedState)
+          return {
+            ...restored,
+            podcasts: restored.podcasts.map(podcast => ({
+              ...podcast,
+              imageUrl: resolvePodcastCoverUrl(podcast),
+            })),
+          }
+        })(),
       }),
     }
   )

@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import type { YandexAudience } from '@/types'
+import { renderDonutShape } from '@/components/dashboard/donutActiveShape'
 
 const YANDEX_COLOR = '#ff9f0a'
 
@@ -14,6 +16,7 @@ const GENDER_COLORS: Record<string, string> = {
 const AGE_COLORS = ['#b150e2', '#0a84ff', '#ff9f0a', '#30d158', '#ff6b9d', '#ff453a', '#aeaeb2']
 
 function DonutSection({ title, data }: { title: string; data: { name: string; value: number; color: string }[] }) {
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined)
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return null
 
@@ -30,7 +33,10 @@ function DonutSection({ title, data }: { title: string; data: { name: string; va
             outerRadius={70}
             paddingAngle={2}
             dataKey="value"
-            activeShape={false}
+            shape={props => renderDonutShape(props, props.index === activeIndex)}
+            onMouseEnter={(_, index) => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(undefined)}
+            onClick={(_, index) => setActiveIndex(index)}
             rootTabIndex={-1}
           >
             {data.map((entry, i) => (

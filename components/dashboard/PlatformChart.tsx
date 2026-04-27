@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import type { NormalizedEpisode, PlayRecord } from '@/types'
+import type { NormalizedEpisode, Platform, PlayRecord } from '@/types'
 import { getPlatformTotals } from '@/lib/podcastMetrics'
+import { renderDonutShape } from '@/components/dashboard/donutActiveShape'
 
 const PLATFORMS = [
   { key: 'mave' as const, label: 'Mave', color: '#b150e2' },
@@ -16,10 +18,12 @@ interface Props {
   episodes: NormalizedEpisode[]
   rawPlays: PlayRecord[]
   compact?: boolean
+  enabledPlatforms?: Set<Platform>
 }
 
-export function PlatformChart({ episodes, rawPlays, compact = false }: Props) {
-  const totals = getPlatformTotals(episodes, rawPlays)
+export function PlatformChart({ episodes, rawPlays, compact = false, enabledPlatforms }: Props) {
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined)
+  const totals = getPlatformTotals(episodes, rawPlays, enabledPlatforms)
 
   const data = PLATFORMS
     .map(p => ({
@@ -46,7 +50,10 @@ export function PlatformChart({ episodes, rawPlays, compact = false }: Props) {
             outerRadius={compact ? 60 : 70}
             paddingAngle={2}
             dataKey="value"
-            activeShape={false}
+            shape={props => renderDonutShape(props, props.index === activeIndex)}
+            onMouseEnter={(_, index) => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(undefined)}
+            onClick={(_, index) => setActiveIndex(index)}
             rootTabIndex={-1}
           >
             {data.map((entry, i) => (

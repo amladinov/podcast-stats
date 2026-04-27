@@ -34,6 +34,7 @@ const EPISODE_LINE = /^(\d+)\s+выпуск$/i
 const SEASON_LINE = /^(\d+)\s+сезон$/i
 const NO_SEASON_LINE = /^без сезона$/i
 const DURATION_LINE = /^\d{1,2}:\d{2}(?::\d{2})?$/
+const VIDEO_RELEASE_LINE = /^видеовыпуск$/i
 const NUMBER_LINE = /^\d[\d ]*$/
 
 function normalizeMonth(month: string): string | null {
@@ -87,7 +88,7 @@ export function parseMavePaste(text: string): MavePasteParseResult {
     }
 
     const episodeMatch = line.match(EPISODE_LINE)
-    const startsWithoutSeason = currentSeason === 'Без сезона' && parseRuDate(line)
+    const maybeDate = parseRuDate(line)
 
     let episodeNumber: number | undefined
     let dateLine: string | null = null
@@ -97,7 +98,7 @@ export function parseMavePaste(text: string): MavePasteParseResult {
       episodeNumber = Number.parseInt(episodeMatch[1], 10)
       dateLine = lines[index + 1] ?? null
       index += 2
-    } else if (startsWithoutSeason) {
+    } else if (maybeDate) {
       dateLine = line
       index += 1
     } else {
@@ -121,10 +122,21 @@ export function parseMavePaste(text: string): MavePasteParseResult {
     }
 
     const durationLabel = lines[index]
-    const playsLine = lines[index + 1]
-    const videoViewsLine = lines[index + 2]
+    if (!durationLabel || !DURATION_LINE.test(durationLabel)) {
+      warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` })
+      continue
+    }
 
-    if (!durationLabel || !DURATION_LINE.test(durationLabel) || !playsLine || !NUMBER_LINE.test(playsLine) || !videoViewsLine || !NUMBER_LINE.test(videoViewsLine)) {
+    index += 1
+
+    if (VIDEO_RELEASE_LINE.test(lines[index] ?? '')) {
+      index += 1
+    }
+
+    const playsLine = lines[index]
+    const videoViewsLine = lines[index + 1]
+
+    if (!playsLine || !NUMBER_LINE.test(playsLine) || !videoViewsLine || !NUMBER_LINE.test(videoViewsLine)) {
       warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` })
       continue
     }
@@ -146,7 +158,7 @@ export function parseMavePaste(text: string): MavePasteParseResult {
       videoViews: parseInteger(videoViewsLine),
     })
 
-    index += 3
+    index += 2
   }
 
   return {

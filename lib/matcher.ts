@@ -1,5 +1,8 @@
 import type { RSSEpisode, PlayRecord, NormalizedEpisode } from '@/types'
 
+const MIN_TITLE_MATCH_SCORE = 0.6
+const AMBIGUOUS_MATCH_DELTA = 0.05
+
 function normalize(str: string): string {
   return str
     .toLowerCase()
@@ -24,8 +27,31 @@ type EpisodeIndex = {
   ordered: IndexedEpisode[]
 }
 
+type ScoredCandidate = {
+  candidate: IndexedEpisode
+  score: number
+}
+
+type YandexTitleVariant = {
+  normalizedTitle: string
+  tokens: Set<string>
+  signature: string
+}
+
+type YandexMatchResult = {
+  episode: RSSEpisode | null
+  score: number
+  signatures: string[]
+  isAmbiguous: boolean
+  resolvedByAnchor: boolean
+}
+
 function getTokens(normalized: string): Set<string> {
   return new Set(normalized.split(' ').filter(word => word.length > 3))
+}
+
+function getTokenSignature(tokens: Set<string>): string {
+  return Array.from(tokens).sort().join('|')
 }
 
 function similarity(
@@ -93,6 +119,162 @@ function buildEpisodeIndex(episodes: RSSEpisode[]): EpisodeIndex {
   return { exactTitle, publishDate, tokenIndex, ordered }
 }
 
+function getCandidatePool(index: EpisodeIndex, queryTokens: Set<string>): IndexedEpisode[] {
+  const narrowed = new Map<string, IndexedEpisode>()
+  for (const token of queryTokens) {
+    for (const candidate of index.tokenIndex.get(token) ?? []) {
+      narrowed.set(candidate.episode.guid, candidate)
+    }
+  }
+  return narrowed.size > 0 ? Array.from(narrowed.values()) : index.ordered
+}
+
+function rankCandidates(
+  index: EpisodeIndex,
+  queryNormalized: string,
+  queryTokens: Set<string>
+): ScoredCandidate[] {
+  const candidatePool = getCandidatePool(index, queryTokens)
+  return candidatePool
+    .map(candidate => ({
+      candidate,
+      score: similarity(queryNormalized, queryTokens, candidate),
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => (b.score - a.score) || (a.candidate.order - b.candidate.order))
+}
+
+function buildYandexTitleVariants(title: string): YandexTitleVariant[] {
+  const rawVariants = [title]
+  rawVariants.push(
+    ...title
+      .split(/[:/]/g)
+      .map(part => part.trim())
+      .filter(Boolean)
+  )
+
+  const variants: YandexTitleVariant[] = []
+  const seenNormalized = new Set<string>()
+
+  for (const raw of rawVariants) {
+    const normalizedTitle = normalize(raw)
+    if (!normalizedTitle || seenNormalized.has(normalizedTitle)) continue
+    seenNormalized.add(normalizedTitle)
+
+    const tokens = getTokens(normalizedTitle)
+    variants.push({
+      normalizedTitle,
+      tokens,
+      signature: getTokenSignature(tokens),
+    })
+  }
+
+  return variants
+}
+
+function findYandexEpisode(
+  index: EpisodeIndex,
+  title: string,
+  anchorsBySignature: Map<string, string>
+): YandexMatchResult {
+  const variants = buildYandexTitleVariants(title)
+  if (variants.length === 0) {
+    return {
+      episode: null,
+      score: 0,
+      signatures: [],
+      isAmbiguous: false,
+      resolvedByAnchor: false,
+    }
+  }
+
+  const candidateScores = new Map<string, ScoredCandidate>()
+  for (const variant of variants) {
+    const ranked = rankCandidates(index, variant.normalizedTitle, variant.tokens)
+    for (const scored of ranked) {
+      const guid = scored.candidate.episode.guid
+      const existing = candidateScores.get(guid)
+      if (!existing || scored.score > existing.score) {
+        candidateScores.set(guid, scored)
+      }
+    }
+  }
+
+  const ranked = Array.from(candidateScores.values())
+    .sort((a, b) => (b.score - a.score) || (a.candidate.order - b.candidate.order))
+
+  if (ranked.length === 0) {
+    return {
+      episode: null,
+      score: 0,
+      signatures: variants.map(variant => variant.signature).filter(Boolean),
+      isAmbiguous: false,
+      resolvedByAnchor: false,
+    }
+  }
+
+  const best = ranked[0]
+  if (best.score < MIN_TITLE_MATCH_SCORE) {
+    return {
+      episode: null,
+      score: best.score,
+      signatures: variants.map(variant => variant.signature).filter(Boolean),
+      isAmbiguous: false,
+      resolvedByAnchor: false,
+    }
+  }
+
+  const secondBest = ranked[1]
+  const isAmbiguous =
+    !!secondBest && (best.score - secondBest.score) <= AMBIGUOUS_MATCH_DELTA
+  const signatures = variants.map(variant => variant.signature).filter(Boolean)
+
+  if (!isAmbiguous) {
+    return {
+      episode: best.candidate.episode,
+      score: best.score,
+      signatures,
+      isAmbiguous: false,
+      resolvedByAnchor: false,
+    }
+  }
+
+  for (const signature of signatures) {
+    const anchoredGuid = anchorsBySignature.get(signature)
+    if (!anchoredGuid) continue
+
+    const anchoredCandidate = candidateScores.get(anchoredGuid)
+    if (anchoredCandidate) {
+      return {
+        episode: anchoredCandidate.candidate.episode,
+        score: anchoredCandidate.score,
+        signatures,
+        isAmbiguous: true,
+        resolvedByAnchor: true,
+      }
+    }
+
+    const anchoredEpisode = index.ordered.find(item => item.episode.guid === anchoredGuid)
+    if (anchoredEpisode) {
+      return {
+        episode: anchoredEpisode.episode,
+        score: best.score,
+        signatures,
+        isAmbiguous: true,
+        resolvedByAnchor: true,
+      }
+    }
+  }
+
+  return {
+    episode: best.candidate.episode,
+    score: best.score,
+    signatures,
+    isAmbiguous: true,
+    resolvedByAnchor: false,
+  }
+}
+
 function chooseBestCandidate(
   candidates: IndexedEpisode[],
   targetTimestamp?: number
@@ -134,17 +316,9 @@ function findEpisodeByTitle(
   }
 
   const queryTokens = getTokens(normalizedTitle)
-  const narrowed = new Map<string, IndexedEpisode>()
-
-  for (const token of queryTokens) {
-    for (const candidate of index.tokenIndex.get(token) ?? []) {
-      narrowed.set(candidate.episode.guid, candidate)
-    }
-  }
-
-  const candidatePool = narrowed.size > 0 ? Array.from(narrowed.values()) : index.ordered
+  const candidatePool = getCandidatePool(index, queryTokens)
   let best: IndexedEpisode | null = null
-  let bestScore = 0.6 // minimum threshold
+  let bestScore = MIN_TITLE_MATCH_SCORE // minimum threshold
 
   for (const candidate of candidatePool) {
     const score = similarity(normalizedTitle, queryTokens, candidate)
@@ -213,6 +387,8 @@ export function normalizePodcastData(
   plays: PlayRecord[]
 ): NormalizedEpisode[] {
   const index = buildEpisodeIndex(episodes)
+  const yandexAnchorsBySignature = new Map<string, string>()
+  const yandexCompletionAccumulators = new Map<string, { weightedSum: number; weight: number }>()
   // Build map keyed by episode guid
   const map = new Map<string, NormalizedEpisode>()
 
@@ -230,10 +406,14 @@ export function normalizePodcastData(
 
   for (const record of plays) {
     let episode: RSSEpisode | null = null
+    let yandexMatch: YandexMatchResult | null = null
 
     if (record.platform === 'vk') {
       // VK has no title — match by date
       episode = findEpisodeByDate(index, record.date)
+    } else if (record.platform === 'yandex') {
+      yandexMatch = findYandexEpisode(index, record.episodeTitle, yandexAnchorsBySignature)
+      episode = yandexMatch.episode
     } else if (record.platform === 'youtube') {
       // YouTube: try title first, fallback to date ±2 days
       episode = findEpisodeByTitle(index, record.episodeTitle, record.date)
@@ -248,6 +428,17 @@ export function normalizePodcastData(
     const norm = map.get(episode.guid)
     if (!norm) continue
 
+    if (record.platform === 'yandex' && yandexMatch) {
+      const canAnchor =
+        yandexMatch.score >= MIN_TITLE_MATCH_SCORE &&
+        (!yandexMatch.isAmbiguous || yandexMatch.resolvedByAnchor)
+      if (canAnchor) {
+        for (const signature of yandexMatch.signatures) {
+          yandexAnchorsBySignature.set(signature, episode.guid)
+        }
+      }
+    }
+
     if (record.platform === 'mave') {
       if (record.sourceKind === 'paste') {
         norm.plays.mave = record.plays
@@ -258,11 +449,21 @@ export function normalizePodcastData(
         norm.timeline.push({ date: record.date, plays: record.plays })
       }
     } else if (record.platform === 'yandex') {
-      norm.plays.yandex = record.plays // total starts
-      norm.yandexStarts = record.plays
-      norm.yandexListeners = record.listeners
-      norm.yandexHours = record.streams // Яндекс "Стримы" → reuse streams field
-      norm.yandexCompletionRate = record.completionRate
+      norm.plays.yandex += record.plays
+      norm.yandexStarts = (norm.yandexStarts ?? 0) + record.plays
+      norm.yandexListeners = (norm.yandexListeners ?? 0) + (record.listeners ?? 0)
+      norm.yandexHours = (norm.yandexHours ?? 0) + (record.streams ?? 0) // Яндекс "Стримы" → reuse streams field
+
+      if (record.completionRate !== undefined && record.plays > 0) {
+        const completion = yandexCompletionAccumulators.get(episode.guid) ?? {
+          weightedSum: 0,
+          weight: 0,
+        }
+        completion.weightedSum += record.completionRate * record.plays
+        completion.weight += record.plays
+        yandexCompletionAccumulators.set(episode.guid, completion)
+        norm.yandexCompletionRate = completion.weightedSum / completion.weight
+      }
     } else if (record.platform === 'spotify') {
       norm.plays.spotify = record.plays
       norm.spotifyStreams = record.streams

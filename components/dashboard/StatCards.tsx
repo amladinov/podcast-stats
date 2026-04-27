@@ -11,10 +11,11 @@ interface Props {
   episodes: NormalizedEpisode[]
   rawPlays: PlayRecord[]
   platformMeta: Partial<Record<Platform, PlatformCardMeta>>
+  enabledPlatforms?: Set<Platform>
 }
 
-export function StatCards({ episodes, rawPlays, platformMeta }: Props) {
-  const totals = getPlatformTotals(episodes, rawPlays)
+export function StatCards({ episodes, rawPlays, platformMeta, enabledPlatforms }: Props) {
+  const totals = getPlatformTotals(episodes, rawPlays, enabledPlatforms)
   const mave = totals.mave
   const yandex = totals.yandex
   const spotify = totals.spotify

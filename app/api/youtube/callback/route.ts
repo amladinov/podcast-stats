@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
+const PODCAST_ID_PATTERN = /^[a-zA-Z0-9-]{1,64}$/
+
 function getGoogleOAuthConfig() {
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
@@ -13,12 +15,20 @@ function getGoogleOAuthConfig() {
   return { clientId, clientSecret, redirectUri }
 }
 
+function isValidPodcastId(value: string): boolean {
+  return PODCAST_ID_PATTERN.test(value)
+}
+
 function extractPodcastId(stateParam: string | null): string | null {
   if (!stateParam) return null
 
   try {
     const decoded = JSON.parse(Buffer.from(stateParam, 'base64url').toString()) as { podcastId?: string }
-    return decoded.podcastId ?? null
+    if (!decoded.podcastId || !isValidPodcastId(decoded.podcastId)) {
+      return null
+    }
+
+    return decoded.podcastId
   } catch {
     return null
   }

@@ -431,7 +431,7 @@ export const DEMO_PODCAST_2: Podcast = {
   rssUrl: 'https://demo-2',
   title: 'Скоро 30',
   description: 'Смешной подкаст о стереотипах про 30-летие. Ведущие: Александра Рудко, Анастасия Хавалкина, Анастасия Гасс.',
-  imageUrl: 'https://cdn.mave.digital/storage/podcasts/1f01963c-e6cd-4754-b920-033bb4ee32c3/images/e5a9d33f-a913-4ba0-8bb7-8018c885bea1.jpg',
+  imageUrl: 'https://cdn.mave.digital/storage/podcasts/1f01963c-e6cd-4754-b920-033bb4ee32c3/images/8bb8f7c8-ab2b-4c1b-b16e-3e29c73288c3.png',
   createdAt: '2026-02-25T12:00:00Z',
 
   uploadedPlatforms: [

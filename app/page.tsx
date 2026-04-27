@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { HeroDemoCta } from '@/components/HeroDemoCta'
 import { SafePodcastImage } from '@/components/SafePodcastImage'
 import { getCtaClasses } from '@/lib/ctaStyles'
+import { resolvePodcastCoverUrl } from '@/lib/podcastCover'
 import { usePodcastStore } from '@/lib/store'
 import { DEMO_IDS } from '@/lib/demoData'
 import type { RSSEpisode } from '@/types'
@@ -22,6 +23,8 @@ function PodcastCard({
   onOpenSetup: () => void
   compact?: boolean
 }) {
+  const coverUrl = resolvePodcastCoverUrl(podcast)
+
   return (
     <div
       className={[
@@ -30,8 +33,8 @@ function PodcastCard({
       ].join(' ')}
     >
       <div className={['flex items-start', compact ? 'gap-2.5' : 'gap-3'].join(' ')}>
-        {podcast.imageUrl
-          ? <SafePodcastImage src={podcast.imageUrl} alt={podcast.title} width={compact ? 58 : 80} height={compact ? 58 : 80} className="rounded object-cover flex-shrink-0" />
+        {coverUrl
+          ? <SafePodcastImage src={coverUrl} alt={podcast.title} width={compact ? 58 : 80} height={compact ? 58 : 80} className="rounded object-cover flex-shrink-0" />
           : <div className={['rounded bg-[#f5f5f7] flex-shrink-0', compact ? 'w-[58px] h-[58px]' : 'w-20 h-20'].join(' ')} />
         }
         <div className="flex-1 min-w-0">

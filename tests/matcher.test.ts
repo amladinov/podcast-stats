@@ -49,6 +49,118 @@ test('cyrillic quotes still match the same episode', () => {
   assert.equal(matched.yandexCompletionRate, 66.6)
 })
 
+test('yandex duplicate rows are accumulated with weighted completion rate', () => {
+  const localEpisodes: RSSEpisode[] = [
+    {
+      guid: 'ep-yandex',
+      title: 'Рынок труда глазами хедхантера / Роман Мазур',
+      publishDate: '2024-01-10',
+    },
+  ]
+  const plays: PlayRecord[] = [
+    {
+      episodeTitle: 'Роман Мазур: рынок труда глазами хедхантера',
+      platform: 'yandex',
+      date: '',
+      plays: 349,
+      listeners: 177,
+      streams: 212,
+      completionRate: 35.38,
+    },
+    {
+      episodeTitle: 'Рынок труда глазами хедхантера / Роман Мазур',
+      platform: 'yandex',
+      date: '',
+      plays: 258,
+      listeners: 139,
+      streams: 168,
+      completionRate: 38.69,
+    },
+  ]
+
+  const normalized = normalizePodcastData(localEpisodes, plays)
+  const matched = normalized.find(item => item.id === 'ep-yandex')
+
+  assert.ok(matched)
+  assert.equal(matched.plays.yandex, 607)
+  assert.equal(matched.yandexStarts, 607)
+  assert.equal(matched.yandexListeners, 316)
+  assert.equal(matched.yandexHours, 380)
+
+  const expectedCompletionRate = (35.38 * 349 + 38.69 * 258) / 607
+  assert.ok(matched.yandexCompletionRate !== undefined)
+  assert.ok(Math.abs((matched.yandexCompletionRate ?? 0) - expectedCompletionRate) < 1e-9)
+})
+
+test('ambiguous yandex match falls back to the best score when anchor is absent', () => {
+  const localEpisodes: RSSEpisode[] = [
+    {
+      guid: 'ep-b',
+      title: 'Рынок труда глазами эйчар / Роман Мазур',
+      publishDate: '2024-01-03',
+    },
+    {
+      guid: 'ep-a',
+      title: 'Рынок труда глазами хедхантера / Роман Мазур',
+      publishDate: '2024-01-02',
+    },
+  ]
+  const plays: PlayRecord[] = [
+    {
+      episodeTitle: 'Роман Мазур: рынок труда глазами',
+      platform: 'yandex',
+      date: '',
+      plays: 40,
+      listeners: 20,
+      streams: 8,
+      completionRate: 30,
+    },
+  ]
+
+  const normalized = normalizePodcastData(localEpisodes, plays)
+  assert.equal(normalized.find(item => item.id === 'ep-b')?.plays.yandex, 40)
+  assert.equal(normalized.find(item => item.id === 'ep-a')?.plays.yandex, 0)
+})
+
+test('ambiguous yandex match uses anchor from a confident duplicate', () => {
+  const localEpisodes: RSSEpisode[] = [
+    {
+      guid: 'ep-b',
+      title: 'Рынок труда глазами эйчар / Роман Мазур',
+      publishDate: '2024-01-03',
+    },
+    {
+      guid: 'ep-a',
+      title: 'Рынок труда глазами хедхантера / Роман Мазур',
+      publishDate: '2024-01-02',
+    },
+  ]
+  const plays: PlayRecord[] = [
+    {
+      episodeTitle: 'Рынок труда глазами хедхантера / Роман Мазур',
+      platform: 'yandex',
+      date: '',
+      plays: 100,
+      listeners: 50,
+      streams: 20,
+      completionRate: 50,
+    },
+    {
+      episodeTitle: 'Роман Мазур: рынок труда глазами',
+      platform: 'yandex',
+      date: '',
+      plays: 40,
+      listeners: 20,
+      streams: 8,
+      completionRate: 30,
+    },
+  ]
+
+  const normalized = normalizePodcastData(localEpisodes, plays)
+  assert.equal(normalized.find(item => item.id === 'ep-a')?.plays.yandex, 140)
+  assert.equal(normalized.find(item => item.id === 'ep-b')?.plays.yandex, 0)
+})
+
 test('partial title containment still matches the intended episode', () => {
   const plays: PlayRecord[] = [
     {

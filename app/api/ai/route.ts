@@ -181,7 +181,8 @@ ${bottom3.map((e, i) => `${i + 1}. «${e.title}» — ${e.plays.total.toLocaleSt
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const text = message.content[0].type === 'text' ? message.content[0].text : ''
+    const firstBlock = message.content[0]
+    const text = firstBlock?.type === 'text' ? firstBlock.text : ''
     return NextResponse.json({ insights: text })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

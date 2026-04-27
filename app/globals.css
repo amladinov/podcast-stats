@@ -518,7 +518,6 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     gap: 8mm;
-    border-bottom: 1px solid #d9d9de;
     padding: 0 0 4mm;
     margin: 0 0 5mm;
   }

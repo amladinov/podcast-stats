@@ -45,3 +45,38 @@ test('parseMavePaste parses seasons, multi-line titles and spaced integers', () 
   assert.equal(result.episodes[1]?.publishDate, '2022-10-04')
   assert.equal(result.episodes[1]?.title, 'Трейлер подкаста «Совет Директоров»')
 })
+
+test('parseMavePaste parses date-first Mave cards and optional "Видеовыпуск" line', () => {
+  const input = `
+5 сезон
+16 апр. 2026
+
+«АМБИЦИИ или ТРЕВОГА?» мы правда хотим больше или боимся быть обычными?
+
+41:47
+517
+
+0
+11 февр. 2026
+
+«ОН СТАРШЕ НА 10 ЛЕТ!»: как строить отношения с большой разницей в возрасте?
+
+30:02
+Видеовыпуск
+793
+
+40
+  `
+
+  const result = parseMavePaste(input)
+
+  assert.equal(result.episodes.length, 2)
+  assert.equal(result.warnings.length, 0)
+  assert.equal(result.episodes[0]?.seasonLabel, '5 сезон')
+  assert.equal(result.episodes[0]?.publishDate, '2026-04-16')
+  assert.equal(result.episodes[0]?.plays, 517)
+  assert.equal(result.episodes[0]?.videoViews, 0)
+  assert.equal(result.episodes[1]?.publishDate, '2026-02-11')
+  assert.equal(result.episodes[1]?.plays, 793)
+  assert.equal(result.episodes[1]?.videoViews, 40)
+})

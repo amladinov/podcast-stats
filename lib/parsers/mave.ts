@@ -16,7 +16,8 @@ function ddmmyyyyToMonthISO(ddmmyyyy: string): string {
 }
 
 export function parseMave(csvText: string): PlayRecord[] {
-  const result = Papa.parse<string[]>(csvText, {
+  const cleaned = csvText.replace(/^﻿/, '')
+  const result = Papa.parse<string[]>(cleaned, {
     header: false,
     skipEmptyLines: true,
   })

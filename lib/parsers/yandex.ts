@@ -1,29 +1,14 @@
-import Papa from 'papaparse'
 import type { PlayRecord } from '@/types'
+import { parseRuFloat, parseRuInt, parseYandexCsv } from './yandexCommon'
 
 // Yandex CSV (semicolon-separated):
 // Ранг;Эпизод;Старты;Слушатели;Стримы;Часы;Средний процент прослушивания, %;Процент дослушиваемости, %
 // Decimal separator is comma (52,9)
 
-function parseRuFloat(s: string): number {
-  return parseFloat((s || '0').replace(',', '.')) || 0
-}
-
-function parseRuInt(s: string): number {
-  return parseInt((s || '0').replace(/\s/g, ''), 10) || 0
-}
-
 export function parseYandex(csvText: string): PlayRecord[] {
-  const result = Papa.parse<Record<string, string>>(csvText, {
-    header: true,
-    skipEmptyLines: true,
-    delimiter: ';',
-    transformHeader: (h: string) => h.trim(),
-  })
-
-  return (result.data as Record<string, string>[])
+  return parseYandexCsv(csvText)
     .filter(row => row['Эпизод'])
-    .map((row: Record<string, string>) => ({
+    .map(row => ({
       episodeTitle: row['Эпизод'].trim(),
       platform: 'yandex' as const,
       date: '', // Yandex has no dates — all-time aggregated

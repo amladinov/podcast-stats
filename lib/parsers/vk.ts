@@ -26,6 +26,21 @@ export function parseVK(csvText: string): PlayRecord[] {
 
   // Detect column indices from header row
   const headers = rows[0].map(h => h.trim().replace(/^\uFEFF/, '')) // strip BOM if present
+  const hasGeneralExportSignature =
+    headers.some(h => h.includes('Вид данных')) &&
+    headers.some(h => h.includes('Сортировка: гранулярность')) &&
+    headers.some(h => h.includes('Значение'))
+
+  const hasGeneralExportRows = rows
+    .slice(1, Math.min(rows.length, 20))
+    .some(row => row?.[0]?.trim() === 'Подкасты' && row?.[1]?.trim() === 'Общее')
+
+  if (hasGeneralExportSignature || hasGeneralExportRows) {
+    throw new Error(
+      'Этот CSV ВК формата «Подкасты / Общее» не поддерживается. Выгрузи эпизодную статистику из раздела «Подкасты → Эпизоды».'
+    )
+  }
+
   const dateIdx = headers.findIndex(h => h.includes('Дата') || h.toLowerCase().includes('date'))
   const playsIdx = headers.findIndex(h => h.includes('избранное') || h.toLowerCase().includes('favorite'))
 

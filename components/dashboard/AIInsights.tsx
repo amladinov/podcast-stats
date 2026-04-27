@@ -10,13 +10,22 @@ interface Props {
   podcastTitle: string
   initialInsights?: string
   compact?: boolean
+  filterActive?: boolean
+  disabledPlatformLabels?: string[]
 }
 
-export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
+export function AIInsights({
+  episodes,
+  podcastTitle,
+  initialInsights,
+  filterActive = false,
+  disabledPlatformLabels = [],
+}: Props) {
   const [loading, setLoading] = useState(false)
   const [insights, setInsights] = useState(initialInsights ?? '')
   const [error, setError] = useState('')
   const hasPreviewInsights = !AI_INSIGHTS_ENABLED && Boolean(insights)
+  const showFilterNotice = filterActive && disabledPlatformLabels.length > 0
 
   async function analyze() {
     if (!AI_INSIGHTS_ENABLED) return
@@ -41,6 +50,11 @@ export function AIInsights({ episodes, podcastTitle, initialInsights }: Props) {
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] shadow-sm h-full flex flex-col print:shadow-none">
+      {showFilterNotice && (
+        <p className="mb-3 rounded-xl border border-[#ffd8a8] bg-[#fff8ef] px-3 py-2 text-[12px] text-[#8a4f00]">
+          AI-аналитика посчитана по всем источникам. Фильтр не учтён: {disabledPlatformLabels.join(', ')}.
+        </p>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-[15px] font-semibold text-[#1d1d1f]">AI-аналитика</h2>
         <button

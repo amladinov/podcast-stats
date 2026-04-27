@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { NormalizedEpisode, PlayRecord, YandexAudience } from '@/types'
+import type { NormalizedEpisode, Platform, PlayRecord, YandexAudience } from '@/types'
 import { getPlatformTotals } from '@/lib/podcastMetrics'
 
 const PLATFORM_CONFIG = [
@@ -51,7 +51,7 @@ export function PrintTrendChart({ episodes }: { episodes: NormalizedEpisode[] })
       {data.length === 0 ? (
         <p className="text-[#8e8e93] text-[13px]">Нет данных для графика. Загрузи CSV от Mave.</p>
       ) : (
-        <AreaChart width={700} height={210} data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+        <AreaChart width={700} height={210} data={data} margin={{ top: 4, right: 24, left: 0, bottom: 8 }}>
           <defs>
             <linearGradient id="printPlaysGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#b150e2" stopOpacity={0.18} />
@@ -59,7 +59,14 @@ export function PrintTrendChart({ episodes }: { episodes: NormalizedEpisode[] })
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-          <XAxis dataKey="month" tick={{ fill: '#8e8e93', fontSize: 11 }} tickLine={false} axisLine={false} />
+          <XAxis
+            dataKey="month"
+            tick={{ fill: '#8e8e93', fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={6}
+            padding={{ right: 18 }}
+          />
           <YAxis tick={{ fill: '#8e8e93', fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
           <Area
             type="monotone"
@@ -79,11 +86,13 @@ export function PrintTrendChart({ episodes }: { episodes: NormalizedEpisode[] })
 export function PrintPlatformChart({
   episodes,
   rawPlays,
+  enabledPlatforms,
 }: {
   episodes: NormalizedEpisode[]
   rawPlays: PlayRecord[]
+  enabledPlatforms?: Set<Platform>
 }) {
-  const totals = getPlatformTotals(episodes, rawPlays)
+  const totals = getPlatformTotals(episodes, rawPlays, enabledPlatforms)
   const data = PLATFORM_CONFIG
     .map(platform => ({
       name: platform.label,
@@ -95,7 +104,7 @@ export function PrintPlatformChart({
   const total = data.reduce((sum, item) => sum + item.value, 0)
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea] h-full">
+    <div className="bg-white rounded-2xl p-5 h-full border border-[#e5e5ea]">
       <h2 className="text-[15px] font-semibold text-[#1d1d1f] mb-4">Платформы</h2>
       {data.length === 0 ? (
         <p className="text-[#8e8e93] text-[13px]">Нет данных по платформам.</p>
@@ -206,7 +215,7 @@ export function PrintYandexAudienceSection({ audience }: { audience: YandexAudie
     : []
 
   return (
-    <div className="bg-white rounded-2xl border border-[#e5e5ea] p-5">
+    <div className="bg-white rounded-2xl p-5 border border-[#e5e5ea]">
       <div className="flex items-center gap-2 mb-4">
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#ff9f0a' }} />
         <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Яндекс Музыка — аудитория</h2>

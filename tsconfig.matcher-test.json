@@ -11,9 +11,23 @@
   },
   "include": [
     "lib/matcher.ts",
+    "lib/storePersist.ts",
     "lib/parsers/mavePaste.ts",
+    "lib/parsers/vk.ts",
+    "lib/parsers/yandex.ts",
+    "lib/parsers/yandexAge.ts",
+    "lib/parsers/yandexCities.ts",
+    "lib/parsers/yandexGender.ts",
+    "lib/parsers/yandexCommon.ts",
+    "lib/parsers/spotify.ts",
+    "lib/parsers/mave.ts",
     "types/index.ts",
     "tests/matcher.test.ts",
-    "tests/mavePaste.test.ts"
+    "tests/mavePaste.test.ts",
+    "tests/vkParser.test.ts",
+    "tests/storePersist.test.ts",
+    "tests/yandexParser.test.ts",
+    "tests/spotifyParser.test.ts",
+    "tests/maveParser.test.ts"
   ]
 }

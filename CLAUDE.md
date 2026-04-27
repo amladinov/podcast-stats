@@ -58,3 +58,18 @@ lib/
 - Основной функционал работает: RSS, загрузка CSV, YouTube OAuth, дашборд, сравнение, AI-инсайты
 - 5 платформ: Mave, Яндекс Музыка, Spotify, VK (CSV), YouTube (OAuth)
 
+## Vercel guardrails (чтобы не путать аккаунты/проекты)
+- Аккаунты:
+  - `alexmladinov` — основной Vercel (используется по умолчанию, там почти все проекты). CLI scope: `amladinovs-projects`
+  - `store` — клиентский Vercel (используется только для одного проекта)
+- Правило по умолчанию: если не указано иное, деплой всегда в `alexmladinov` (scope `amladinovs-projects`).
+- Деплой запускать только через safe-скрипт:
+  - `npm run deploy:preview:safe`
+  - `npm run deploy:prod:safe`
+- Быстрое переключение Vercel scope:
+  - `npm run use-vercel-main` — переключить линковку на основной scope `amladinovs-projects`
+  - `npm run use-vercel-store` — переключить линковку на клиентский scope `store`
+- Перед запуском обязательно задать переменные окружения:
+  - `VERCEL_SCOPE` — нужный team/user scope (`amladinovs-projects` по умолчанию)
+  - `VERCEL_PROJECT=podcast-stats`
+  - `VERCEL_PROD_DOMAIN=podcast-stats.vercel.app` (для prod)

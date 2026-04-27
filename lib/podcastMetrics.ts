@@ -4,7 +4,8 @@ type PlatformTotals = Record<Platform, number>
 
 export function getPlatformTotals(
   episodes: NormalizedEpisode[],
-  rawPlays: PlayRecord[]
+  rawPlays: PlayRecord[],
+  enabledPlatforms?: Set<Platform>
 ): PlatformTotals {
   const hasMaveSnapshot = rawPlays.some(record => record.platform === 'mave' && record.sourceKind === 'paste')
   const rawTotals: PlatformTotals = {
@@ -19,22 +20,36 @@ export function getPlatformTotals(
     rawTotals[record.platform] += record.plays
   }
 
+  let totals: PlatformTotals
+
   if (rawPlays.length > 0) {
-    return {
+    totals = {
       mave: hasMaveSnapshot ? sumEpisodePlays(episodes, 'mave') : (rawTotals.mave > 0 ? rawTotals.mave : sumEpisodePlays(episodes, 'mave')),
       yandex: rawTotals.yandex > 0 ? rawTotals.yandex : sumEpisodePlays(episodes, 'yandex'),
       spotify: rawTotals.spotify > 0 ? rawTotals.spotify : sumEpisodePlays(episodes, 'spotify'),
       vk: rawTotals.vk > 0 ? rawTotals.vk : sumEpisodePlays(episodes, 'vk'),
       youtube: rawTotals.youtube > 0 ? rawTotals.youtube : sumEpisodePlays(episodes, 'youtube'),
     }
+  } else {
+    totals = {
+      mave: sumEpisodePlays(episodes, 'mave'),
+      yandex: sumEpisodePlays(episodes, 'yandex'),
+      spotify: sumEpisodePlays(episodes, 'spotify'),
+      vk: sumEpisodePlays(episodes, 'vk'),
+      youtube: sumEpisodePlays(episodes, 'youtube'),
+    }
+  }
+
+  if (!enabledPlatforms) {
+    return totals
   }
 
   return {
-    mave: sumEpisodePlays(episodes, 'mave'),
-    yandex: sumEpisodePlays(episodes, 'yandex'),
-    spotify: sumEpisodePlays(episodes, 'spotify'),
-    vk: sumEpisodePlays(episodes, 'vk'),
-    youtube: sumEpisodePlays(episodes, 'youtube'),
+    mave: enabledPlatforms.has('mave') ? totals.mave : 0,
+    yandex: enabledPlatforms.has('yandex') ? totals.yandex : 0,
+    spotify: enabledPlatforms.has('spotify') ? totals.spotify : 0,
+    vk: enabledPlatforms.has('vk') ? totals.vk : 0,
+    youtube: enabledPlatforms.has('youtube') ? totals.youtube : 0,
   }
 }
 
@@ -52,4 +67,31 @@ export function getTotalPlays(episodes: NormalizedEpisode[]): number {
     total += episode.plays.total
   }
   return total
+}
+
+export function getFilteredEpisodes(
+  episodes: NormalizedEpisode[],
+  enabledPlatforms: Set<Platform>
+): NormalizedEpisode[] {
+  return episodes.map(episode => {
+    const mave = enabledPlatforms.has('mave') ? episode.plays.mave : 0
+    const yandex = enabledPlatforms.has('yandex') ? episode.plays.yandex : 0
+    const spotify = enabledPlatforms.has('spotify') ? episode.plays.spotify : 0
+    const vk = enabledPlatforms.has('vk') ? episode.plays.vk : 0
+    const youtube = enabledPlatforms.has('youtube') ? episode.plays.youtube : 0
+
+    return {
+      ...episode,
+      plays: {
+        ...episode.plays,
+        mave,
+        yandex,
+        spotify,
+        vk,
+        youtube,
+        total: mave + yandex + spotify + vk + youtube,
+      },
+      timeline: enabledPlatforms.has('mave') ? [...episode.timeline] : [],
+    }
+  })
 }

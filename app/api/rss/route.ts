@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import dns from 'node:dns/promises'
 import net from 'node:net'
 import { DOMParser } from '@xmldom/xmldom'
+import { normalizePodcastImageUrl } from '@/lib/imageHosts'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyNode = any
 
 const FETCH_TIMEOUT_MS = 8_000
-const MAX_XML_BYTES = 2 * 1024 * 1024
+// Keep RSS size bounded for DoS safety, but allow large long-running feeds.
+const MAX_XML_BYTES = 12 * 1024 * 1024
 const MAX_REDIRECTS = 3
 
 function parseAndValidateUrl(raw: string): URL {
@@ -43,6 +45,12 @@ function isPrivateIPv4(ip: string): boolean {
   if (parts[0] === 169 && parts[1] === 254) return true
   if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true
   if (parts[0] === 192 && parts[1] === 168) return true
+  if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true
+  if (parts[0] === 198 && (parts[1] === 18 || parts[1] === 19)) return true
+  if (parts[0] === 192 && parts[1] === 0 && parts[2] === 0) return true
+  if (parts[0] === 192 && parts[1] === 0 && parts[2] === 2) return true
+  if (parts[0] === 198 && parts[1] === 51 && parts[2] === 100) return true
+  if (parts[0] === 203 && parts[1] === 0 && parts[2] === 113) return true
   if (parts[0] === 0) return true
   if (parts[0] >= 224) return true
 
@@ -83,12 +91,15 @@ function expandIPv6(input: string): string[] | null {
 
 function isPrivateIPv6(ip: string): boolean {
   const normalized = ip.toLowerCase()
+  if (normalized === '::') return true
   if (normalized === '::1') return true
   if (normalized.startsWith('fe80:')) return true
   if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true
 
   const expanded = expandIPv6(normalized)
   if (!expanded) return true
+
+  if (expanded[0] === '2001' && expanded[1] === 'db8') return true
 
   if (expanded.slice(0, 5).every(part => part === '0') && expanded[5] === 'ffff') {
     const ipv4Hex = expanded.slice(6)
@@ -245,10 +256,12 @@ export async function GET(req: NextRequest) {
 
     // Cover image: try itunes:image href, then image/url
     const itunesImageEl = getFirstEl(channel, 'itunes:image')
-    const imageUrl =
+    const imageUrl = normalizePodcastImageUrl(
       itunesImageEl?.getAttribute('href') ||
-      getText(getFirstEl(channel, 'image') as AnyNode | null ?? channel, 'url') ||
-      ''
+        getText(getFirstEl(channel, 'image') as AnyNode | null ?? channel, 'url') ||
+        '',
+      url.toString()
+    )
 
     const itemEls = channel.getElementsByTagName('item')
     const episodes = Array.from({ length: itemEls.length }, (_, idx) => {
@@ -268,7 +281,7 @@ export async function GET(req: NextRequest) {
         getText(item, 'description')
 
       const epImageEl = getFirstEl(item, 'itunes:image')
-      const epImage = epImageEl?.getAttribute('href') ?? ''
+      const epImage = normalizePodcastImageUrl(epImageEl?.getAttribute('href') ?? '', url.toString())
 
       return {
         guid,

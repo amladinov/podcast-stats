@@ -1,5 +1,5 @@
-import Papa from 'papaparse'
 import type { YandexAudience } from '@/types'
+import { parseRuFloat, parseRuInt, parseYandexCsv } from './yandexCommon'
 
 // Yandex cities CSV (semicolon-separated):
 // "Ранг";"Город";"Старты";"Стримы";"Авторизованные слушатели";"Часы";"Средний процент прослушивания, %";"Процент дослушиваемости, %"
@@ -7,23 +7,8 @@ import type { YandexAudience } from '@/types'
 
 type YandexCity = NonNullable<YandexAudience['cities']>[number]
 
-function parseRuFloat(s: string): number {
-  return parseFloat((s || '0').replace(',', '.')) || 0
-}
-
-function parseRuInt(s: string): number {
-  return parseInt((s || '0').replace(/\s/g, ''), 10) || 0
-}
-
 export function parseYandexCities(csvText: string): YandexCity[] {
-  const result = Papa.parse<Record<string, string>>(csvText, {
-    header: true,
-    skipEmptyLines: true,
-    delimiter: ';',
-    transformHeader: (h: string) => h.trim(),
-  })
-
-  return (result.data as Record<string, string>[])
+  return parseYandexCsv(csvText)
     .filter(row => row['Город'])
     .slice(0, 50)
     .map(row => ({

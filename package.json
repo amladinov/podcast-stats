@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:matcher": "tsc -p tsconfig.matcher-test.json && node --test .tmp/matcher-test/tests/*.test.js"
+    "test:matcher": "tsc -p tsconfig.matcher-test.json && node --test .tmp/matcher-test/tests/*.test.js",
+    "deploy:preview:safe": "bash scripts/vercel-safe-deploy.sh",
+    "deploy:prod:safe": "bash scripts/vercel-safe-deploy.sh --prod",
+    "use-vercel-main": "bash scripts/use-vercel-scope.sh amladinovs-projects",
+    "use-vercel-store": "bash scripts/use-vercel-scope.sh store"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0",

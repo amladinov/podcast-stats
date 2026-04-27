@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { SafePodcastImage } from '@/components/SafePodcastImage'
 import { usePodcastStore } from '@/lib/store'
+import { resolvePodcastCoverUrl } from '@/lib/podcastCover'
 import { DEMO_IDS, DEMO_INSIGHTS_MAP } from '@/lib/demoData'
 import { getFilteredEpisodes, getPlatformTotals, getTotalPlays } from '@/lib/podcastMetrics'
 import { StatCards } from '@/components/dashboard/StatCards'
@@ -115,62 +115,6 @@ function PrintPage({
   )
 }
 
-function MobileAudienceDonutSection({
-  title,
-  data,
-  compact = false,
-}: {
-  title: string
-  data: { name: string; value: number; color: string }[]
-  compact?: boolean
-}) {
-  const total = data.reduce((sum, item) => sum + item.value, 0)
-  if (total === 0) return null
-
-  return (
-    <div className={`rounded-2xl border border-[#e5e5ea] bg-white shadow-sm ${compact ? 'p-3' : 'p-4'}`}>
-      <h3 className={`font-semibold uppercase tracking-[0.12em] text-[#8e8e93] ${compact ? 'text-[10px]' : 'text-[12px]'}`}>{title}</h3>
-      <ResponsiveContainer width="100%" height={compact ? 100 : 150}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={compact ? 28 : 40}
-            outerRadius={compact ? 44 : 62}
-            paddingAngle={2}
-            dataKey="value"
-            activeShape={false}
-            rootTabIndex={-1}
-          >
-            {data.map(entry => (
-              <Cell key={entry.name} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{ background: '#fff', border: '1px solid #e5e5ea', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
-            formatter={(value: unknown, _name: unknown, props: { payload?: { name: string } }) => {
-              const pct = total > 0 ? Math.round((value as number) / total * 100) : 0
-              return [`${pct}%`, props.payload?.name ?? '']
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
-        {data.map(item => (
-          <div key={item.name} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className={`flex-shrink-0 rounded-full ${compact ? 'h-2 w-2' : 'h-2.5 w-2.5'}`} style={{ background: item.color }} />
-              <span className={`text-[#1d1d1f] ${compact ? 'text-[11px]' : 'text-[13px]'}`}>{item.name}</span>
-            </div>
-            <span className={`text-[#6e6e73] ${compact ? 'text-[11px]' : 'text-[13px]'}`}>{Math.round(item.value / total * 100)}%</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function DashboardPage() {
   const { podcastId } = useParams<{ podcastId: string }>()
   const router = useRouter()
@@ -178,7 +122,7 @@ export default function DashboardPage() {
   const comparablePodcastCount = usePodcastStore(s => s.podcasts.filter(item => item.uploadedPlatforms.length > 0).length)
   const isDemo = podcast ? DEMO_IDS.has(podcastId) : false
   const podcastTitle = podcast?.title ?? ''
-  const podcastImageUrl = podcast?.imageUrl ?? ''
+  const podcastImageUrl = podcast ? (resolvePodcastCoverUrl(podcast) ?? '') : ''
   const episodes = useMemo(() => podcast?.normalized ?? [], [podcast?.normalized])
   const rawPlays = useMemo(() => podcast?.rawPlays ?? [], [podcast?.rawPlays])
   const uploadedPlatformsArray = useMemo(
@@ -884,7 +828,7 @@ export default function DashboardPage() {
   const dashboardRenderTotalScenes = mobileDashboardRenderScenes.length
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
+    <div className="min-h-screen bg-[#f5f5f7] print:bg-white">
       <div
         className="md:hidden mobile-viewport-shell bg-[#f5f5f7] print:hidden"
         onTouchStart={handleMobileTouchStart}
@@ -1205,7 +1149,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <table className="w-full text-[11px]">
-                <thead className="border-y border-[#f0f0f0]">
+                <thead>
                   <tr className="text-[#8e8e93] text-[10px] uppercase tracking-wide">
                     <th className="text-left px-3 py-2 font-medium w-[24px]">#</th>
                     <th className="text-left px-2 py-2 font-medium">Эпизод</th>
@@ -1220,7 +1164,7 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {filteredTopEpisodes.map((episode, index) => (
-                    <tr key={episode.id} className="border-b border-[#f5f5f7]">
+                    <tr key={episode.id} className={index === filteredTopEpisodes.length - 1 ? '' : 'border-b border-[#f5f5f7]'}>
                       <td className="px-3 py-2 text-[#8e8e93]">{index + 1}</td>
                       <td className="px-2 py-2 text-[#1d1d1f]">{episode.title}</td>
                       <td className="px-2 py-2 text-right text-[#8e8e93] whitespace-nowrap">

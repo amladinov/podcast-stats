@@ -1,7 +1,8 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { canUseNextImage } from '@/lib/imageHosts'
+import { canUseNextImage, normalizePodcastImageUrl } from '@/lib/imageHosts'
 
 interface SafePodcastImageProps {
   src: string
@@ -12,20 +13,42 @@ interface SafePodcastImageProps {
 }
 
 export function SafePodcastImage({ src, alt, width, height, className }: SafePodcastImageProps) {
-  if (canUseNextImage(src)) {
-    return <Image src={src} alt={alt} width={width} height={height} className={className} />
+  const [failed, setFailed] = useState(false)
+  const normalizedSrc = useMemo(() => normalizePodcastImageUrl(src), [src])
+
+  if (failed || !normalizedSrc) {
+    return (
+      <div
+        aria-hidden="true"
+        className={[className, 'bg-[#f2f2f7]'].filter(Boolean).join(' ')}
+        style={{ width, height }}
+      />
+    )
+  }
+
+  if (canUseNextImage(normalizedSrc)) {
+    return (
+      <Image
+        src={normalizedSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        onError={() => setFailed(true)}
+      />
+    )
   }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={normalizedSrc}
       alt={alt}
       width={width}
       height={height}
       className={className}
       loading="lazy"
-      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
     />
   )
 }
