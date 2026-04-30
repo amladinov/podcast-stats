@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0",
+    "@sparticuz/chromium-min": "^148.0.0",
     "@xmldom/xmldom": "^0.8.12",
     "next": "16.1.7",
     "papaparse": "^5.5.3",
+    "puppeteer-core": "^24.42.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.8.0",

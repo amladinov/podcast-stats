@@ -23,6 +23,7 @@ import {
 import { formatCompactPeriod, getEpisodeRangeFromNormalized, getPeriodFromPlays } from '@/lib/platformPeriods'
 import { formatTimeAgo } from '@/lib/timeAgo'
 import { fetchYouTubeImport } from '@/lib/youtubeImport'
+import { exportDashboardToPdf, isMobileViewport } from '@/lib/pdfExport'
 import type { Platform } from '@/types'
 
 const DASHBOARD_PLATFORMS = [
@@ -157,6 +158,9 @@ export default function DashboardPage() {
   const [youtubeRefreshing, setYoutubeRefreshing] = useState(false)
   const [youtubeMessage, setYoutubeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [, setNowTick] = useState(0)
+  const [pdfGenerating, setPdfGenerating] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const printRootRef = useRef<HTMLDivElement | null>(null)
   const youtubeCallbackHandledRef = useRef(false)
   const mobileChromeRef = useRef<HTMLDivElement | null>(null)
   const mobileSceneContentRefs = useRef<Array<HTMLDivElement | null>>([])
@@ -188,7 +192,6 @@ export default function DashboardPage() {
 
     if (status === 'error') {
       const reason = searchParams.get('reason') || 'unknown'
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setYoutubeMessage({ type: 'error', text: `Не удалось обновить YouTube: ${reason}` })
       return
     }
@@ -364,14 +367,21 @@ export default function DashboardPage() {
     if (typeof window === 'undefined') return
 
     const syncMobileHeights = () => {
-      // Измеряем реальную видимую высоту через CSS dvh (dynamic viewport height)
+      // Prefer visualViewport.height — it's the only source that correctly
+      // reflects the floating Safari iOS URL bar in real time. 100dvh can
+      // briefly report the no-URL-bar height during the first render even
+      // when the URL bar is visible, pushing content under it.
+      const visual = window.visualViewport?.height
+
+      // Fallback: measure 100dvh via probe (works on browsers without
+      // visualViewport API).
       const probe = document.createElement('div')
       probe.style.cssText = 'position:fixed;top:0;height:100dvh;pointer-events:none;visibility:hidden'
       document.body.appendChild(probe)
       const dvh = probe.offsetHeight
       document.body.removeChild(probe)
 
-      setMobileViewportHeight(dvh || window.visualViewport?.height || window.innerHeight)
+      setMobileViewportHeight(visual || dvh || window.innerHeight)
       setMobileChromeHeight(mobileChromeRef.current?.offsetHeight ?? 0)
     }
 
@@ -430,11 +440,35 @@ export default function DashboardPage() {
     })
   }
 
-  const handlePrintPdf = () => {
+  const handlePrintPdf = async () => {
     if (typeof window === 'undefined') return
 
-    const originalTitle = document.title
     const printTitle = `${sanitizePrintTitle(podcastTitle)}_${formatPrintTimestamp()}`
+
+    // Mobile (incl. Arc and other WKWebView wrappers) — generate PDF in JS
+    // because window.print() is unreliable there.
+    if (isMobileViewport()) {
+      const root = printRootRef.current
+      if (!root) {
+        setPdfError('Не нашли блок для экспорта')
+        return
+      }
+
+      setPdfGenerating(true)
+      setPdfError(null)
+      try {
+        await exportDashboardToPdf(root, { filename: printTitle })
+      } catch (e) {
+        setPdfError(e instanceof Error ? e.message : 'Не удалось собрать PDF')
+      } finally {
+        setPdfGenerating(false)
+      }
+      return
+    }
+
+    // Desktop — native browser print preserves crisp typography and respects
+    // the existing @media print stylesheet.
+    const originalTitle = document.title
     let restored = false
 
     const restoreTitle = () => {
@@ -466,13 +500,20 @@ export default function DashboardPage() {
 
     if (Math.abs(deltaY) < 56 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return
 
+    // A "decisive" swipe (>180px) always advances the scene, even when the
+    // content is scrollable inside. Otherwise users could get stuck on scenes
+    // whose content exceeds the viewport (e.g. when the browser URL bar
+    // squeezes 100dvh on Arc/Telegram WebView).
+    const FORCE_SWITCH_THRESHOLD_PX = 180
+    const isDecisive = Math.abs(deltaY) > FORCE_SWITCH_THRESHOLD_PX
+
     const currentContent = mobileSceneContentRefs.current[activeDashboardSceneIndex]
     const canScrollInside = Boolean(currentContent && currentContent.scrollHeight > currentContent.clientHeight + 4)
     const scrollTop = currentContent?.scrollTop ?? 0
     const nearBottom = !currentContent || scrollTop + currentContent.clientHeight >= currentContent.scrollHeight - 4
 
     if (deltaY < 0) {
-      if (canScrollInside && !nearBottom) return
+      if (canScrollInside && !nearBottom && !isDecisive) return
       if (activeDashboardSceneIndex < dashboardTotalScenes - 1) {
         setDashboardSceneIndex(prev => prev + 1)
       } else {
@@ -481,7 +522,7 @@ export default function DashboardPage() {
       return
     }
 
-    if (scrollTop > 4) return
+    if (scrollTop > 4 && !isDecisive) return
     if (activeDashboardSceneIndex > 0) {
       setDashboardSceneIndex(prev => prev - 1)
     }
@@ -535,10 +576,14 @@ export default function DashboardPage() {
         <div className="mt-4">
           <button
             onClick={handlePrintPdf}
-            className={getCtaClasses({ tone: 'dark', fullWidth: true })}
+            disabled={pdfGenerating}
+            className={getCtaClasses({ tone: 'dark', fullWidth: true, disabled: pdfGenerating })}
           >
-            Экспорт в PDF
+            {pdfGenerating ? 'Готовим PDF…' : 'Экспорт в PDF'}
           </button>
+          {pdfError && (
+            <p className="mt-2 text-[12px] text-[#d70015]">{pdfError}</p>
+          )}
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               onClick={() => router.push('/compare')}
@@ -998,12 +1043,18 @@ export default function DashboardPage() {
                     ref={element => { mobileSceneContentRefs.current[index] = element }}
                     className={[
                       'h-full overscroll-contain',
-                      scene.id === 'overview' || scene.id === 'episodes' || scene.id === 'episode-detail' || (scene.id === 'cities' && citiesExpanded)
+                      // Only intrinsically long lists scroll; "single-screen"
+                      // scenes (summary/charts/ai/audience) must fit as-is —
+                      // that's the UX intent.
+                      scene.id === 'overview' || scene.id === 'episodes' || scene.id === 'episode-detail' || scene.id === 'cities'
                         ? 'overflow-y-auto'
                         : 'overflow-hidden',
                     ].join(' ')}
                     style={{
-                      paddingBottom: scene.id === 'episodes' || scene.id === 'episode-detail'
+                      // Long lists get extra room under the Safari iOS URL bar
+                      // so scroll-end doesn't sit underneath it. Single-screen
+                      // scenes use minimal padding to preserve the design.
+                      paddingBottom: scene.id === 'episodes' || scene.id === 'episode-detail' || scene.id === 'cities'
                         ? 'max(env(safe-area-inset-bottom), 92px)'
                         : 'max(env(safe-area-inset-bottom), 16px)',
                     }}
@@ -1192,7 +1243,7 @@ export default function DashboardPage() {
       </div>
 
       {episodes.length > 0 && (
-        <div className="print-only print-report-root">
+        <div ref={printRootRef} className="print-only print-report-root">
           <PrintPage
             title={podcastTitle}
             exportDate={exportDate}
