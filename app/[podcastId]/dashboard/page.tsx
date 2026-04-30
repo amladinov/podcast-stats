@@ -28,6 +28,7 @@ const DASHBOARD_PLATFORMS = [
   { key: 'yandex', label: 'Яндекс', color: '#ff9f0a' },
   { key: 'spotify', label: 'Spotify', color: '#30d158' },
   { key: 'vk', label: 'VK', color: '#0a84ff' },
+  { key: 'vkvideo', label: 'VK Video', color: '#00B6FF' },
   { key: 'youtube', label: 'YouTube', color: '#ff453a' },
 ] as const
 

@@ -398,7 +398,7 @@ export function normalizePodcastData(
       id: episode.guid,
       title: episode.title,
       publishDate: episode.publishDate,
-      plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, youtube: 0, total: 0 },
+      plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, vkvideo: 0, youtube: 0, total: 0 },
       timeline: [],
       maveVideoViews: undefined,
     })
@@ -414,8 +414,9 @@ export function normalizePodcastData(
     } else if (record.platform === 'yandex') {
       yandexMatch = findYandexEpisode(index, record.episodeTitle, yandexAnchorsBySignature)
       episode = yandexMatch.episode
-    } else if (record.platform === 'youtube') {
-      // YouTube: try title first, fallback to date ±2 days
+    } else if (record.platform === 'youtube' || record.platform === 'vkvideo') {
+      // Video platforms: try title first, fallback to date ±2 days
+      // (own video publish date may differ from RSS date by 1-2 days)
       episode = findEpisodeByTitle(index, record.episodeTitle, record.date)
       if (!episode && record.date) {
         episode = findEpisodeByISODate(index, record.date)
@@ -470,6 +471,8 @@ export function normalizePodcastData(
       norm.spotifyAudience = record.listeners
     } else if (record.platform === 'vk') {
       norm.plays.vk += record.plays
+    } else if (record.platform === 'vkvideo') {
+      norm.plays.vkvideo += record.plays
     } else if (record.platform === 'youtube') {
       norm.plays.youtube = record.plays
       norm.youtubeViews = record.plays
@@ -481,7 +484,7 @@ export function normalizePodcastData(
   // Recalculate totals and sort timeline
   for (const norm of map.values()) {
     norm.plays.total =
-      norm.plays.mave + norm.plays.yandex + norm.plays.spotify + norm.plays.vk + norm.plays.youtube
+      norm.plays.mave + norm.plays.yandex + norm.plays.spotify + norm.plays.vk + norm.plays.vkvideo + norm.plays.youtube
     norm.timeline.sort((a, b) => a.date.localeCompare(b.date))
   }
 

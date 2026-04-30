@@ -11,13 +11,14 @@ interface Props {
   onSortChange: (key: SortKey, desc: boolean) => void
 }
 
-type SortKey = 'total' | 'mave' | 'yandex' | 'spotify' | 'vk' | 'youtube' | 'publishDate'
+type SortKey = 'total' | 'mave' | 'yandex' | 'spotify' | 'vk' | 'vkvideo' | 'youtube' | 'publishDate'
 
 const PLATFORM_COLUMNS = [
   { key: 'mave' as const, label: 'Mave' },
   { key: 'yandex' as const, label: 'Яндекс' },
   { key: 'spotify' as const, label: 'Spotify' },
   { key: 'vk' as const, label: 'VK' },
+  { key: 'vkvideo' as const, label: 'VK Video' },
   { key: 'youtube' as const, label: 'YouTube' },
 ]
 

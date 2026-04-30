@@ -160,8 +160,8 @@ export default function ComparePage() {
   }
 
   // Build platform bar chart data
-  const platforms = ['Mave', 'Яндекс', 'Spotify', 'VK', 'YouTube']
-  const platformKeys = ['mave', 'yandex', 'spotify', 'vk', 'youtube'] as const
+  const platforms = ['Mave', 'Яндекс', 'Spotify', 'VK', 'VK Video', 'YouTube']
+  const platformKeys = ['mave', 'yandex', 'spotify', 'vk', 'vkvideo', 'youtube'] as const
 
   const barChartData = platforms.map((name, pi) => {
     const key = platformKeys[pi]
@@ -244,12 +244,14 @@ export default function ComparePage() {
                 const yandexTotal = totals.yandex
                 const spotifyTotal = totals.spotify
                 const vkTotal = totals.vk
+                const vkvideoTotal = totals.vkvideo
                 const youtubeTotal = totals.youtube
 
                 const pctMave    = totalPlays > 0 ? Math.round(maveTotal    / totalPlays * 100) : 0
                 const pctYandex  = totalPlays > 0 ? Math.round(yandexTotal  / totalPlays * 100) : 0
                 const pctSpotify = totalPlays > 0 ? Math.round(spotifyTotal / totalPlays * 100) : 0
                 const pctVk      = totalPlays > 0 ? Math.round(vkTotal      / totalPlays * 100) : 0
+                const pctVkvideo = totalPlays > 0 ? Math.round(vkvideoTotal / totalPlays * 100) : 0
                 const pctYoutube = totalPlays > 0 ? Math.round(youtubeTotal / totalPlays * 100) : 0
 
                 const color = PODCAST_COLORS[i % PODCAST_COLORS.length]
@@ -281,11 +283,12 @@ export default function ComparePage() {
 
                     <div className="space-y-1 mt-3">
                       {[
-                        { label: 'Mave',   pct: pctMave    },
-                        { label: 'Яндекс', pct: pctYandex  },
-                        { label: 'Spotify',pct: pctSpotify },
-                        { label: 'VK',     pct: pctVk      },
-                        { label: 'YouTube', pct: pctYoutube },
+                        { label: 'Mave',     pct: pctMave    },
+                        { label: 'Яндекс',   pct: pctYandex  },
+                        { label: 'Spotify',  pct: pctSpotify },
+                        { label: 'VK',       pct: pctVk      },
+                        { label: 'VK Video', pct: pctVkvideo },
+                        { label: 'YouTube',  pct: pctYoutube },
                       ].map(({ label, pct }) => (
                         <div key={label} className="flex items-center gap-2">
                           <span className="text-[11px] text-[#6e6e73] w-16 sm:w-14 flex-shrink-0">{label}</span>

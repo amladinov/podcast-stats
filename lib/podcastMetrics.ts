@@ -13,6 +13,7 @@ export function getPlatformTotals(
     yandex: 0,
     spotify: 0,
     vk: 0,
+    vkvideo: 0,
     youtube: 0,
   }
 
@@ -28,6 +29,7 @@ export function getPlatformTotals(
       yandex: rawTotals.yandex > 0 ? rawTotals.yandex : sumEpisodePlays(episodes, 'yandex'),
       spotify: rawTotals.spotify > 0 ? rawTotals.spotify : sumEpisodePlays(episodes, 'spotify'),
       vk: rawTotals.vk > 0 ? rawTotals.vk : sumEpisodePlays(episodes, 'vk'),
+      vkvideo: rawTotals.vkvideo > 0 ? rawTotals.vkvideo : sumEpisodePlays(episodes, 'vkvideo'),
       youtube: rawTotals.youtube > 0 ? rawTotals.youtube : sumEpisodePlays(episodes, 'youtube'),
     }
   } else {
@@ -36,6 +38,7 @@ export function getPlatformTotals(
       yandex: sumEpisodePlays(episodes, 'yandex'),
       spotify: sumEpisodePlays(episodes, 'spotify'),
       vk: sumEpisodePlays(episodes, 'vk'),
+      vkvideo: sumEpisodePlays(episodes, 'vkvideo'),
       youtube: sumEpisodePlays(episodes, 'youtube'),
     }
   }
@@ -49,6 +52,7 @@ export function getPlatformTotals(
     yandex: enabledPlatforms.has('yandex') ? totals.yandex : 0,
     spotify: enabledPlatforms.has('spotify') ? totals.spotify : 0,
     vk: enabledPlatforms.has('vk') ? totals.vk : 0,
+    vkvideo: enabledPlatforms.has('vkvideo') ? totals.vkvideo : 0,
     youtube: enabledPlatforms.has('youtube') ? totals.youtube : 0,
   }
 }
@@ -78,6 +82,7 @@ export function getFilteredEpisodes(
     const yandex = enabledPlatforms.has('yandex') ? episode.plays.yandex : 0
     const spotify = enabledPlatforms.has('spotify') ? episode.plays.spotify : 0
     const vk = enabledPlatforms.has('vk') ? episode.plays.vk : 0
+    const vkvideo = enabledPlatforms.has('vkvideo') ? episode.plays.vkvideo : 0
     const youtube = enabledPlatforms.has('youtube') ? episode.plays.youtube : 0
 
     return {
@@ -88,8 +93,9 @@ export function getFilteredEpisodes(
         yandex,
         spotify,
         vk,
+        vkvideo,
         youtube,
-        total: mave + yandex + spotify + vk + youtube,
+        total: mave + yandex + spotify + vk + vkvideo + youtube,
       },
       timeline: enabledPlatforms.has('mave') ? [...episode.timeline] : [],
     }

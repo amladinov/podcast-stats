@@ -74,6 +74,7 @@ function sanitizeEpisodes(input: unknown): NormalizedEpisode[] {
         yandex: safeNumber(plays?.yandex),
         spotify: safeNumber(plays?.spotify),
         vk: safeNumber(plays?.vk),
+        vkvideo: safeNumber(plays?.vkvideo),
         youtube: safeNumber(plays?.youtube),
         total: safeNumber(plays?.total),
       },
@@ -93,7 +94,7 @@ function sanitizeEpisodes(input: unknown): NormalizedEpisode[] {
     ...ep,
     plays: {
       ...ep.plays,
-      total: ep.plays.mave + ep.plays.yandex + ep.plays.spotify + ep.plays.vk + ep.plays.youtube,
+      total: ep.plays.mave + ep.plays.yandex + ep.plays.spotify + ep.plays.vk + ep.plays.vkvideo + ep.plays.youtube,
     },
   }))
 }
@@ -157,13 +158,14 @@ export async function POST(req: NextRequest) {
     const yandexPlays = episodes.reduce((s, e) => s + e.plays.yandex, 0)
     const spotifyPlays = episodes.reduce((s, e) => s + e.plays.spotify, 0)
     const vkPlays = episodes.reduce((s, e) => s + e.plays.vk, 0)
+    const vkvideoPlays = episodes.reduce((s, e) => s + e.plays.vkvideo, 0)
     const youtubePlays = episodes.reduce((s, e) => s + e.plays.youtube, 0)
 
     const prompt = `Ты аналитик подкастов. Проанализируй статистику подкаста «${podcastTitle}» и дай краткие практические выводы на русском языке.
 
 Общая статистика:
 - Всего прослушиваний/просмотров: ${totalPlays.toLocaleString('ru')}
-- По платформам: Mave ${mavePlays.toLocaleString('ru')}, Яндекс ${yandexPlays.toLocaleString('ru')}, Spotify ${spotifyPlays.toLocaleString('ru')}, VK ${vkPlays.toLocaleString('ru')}, YouTube ${youtubePlays.toLocaleString('ru')}
+- По платформам: Mave ${mavePlays.toLocaleString('ru')}, Яндекс ${yandexPlays.toLocaleString('ru')}, Spotify ${spotifyPlays.toLocaleString('ru')}, VK ${vkPlays.toLocaleString('ru')}, VK Video ${vkvideoPlays.toLocaleString('ru')}, YouTube ${youtubePlays.toLocaleString('ru')}
 - Всего эпизодов: ${episodes.length}
 - Среднее на эпизод: ${episodes.length > 0 ? Math.round(totalPlays / episodes.length).toLocaleString('ru') : '—'}
 

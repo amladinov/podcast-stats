@@ -57,7 +57,7 @@ function PodcastCard({
           <p className={['text-[#6e6e73] break-words', compact ? 'text-[12px] mb-1.5 leading-[1.25]' : 'text-[13px] mb-2'].join(' ')}>
             {podcast.episodes.length} эп.
             {podcast.uploadedPlatforms.length > 0 && (
-              <span className="ml-1.5 text-[#b150e2]">· {podcast.uploadedPlatforms.map(u => ({ mave: 'Mave', yandex: 'Яндекс', spotify: 'Spotify', vk: 'VK', youtube: 'YouTube' })[u.platform]).join(', ')}</span>
+              <span className="ml-1.5 text-[#b150e2]">· {podcast.uploadedPlatforms.map(u => ({ mave: 'Mave', yandex: 'Яндекс', spotify: 'Spotify', vk: 'VK', vkvideo: 'VK Video', youtube: 'YouTube' })[u.platform]).join(', ')}</span>
             )}
           </p>
           <div className={['flex flex-wrap', compact ? 'gap-1.5' : 'gap-2'].join(' ')}>

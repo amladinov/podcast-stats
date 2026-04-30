@@ -6,7 +6,10 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 type PersistedTimelinePointV2 = [number, number]
 type PersistedTimelineV2 = [string, PersistedTimelinePointV2[]]
-type PersistedPlaysV2 = [number, number, number, number, number, number]
+// Legacy V2 had 6 fields: [mave, yandex, spotify, vk, youtube, total].
+// V2.1 adds vkvideo in trailing position 7 to preserve backward compatibility
+// with persisted data — older arrays read vkvideo as 0 via `?? 0`.
+type PersistedPlaysV2 = [number, number, number, number, number, number, number?]
 type PersistedGenderV2 = [number, number, number]
 type PersistedAgeRowV2 = [string, number]
 type PersistedCityRowV2 = [number, string, number, number, number, number, number, number]
@@ -146,6 +149,7 @@ function serializeNormalized(normalized: NormalizedEpisode[]): PersistedNormaliz
       episode.plays.vk,
       episode.plays.youtube,
       episode.plays.total,
+      episode.plays.vkvideo,
     ],
     ...(serializeTimeline(episode.timeline) ? { l: serializeTimeline(episode.timeline) } : {}),
     ...(episode.maveVideoViews !== undefined ? { mv: episode.maveVideoViews } : {}),
@@ -173,6 +177,7 @@ function deserializeNormalized(normalized: PersistedNormalizedEpisodeV2[]): Norm
       vk: episode.p[3] ?? 0,
       youtube: episode.p[4] ?? 0,
       total: episode.p[5] ?? 0,
+      vkvideo: episode.p[6] ?? 0,
     },
     timeline: deserializeTimeline(episode.l),
     ...(episode.mv !== undefined ? { maveVideoViews: episode.mv } : {}),

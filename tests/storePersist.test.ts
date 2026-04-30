@@ -39,6 +39,7 @@ const runtimePodcast: Podcast = {
         yandex: 230,
         spotify: 45,
         vk: 12,
+        vkvideo: 0,
         youtube: 67,
         total: 474,
       },

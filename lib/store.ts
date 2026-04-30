@@ -77,7 +77,7 @@ export const usePodcastStore = create<PodcastStore>()(
               if (!existing) return ep
 
               const plays = { ...existing.plays, [platform]: ep.plays[platform] }
-              plays.total = plays.mave + plays.yandex + plays.spotify + plays.vk + plays.youtube
+              plays.total = plays.mave + plays.yandex + plays.spotify + plays.vk + plays.vkvideo + plays.youtube
 
               const platformFields =
                 platform === 'mave' ? {

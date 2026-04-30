@@ -9,6 +9,7 @@ import { parseMavePaste } from '@/lib/parsers/mavePaste'
 import { parseSpotify } from '@/lib/parsers/spotify'
 import { parseYandex } from '@/lib/parsers/yandex'
 import { parseVK } from '@/lib/parsers/vk'
+import { parseVKVideo } from '@/lib/parsers/vkVideo'
 import { parseYandexGender } from '@/lib/parsers/yandexGender'
 import { parseYandexAge } from '@/lib/parsers/yandexAge'
 import { parseYandexCities } from '@/lib/parsers/yandexCities'
@@ -81,6 +82,18 @@ const PLATFORMS = [
       [{ t: 'text' as const, v: 'Выбери нужный период и нажми «Экспортировать»' }],
     ] as GuideStep[],
   },
+  {
+    key: 'vkvideo' as const,
+    label: 'VK Video',
+    desc: 'CSV из статистики VK Video (разделитель — точка с запятой)',
+    dot: '#00B6FF',
+    guide: [
+      [{ t: 'text' as const, v: 'Зайди в сообщество, к которому привязан канал VK Video' }],
+      [{ t: 'text' as const, v: 'Перейди в «Статистика» → «Видео» → «Контент»' }],
+      [{ t: 'text' as const, v: 'В правом верхнем углу нажми кнопку скачивания' }],
+      [{ t: 'text' as const, v: 'Выбери период и формат CSV — нажми «Экспортировать»' }],
+    ] as GuideStep[],
+  },
 ]
 
 const YOUTUBE_PLATFORM = {
@@ -90,13 +103,14 @@ const YOUTUBE_PLATFORM = {
   dot: '#ff0000',
 }
 
-const MOBILE_SETUP_PLATFORM_ORDER = ['mave', 'yandex', 'spotify', 'vk', 'youtube'] as const
+const MOBILE_SETUP_PLATFORM_ORDER = ['mave', 'yandex', 'spotify', 'vk', 'vkvideo', 'youtube'] as const
 
 const MOBILE_SETUP_SCENES = [
   { id: 'mave', label: 'Mave' },
   { id: 'yandex', label: 'Яндекс' },
   { id: 'spotify', label: 'Spotify' },
   { id: 'vk', label: 'VK' },
+  { id: 'vkvideo', label: 'VK Video' },
   { id: 'youtube', label: 'YouTube' },
   { id: 'done', label: 'Готово' },
 ] as const
@@ -106,6 +120,7 @@ function parsePlatform(platform: string, text: string): PlayRecord[] {
   if (platform === 'yandex') return parseYandex(text)
   if (platform === 'spotify') return parseSpotify(text)
   if (platform === 'vk') return parseVK(text)
+  if (platform === 'vkvideo') return parseVKVideo(text)
   return []
 }
 

@@ -14,7 +14,7 @@ export interface RSSPodcast {
   episodes: RSSEpisode[]
 }
 
-export type Platform = 'mave' | 'yandex' | 'spotify' | 'vk' | 'youtube'
+export type Platform = 'mave' | 'yandex' | 'spotify' | 'vk' | 'vkvideo' | 'youtube'
 export type MaveSourceKind = 'csv' | 'paste'
 
 // Raw play record after parsing any CSV or API import
@@ -43,6 +43,7 @@ export interface NormalizedEpisode {
     yandex: number
     spotify: number
     vk: number
+    vkvideo: number
     youtube: number
     total: number
   }

@@ -20,8 +20,9 @@ export function StatCards({ episodes, rawPlays, platformMeta, enabledPlatforms }
   const yandex = totals.yandex
   const spotify = totals.spotify
   const vk = totals.vk
+  const vkvideo = totals.vkvideo
   const youtube = totals.youtube
-  const total = mave + yandex + spotify + vk + youtube
+  const total = mave + yandex + spotify + vk + vkvideo + youtube
   const avg = episodes.length > 0 ? Math.round(total / episodes.length) : 0
 
   const fmt = (n: number) => n.toLocaleString('ru')
@@ -41,6 +42,7 @@ export function StatCards({ episodes, rawPlays, platformMeta, enabledPlatforms }
         { key: 'youtube' as const, label: 'YouTube', value: youtube },
         { key: 'spotify' as const, label: 'Spotify', value: spotify },
         { key: 'vk' as const, label: 'VK', value: vk },
+        { key: 'vkvideo' as const, label: 'VK Video', value: vkvideo },
       ].filter(c => c.value > 0).map(c => (
         <div key={c.label} className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#e5e5ea] min-w-0 print:shadow-none print:p-4">
           <p className="text-[#6e6e73] text-[11px] sm:text-[12px] font-medium uppercase tracking-wide mb-2 break-words">{c.label}</p>
