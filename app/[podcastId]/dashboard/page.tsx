@@ -289,7 +289,7 @@ export default function DashboardPage() {
 
   const dashboardTotalScenes = mobileDashboardScenes.length
   const mobileSceneViewportHeight = mobileViewportHeight > 0
-    ? Math.max(mobileViewportHeight - mobileChromeHeight, 0)
+    ? Math.max(mobileViewportHeight - mobileChromeHeight + 25, 0)
     : 0
 
   const mobilePlatformCards = DASHBOARD_PLATFORMS
