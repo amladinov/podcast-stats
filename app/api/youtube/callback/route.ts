@@ -19,26 +19,35 @@ function isValidPodcastId(value: string): boolean {
   return PODCAST_ID_PATTERN.test(value)
 }
 
-function extractPodcastId(stateParam: string | null): string | null {
-  if (!stateParam) return null
+type ReturnTo = 'setup' | 'dashboard'
+
+function isValidReturnTo(value: unknown): value is ReturnTo {
+  return value === 'setup' || value === 'dashboard'
+}
+
+function extractState(stateParam: string | null): { podcastId: string | null; returnTo: ReturnTo } {
+  if (!stateParam) return { podcastId: null, returnTo: 'setup' }
 
   try {
-    const decoded = JSON.parse(Buffer.from(stateParam, 'base64url').toString()) as { podcastId?: string }
-    if (!decoded.podcastId || !isValidPodcastId(decoded.podcastId)) {
-      return null
+    const decoded = JSON.parse(Buffer.from(stateParam, 'base64url').toString()) as {
+      podcastId?: string
+      returnTo?: unknown
     }
-
-    return decoded.podcastId
+    const podcastId = decoded.podcastId && isValidPodcastId(decoded.podcastId) ? decoded.podcastId : null
+    const returnTo: ReturnTo = isValidReturnTo(decoded.returnTo) ? decoded.returnTo : 'setup'
+    return { podcastId, returnTo }
   } catch {
-    return null
+    return { podcastId: null, returnTo: 'setup' }
   }
 }
 
-function setupRedirect(req: NextRequest, podcastId: string | null, reason: string) {
-  const target = podcastId
-    ? `/${podcastId}/setup?youtube=error&reason=${encodeURIComponent(reason)}`
-    : `/?youtube=error&reason=${encodeURIComponent(reason)}`
+function buildPath(podcastId: string, returnTo: ReturnTo, query: string): string {
+  return `/${podcastId}/${returnTo}?${query}`
+}
 
+function errorRedirect(req: NextRequest, podcastId: string | null, returnTo: ReturnTo, reason: string) {
+  const query = `youtube=error&reason=${encodeURIComponent(reason)}`
+  const target = podcastId ? buildPath(podcastId, returnTo, query) : `/?${query}`
   return NextResponse.redirect(new URL(target, req.url))
 }
 
@@ -46,7 +55,7 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
   const stateParam = req.nextUrl.searchParams.get('state')
   const error = req.nextUrl.searchParams.get('error')
-  const podcastIdFromState = extractPodcastId(stateParam)
+  const { podcastId: podcastIdFromState, returnTo } = extractState(stateParam)
 
   const cookieStore = await cookies()
   const savedState = cookieStore.get('yt_oauth_state')?.value
@@ -56,29 +65,29 @@ export async function GET(req: NextRequest) {
 
   // Handle user denial or Google error
   if (error) {
-    return setupRedirect(req, podcastIdFromState, 'denied')
+    return errorRedirect(req, podcastIdFromState, returnTo, 'denied')
   }
 
   // Validate required params
   if (!code || !stateParam) {
-    return setupRedirect(req, podcastIdFromState, 'missing_params')
+    return errorRedirect(req, podcastIdFromState, returnTo, 'missing_params')
   }
 
   // CSRF: verify state matches cookie
   if (!savedState || savedState !== stateParam) {
-    return setupRedirect(req, podcastIdFromState, 'invalid_state')
+    return errorRedirect(req, podcastIdFromState, returnTo, 'invalid_state')
   }
 
   // Decode state to get podcastId
   const podcastId = podcastIdFromState
   if (!podcastId) {
-    return setupRedirect(req, null, 'bad_state')
+    return errorRedirect(req, null, returnTo, 'bad_state')
   }
 
   // Exchange code for access_token
   const config = getGoogleOAuthConfig()
   if (!config) {
-    return setupRedirect(req, podcastId, 'oauth_not_configured')
+    return errorRedirect(req, podcastId, returnTo, 'oauth_not_configured')
   }
 
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -94,14 +103,14 @@ export async function GET(req: NextRequest) {
   })
 
   if (!tokenRes.ok) {
-    return NextResponse.redirect(new URL(`/${podcastId}/setup?youtube=error&reason=token_exchange`, req.url))
+    return errorRedirect(req, podcastId, returnTo, 'token_exchange')
   }
 
   const tokenData = await tokenRes.json()
   const accessToken = tokenData.access_token
 
   if (!accessToken) {
-    return NextResponse.redirect(new URL(`/${podcastId}/setup?youtube=error&reason=no_token`, req.url))
+    return errorRedirect(req, podcastId, returnTo, 'no_token')
   }
 
   // Store access_token in short-lived httpOnly cookie (5 min)
@@ -113,5 +122,5 @@ export async function GET(req: NextRequest) {
     path: '/',
   })
 
-  return NextResponse.redirect(new URL(`/${podcastId}/setup?youtube=success`, req.url))
+  return NextResponse.redirect(new URL(buildPath(podcastId, returnTo, 'youtube=success'), req.url))
 }

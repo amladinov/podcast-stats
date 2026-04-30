@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { HeroDemoCta } from '@/components/HeroDemoCta'
 import { SafePodcastImage } from '@/components/SafePodcastImage'
 import { getCtaClasses } from '@/lib/ctaStyles'
@@ -314,8 +315,15 @@ export default function HomePage() {
 
               <div className="relative flex min-h-full flex-col justify-between text-center px-5 pb-[clamp(1.25rem,2.8vh,1.7rem)] pt-[clamp(0.1rem,0.7vh,0.3rem)]">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-medium tracking-[0.12em] text-[#7b57c8] uppercase shadow-sm mb-4">
-                  Podcast Stats
+                  <div className="mb-4 flex justify-center">
+                    <Image
+                      src="/logo.png"
+                      alt="Podcast Stats"
+                      width={170}
+                      height={30}
+                      priority
+                      className="h-[26px] w-auto"
+                    />
                   </div>
                   <h1 className="text-[clamp(2rem,7.8vw,2.95rem)] font-bold text-[#1d1d1f] tracking-tight mb-[clamp(0.65rem,1.6vh,0.95rem)] leading-[0.97]">
                     Полная статистика подкаста
@@ -445,8 +453,15 @@ export default function HomePage() {
         </div>
 
         <div className="relative text-center px-5 sm:px-8 pb-7 sm:pb-9">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[11px] font-medium tracking-[0.12em] text-[#7b57c8] uppercase shadow-sm mb-4">
-            Podcast Stats
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/logo.png"
+              alt="Podcast Stats"
+              width={210}
+              height={37}
+              priority
+              className="h-[32px] w-auto"
+            />
           </div>
           <h1 className="text-[28px] sm:text-[42px] font-bold text-[#1d1d1f] tracking-tight mb-3 leading-[1.05]">
             Полная статистика подкаста

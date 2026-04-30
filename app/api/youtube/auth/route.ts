@@ -19,8 +19,16 @@ function isValidPodcastId(value: string): boolean {
   return PODCAST_ID_PATTERN.test(value)
 }
 
+export type ReturnTo = 'setup' | 'dashboard'
+
+function isValidReturnTo(value: string | null): value is ReturnTo {
+  return value === 'setup' || value === 'dashboard'
+}
+
 export async function GET(req: NextRequest) {
   const podcastId = req.nextUrl.searchParams.get('podcastId')
+  const returnToParam = req.nextUrl.searchParams.get('returnTo')
+  const returnTo: ReturnTo = isValidReturnTo(returnToParam) ? returnToParam : 'setup'
 
   if (!podcastId) {
     return NextResponse.json({ error: 'podcastId is required' }, { status: 400 })
@@ -38,7 +46,7 @@ export async function GET(req: NextRequest) {
 
   // Create state with podcastId + nonce for CSRF protection
   const nonce = crypto.randomUUID()
-  const state = JSON.stringify({ podcastId, nonce })
+  const state = JSON.stringify({ podcastId, nonce, returnTo })
   const stateB64 = Buffer.from(state).toString('base64url')
 
   // Store state in httpOnly cookie for verification in callback

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { SafePodcastImage } from '@/components/SafePodcastImage'
 import { usePodcastStore } from '@/lib/store'
 import { resolvePodcastCoverUrl } from '@/lib/podcastCover'
@@ -21,6 +21,8 @@ import {
   PrintYandexAudienceSection,
 } from '@/components/dashboard/PrintReportCharts'
 import { formatCompactPeriod, getEpisodeRangeFromNormalized, getPeriodFromPlays } from '@/lib/platformPeriods'
+import { formatTimeAgo } from '@/lib/timeAgo'
+import { fetchYouTubeImport } from '@/lib/youtubeImport'
 import type { Platform } from '@/types'
 
 const DASHBOARD_PLATFORMS = [
@@ -119,6 +121,8 @@ function PrintPage({
 export default function DashboardPage() {
   const { podcastId } = useParams<{ podcastId: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const uploadPlays = usePodcastStore(s => s.uploadPlays)
   const podcast = usePodcastStore(s => s.getPodcast(podcastId))
   const comparablePodcastCount = usePodcastStore(s => s.podcasts.filter(item => item.uploadedPlatforms.length > 0).length)
   const isDemo = podcast ? DEMO_IDS.has(podcastId) : false
@@ -150,11 +154,61 @@ export default function DashboardPage() {
   const [enabledPlatforms, setEnabledPlatforms] = useState<Set<Platform>>(
     () => new Set(uploadedPlatformKeys)
   )
+  const [youtubeRefreshing, setYoutubeRefreshing] = useState(false)
+  const [youtubeMessage, setYoutubeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [, setNowTick] = useState(0)
+  const youtubeCallbackHandledRef = useRef(false)
   const mobileChromeRef = useRef<HTMLDivElement | null>(null)
   const mobileSceneContentRefs = useRef<Array<HTMLDivElement | null>>([])
   const mobileTouchStartRef = useRef<{ x: number; y: number } | null>(null)
   const previousPodcastIdRef = useRef<string | null>(null)
   const exportDate = formatExportDate()
+
+  const youtubeUploaded = uploadedPlatformsArray.find(p => p.platform === 'youtube')
+  const showYoutubeRefresh = !isDemo && Boolean(youtubeUploaded)
+
+  // Re-render every 60s so "N minutes ago" stays fresh.
+  useEffect(() => {
+    if (!showYoutubeRefresh) return
+    const interval = window.setInterval(() => setNowTick(t => t + 1), 60_000)
+    return () => window.clearInterval(interval)
+  }, [showYoutubeRefresh])
+
+  // Handle YouTube OAuth callback (?youtube=success|error&reason=...)
+  // Runs once per mount thanks to youtubeCallbackHandledRef guard. setState calls
+  // are part of reacting to a one-shot navigation event, so the lint warning
+  // about sync setState in effect doesn't apply here.
+  useEffect(() => {
+    const status = searchParams.get('youtube')
+    if (!status || youtubeCallbackHandledRef.current) return
+    youtubeCallbackHandledRef.current = true
+
+    // Strip query params from URL without re-triggering the effect.
+    window.history.replaceState({}, '', `/${podcastId}/dashboard`)
+
+    if (status === 'error') {
+      const reason = searchParams.get('reason') || 'unknown'
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setYoutubeMessage({ type: 'error', text: `Не удалось обновить YouTube: ${reason}` })
+      return
+    }
+
+    if (status === 'success') {
+      setYoutubeRefreshing(true)
+      setYoutubeMessage(null)
+
+      fetchYouTubeImport()
+        .then(({ plays, uploadedPlatform }) => {
+          uploadPlays(podcastId, plays, uploadedPlatform)
+          setYoutubeMessage({ type: 'success', text: `Обновлено ${plays.length} видео` })
+        })
+        .catch(e => {
+          const text = e instanceof Error ? e.message : 'Ошибка импорта YouTube'
+          setYoutubeMessage({ type: 'error', text })
+        })
+        .finally(() => setYoutubeRefreshing(false))
+    }
+  }, [searchParams, podcastId, uploadPlays])
 
   const uploadedPlatformLabels = DASHBOARD_PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key))
@@ -1050,6 +1104,48 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
+              {showYoutubeRefresh && youtubeUploaded && (
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm print:hidden">
+                  <div className="min-w-0 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#ff453a' }} />
+                      <p className="text-[13px] font-semibold text-[#1d1d1f]">YouTube</p>
+                      <p className="text-[12px] text-[#8e8e93]">
+                        обновлено {formatTimeAgo(youtubeUploaded.uploadedAt)}
+                      </p>
+                    </div>
+                    {youtubeMessage && (
+                      <p
+                        className={[
+                          'mt-1 text-[12px]',
+                          youtubeMessage.type === 'success' ? 'text-[#30a14e]' : 'text-[#d70015]',
+                        ].join(' ')}
+                      >
+                        {youtubeMessage.text}
+                      </p>
+                    )}
+                  </div>
+                  <a
+                    href={youtubeRefreshing ? undefined : `/api/youtube/auth?podcastId=${podcastId}&returnTo=dashboard`}
+                    aria-disabled={youtubeRefreshing}
+                    className={[
+                      'inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px] font-medium transition-colors',
+                      youtubeRefreshing
+                        ? 'cursor-not-allowed border-[#e5e5ea] bg-[#f5f5f7] text-[#aeaeb2]'
+                        : 'border-[#ff453a]/30 bg-white text-[#ff453a] hover:bg-[#ff453a]/5',
+                    ].join(' ')}
+                  >
+                    {youtubeRefreshing ? (
+                      <>
+                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#aeaeb2] border-t-transparent" />
+                        Обновляем…
+                      </>
+                    ) : (
+                      <>↻ Обновить</>
+                    )}
+                  </a>
+                </div>
+              )}
               <PlatformFilters
                 uploadedPlatforms={uploadedPlatformKeys}
                 enabledPlatforms={enabledPlatforms}

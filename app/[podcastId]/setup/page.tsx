@@ -10,6 +10,7 @@ import { parseSpotify } from '@/lib/parsers/spotify'
 import { parseYandex } from '@/lib/parsers/yandex'
 import { parseVK } from '@/lib/parsers/vk'
 import { parseVKVideo } from '@/lib/parsers/vkVideo'
+import { fetchYouTubeImport } from '@/lib/youtubeImport'
 import { parseYandexGender } from '@/lib/parsers/yandexGender'
 import { parseYandexAge } from '@/lib/parsers/yandexAge'
 import { parseYandexCities } from '@/lib/parsers/yandexCities'
@@ -179,36 +180,9 @@ export default function SetupPage() {
       setYoutubeLoading(true)
       setErrors(prev => ({ ...prev, youtube: '' }))
 
-      fetch('/api/youtube/videos', { method: 'POST' })
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          return res.json()
-        })
-        .then(data => {
-          if (data.error) throw new Error(data.error)
-          const videos = data.videos as Array<{
-            title: string; videoId: string; publishDate: string
-            views: number; likes: number; comments: number
-          }>
-
-          const plays: PlayRecord[] = videos.map(v => ({
-            episodeTitle: v.title,
-            platform: 'youtube' as const,
-            date: v.publishDate,
-            plays: v.views,
-            likes: v.likes,
-            comments: v.comments,
-          }))
-
-          if (plays.length === 0) throw new Error('Не найдено видео на канале')
-
-          uploadPlays(podcastId, plays, {
-            platform: 'youtube',
-            fileName: 'YouTube API',
-            recordsCount: plays.length,
-            uploadedAt: new Date().toISOString(),
-            ...getPeriodFromPlays(plays),
-          })
+      fetchYouTubeImport()
+        .then(({ plays, uploadedPlatform }) => {
+          uploadPlays(podcastId, plays, uploadedPlatform)
           setPreviews(prev => ({ ...prev, youtube: plays.length }))
           setLastUploadedKey('youtube')
         })
