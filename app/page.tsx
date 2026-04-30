@@ -98,6 +98,7 @@ export default function HomePage() {
   const compareTransitionTimerRef = useRef<number | null>(null)
   const canCompare = podcasts.filter(p => p.uploadedPlatforms.length > 0).length >= 2
   const [compareVisibility, setCompareVisibility] = useState<'text' | 'text-exit' | 'button-enter' | 'button'>(canCompare ? 'button' : 'text')
+  const prevCanCompareRef = useRef(canCompare)
 
   useEffect(() => {
     return () => {
@@ -160,14 +161,15 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
+    if (prevCanCompareRef.current === canCompare) return
+    prevCanCompareRef.current = canCompare
+
     if (compareTransitionTimerRef.current !== null) {
       window.clearTimeout(compareTransitionTimerRef.current)
       compareTransitionTimerRef.current = null
     }
 
     if (canCompare) {
-      if (compareVisibility === 'button' || compareVisibility === 'button-enter') return
-
       setCompareVisibility('text-exit')
       compareTransitionTimerRef.current = window.setTimeout(() => {
         setCompareVisibility('button-enter')
@@ -179,14 +181,12 @@ export default function HomePage() {
       return
     }
 
-    if (compareVisibility === 'text' || compareVisibility === 'text-exit') return
-
     setCompareVisibility('button-enter')
     compareTransitionTimerRef.current = window.setTimeout(() => {
       setCompareVisibility('text')
       compareTransitionTimerRef.current = null
     }, 220)
-  }, [canCompare, compareVisibility])
+  }, [canCompare])
 
   function handleDemoComplete() {
     if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
