@@ -17,7 +17,7 @@
 app/
   page.tsx                — главная (список подкастов, добавление)
   [podcastId]/
-    setup/page.tsx        — мастер загрузки CSV по платформам
+    setup/page.tsx        — мастер загрузки: оркестратор (state, хуки, раскладка); UI в components/setup
     dashboard/page.tsx    — дашборд: оркестратор (state, хуки, раскладка); UI в components/dashboard
   compare/page.tsx        — сравнение подкастов
   api/
@@ -29,6 +29,9 @@ app/
       videos/route.ts     — получение видео с канала через API
 
 components/
+  setup/                  — мастер загрузки: PlatformCard, MavePasteSection, AudienceCards, YouTubeCard,
+                            SetupMobileShell, platformGuides.ts (инструкции по платформам), хуки use*.ts
+                            Компоненты принимают layout='mobile'|'desktop' и воспроизводят обе вёрстки
   dashboard/              — блоки дашборда (StatCards, графики, таблица, фильтры, AI)
     DashboardHeader.tsx, RefreshPanel.tsx — шапка и панели «обновить»
     use*.ts               — хуки дашборда (PDF-экспорт, обновление YouTube/RSS, фильтр платформ)

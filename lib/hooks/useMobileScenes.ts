@@ -8,6 +8,12 @@ interface Params {
   remeasureKey: string
   /** Поправка к высоте сцены (дашборду нужно +25px «воздуха»). */
   sceneHeightOffset?: number
+  /** Резкий свайп (>180px) листает даже прокручиваемую сцену; мастер загрузки это не использует. */
+  decisiveSwipe?: boolean
+  /** Свайп вверх с последней сцены возвращает на первую. */
+  wrapAround?: boolean
+  /** Измерять высоту через visualViewport (учитывает плавающую адресную строку Safari). */
+  measureVisualViewport?: boolean
 }
 
 /**
@@ -15,7 +21,14 @@ interface Params {
  * блокировка скролла страницы, измерение высоты viewport и шапки,
  * обработка касаний с учётом прокрутки внутри сцены.
  */
-export function useMobileScenes({ totalScenes, remeasureKey, sceneHeightOffset = 0 }: Params) {
+export function useMobileScenes({
+  totalScenes,
+  remeasureKey,
+  sceneHeightOffset = 0,
+  decisiveSwipe = true,
+  wrapAround = true,
+  measureVisualViewport = true,
+}: Params) {
   const [sceneIndex, setSceneIndex] = useState(0)
   const [viewportHeight, setViewportHeight] = useState(0)
   const [chromeHeight, setChromeHeight] = useState(0)
@@ -64,6 +77,12 @@ export function useMobileScenes({ totalScenes, remeasureKey, sceneHeightOffset =
     if (typeof window === 'undefined') return
 
     const syncMobileHeights = () => {
+      if (!measureVisualViewport) {
+        setViewportHeight(window.innerHeight)
+        setChromeHeight(chromeRef.current?.offsetHeight ?? 0)
+        return
+      }
+
       // Prefer visualViewport.height — it's the only source that correctly
       // reflects the floating Safari iOS URL bar in real time. 100dvh can
       // briefly report the no-URL-bar height during the first render even
@@ -92,7 +111,7 @@ export function useMobileScenes({ totalScenes, remeasureKey, sceneHeightOffset =
       window.removeEventListener('orientationchange', syncMobileHeights)
       window.visualViewport?.removeEventListener('resize', syncMobileHeights)
     }
-  }, [totalScenes, remeasureKey])
+  }, [totalScenes, remeasureKey, measureVisualViewport])
 
   function onTouchStart(event: React.TouchEvent<HTMLDivElement>) {
     const touch = event.changedTouches[0]
@@ -110,6 +129,29 @@ export function useMobileScenes({ totalScenes, remeasureKey, sceneHeightOffset =
 
     if (Math.abs(deltaY) < 56 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return
 
+    const currentContent = sceneContentRefs.current[activeSceneIndex]
+    const scrollTop = currentContent?.scrollTop ?? 0
+
+    if (!decisiveSwipe) {
+      // Строгий режим: листаем только когда сцена докручена до края.
+      const clientHeight = currentContent?.clientHeight ?? 0
+      const scrollHeight = currentContent?.scrollHeight ?? 0
+      const atTop = scrollTop <= 4
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 4
+
+      if (deltaY < 0) {
+        if (activeSceneIndex < totalScenes - 1 && (scrollHeight <= clientHeight + 4 || atBottom)) {
+          setSceneIndex(current => Math.min(current + 1, totalScenes - 1))
+        }
+        return
+      }
+
+      if (activeSceneIndex > 0 && atTop) {
+        setSceneIndex(current => Math.max(current - 1, 0))
+      }
+      return
+    }
+
     // A "decisive" swipe (>180px) always advances the scene, even when the
     // content is scrollable inside. Otherwise users could get stuck on scenes
     // whose content exceeds the viewport (e.g. when the browser URL bar
@@ -117,16 +159,14 @@ export function useMobileScenes({ totalScenes, remeasureKey, sceneHeightOffset =
     const FORCE_SWITCH_THRESHOLD_PX = 180
     const isDecisive = Math.abs(deltaY) > FORCE_SWITCH_THRESHOLD_PX
 
-    const currentContent = sceneContentRefs.current[activeSceneIndex]
     const canScrollInside = Boolean(currentContent && currentContent.scrollHeight > currentContent.clientHeight + 4)
-    const scrollTop = currentContent?.scrollTop ?? 0
     const nearBottom = !currentContent || scrollTop + currentContent.clientHeight >= currentContent.scrollHeight - 4
 
     if (deltaY < 0) {
       if (canScrollInside && !nearBottom && !isDecisive) return
       if (activeSceneIndex < totalScenes - 1) {
         setSceneIndex(prev => prev + 1)
-      } else {
+      } else if (wrapAround) {
         setSceneIndex(0)
       }
       return
