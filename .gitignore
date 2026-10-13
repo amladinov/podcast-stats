@@ -48,3 +48,6 @@ output/
 # loose media in project root
 /*.mov
 /*.mp4
+
+# playwright mcp artifacts
+.playwright-mcp/

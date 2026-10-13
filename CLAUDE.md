@@ -18,7 +18,7 @@ app/
   page.tsx                — главная (список подкастов, добавление)
   [podcastId]/
     setup/page.tsx        — мастер загрузки CSV по платформам
-    dashboard/page.tsx    — аналитический дашборд с графиками
+    dashboard/page.tsx    — дашборд: оркестратор (state, хуки, раскладка); UI в components/dashboard
   compare/page.tsx        — сравнение подкастов
   api/
     rss/route.ts          — парсинг RSS-ленты
@@ -28,8 +28,17 @@ app/
       callback/route.ts   — OAuth callback, обмен code на token
       videos/route.ts     — получение видео с канала через API
 
+components/
+  dashboard/              — блоки дашборда (StatCards, графики, таблица, фильтры, AI)
+    DashboardHeader.tsx, RefreshPanel.tsx — шапка и панели «обновить»
+    use*.ts               — хуки дашборда (PDF-экспорт, обновление YouTube/RSS, фильтр платформ)
+    mobile/               — мобильные сцены и оболочка со свайпом
+    print/                — печатный отчёт (PDF)
+
 lib/
   store.ts                — Zustand (добавление подкастов, загрузка прослушиваний)
+  dashboardMetrics.ts     — сортировка эпизодов, подписи периодов, данные диаграмм аудитории
+  hooks/useMobileScenes.ts — полноэкранные мобильные сцены со свайпом (общий хук)
   demoData.ts             — демо-подкасты (Совет Директоров, Скоро 30, НЖО)
   platforms.ts            — единый справочник платформ (ключ, имя, цвет); новая платформа добавляется здесь + в тип Platform
   matcher.ts              — мэтчинг эпизодов, нормализация данных

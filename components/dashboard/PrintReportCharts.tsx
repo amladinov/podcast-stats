@@ -11,16 +11,10 @@ import {
   YAxis,
 } from 'recharts'
 import type { NormalizedEpisode, Platform, PlayRecord, YandexAudience } from '@/types'
+import { AGE_COLORS, GENDER_COLORS } from '@/lib/chartColors'
 import { getPlatformTotals } from '@/lib/podcastMetrics'
 import { PLATFORMS } from '@/lib/platforms'
 
-const GENDER_COLORS: Record<string, string> = {
-  'Женщины': '#ff6b9d',
-  'Мужчины': '#0a84ff',
-  'Не определён': '#aeaeb2',
-}
-
-const AGE_COLORS = ['#b150e2', '#0a84ff', '#ff9f0a', '#30d158', '#ff6b9d', '#ff453a', '#aeaeb2']
 
 export function PrintTrendChart({ episodes }: { episodes: NormalizedEpisode[] }) {
   const monthMap = new Map<string, number>()

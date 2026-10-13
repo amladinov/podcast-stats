@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { SafePodcastImage } from '@/components/SafePodcastImage'
 import { usePodcastStore } from '@/lib/store'
 import { resolvePodcastCoverUrl } from '@/lib/podcastCover'
 import { DEMO_IDS, DEMO_INSIGHTS_MAP } from '@/lib/demoData'
 import { getFilteredEpisodes, getPlatformTotals, getTotalPlays } from '@/lib/podcastMetrics'
+import { PLATFORMS } from '@/lib/platforms'
+import { buildAudienceChartData, buildStatCardMeta, sortEpisodes, type EpisodeSortKey } from '@/lib/dashboardMetrics'
+import { formatTimeAgo } from '@/lib/timeAgo'
+import { useMobileScenes } from '@/lib/hooks/useMobileScenes'
 import { StatCards } from '@/components/dashboard/StatCards'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { PlatformChart } from '@/components/dashboard/PlatformChart'
@@ -14,103 +17,23 @@ import { EpisodeTable } from '@/components/dashboard/EpisodeTable'
 import { AIInsights } from '@/components/dashboard/AIInsights'
 import { PlatformFilters } from '@/components/dashboard/PlatformFilters'
 import { YandexAudienceSection } from '@/components/dashboard/YandexAudienceSection'
-import { getCtaClasses } from '@/lib/ctaStyles'
-import {
-  PrintPlatformChart,
-  PrintTrendChart,
-  PrintYandexAudienceSection,
-} from '@/components/dashboard/PrintReportCharts'
-import { formatCompactPeriod, getEpisodeRangeFromNormalized, getPeriodFromPlays } from '@/lib/platformPeriods'
-import { formatTimeAgo } from '@/lib/timeAgo'
-import { fetchYouTubeImport } from '@/lib/youtubeImport'
-import { fetchRssEpisodes } from '@/lib/podcastRss'
-import { exportDashboardToPdf, isMobileViewport } from '@/lib/pdfExport'
-import type { Platform } from '@/types'
-import { PLATFORMS } from '@/lib/platforms'
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
+import { RefreshPanel } from '@/components/dashboard/RefreshPanel'
+import { DashboardPrintReport } from '@/components/dashboard/print/DashboardPrintReport'
+import { MobileDashboardShell, type MobileScene } from '@/components/dashboard/mobile/MobileDashboardShell'
+import { MobileOverviewScene } from '@/components/dashboard/mobile/MobileOverviewScene'
+import { MobileSummaryScene } from '@/components/dashboard/mobile/MobileSummaryScene'
+import { MobileEpisodesScene, type EpisodeListMode } from '@/components/dashboard/mobile/MobileEpisodesScene'
+import { MobileEpisodeDetailScene } from '@/components/dashboard/mobile/MobileEpisodeDetailScene'
+import { MobileAudienceScene } from '@/components/dashboard/mobile/MobileAudienceScene'
+import { MobileCitiesScene } from '@/components/dashboard/mobile/MobileCitiesScene'
+import { useDashboardPdfExport } from '@/components/dashboard/useDashboardPdfExport'
+import { useYouTubeRefresh } from '@/components/dashboard/useYouTubeRefresh'
+import { useEpisodesRefresh } from '@/components/dashboard/useEpisodesRefresh'
+import { useEnabledPlatforms } from '@/components/dashboard/useEnabledPlatforms'
 
-const GENDER_COLORS: Record<string, string> = {
-  'Женщины': '#ff6b9d',
-  'Мужчины': '#0a84ff',
-  'Не определён': '#aeaeb2',
-}
-
-const AGE_COLORS = ['#b150e2', '#0a84ff', '#ff9f0a', '#30d158', '#ff6b9d', '#ff453a', '#aeaeb2']
-const PDF_EPISODE_LIMIT = 15
-
-type EpisodeSortKey = 'total' | 'publishDate' | Platform
-
-function formatExportDate(): string {
-  return new Date().toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
-function sanitizePrintTitle(title: string): string {
-  const sanitized = title
-    .replace(/[\\/:*?"<>|]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  return sanitized || 'Podcast Stats'
-}
-
-function formatPrintTimestamp(): string {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day}_${hours}-${minutes}`
-}
-
-function formatShortDate(date: string | undefined): string {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('ru', {
-    day: 'numeric',
-    month: 'short',
-    year: '2-digit',
-  })
-}
-
-function PrintPage({
-  title,
-  exportDate,
-  platformLabels,
-  children,
-  last = false,
-}: {
-  title: string
-  exportDate: string
-  platformLabels: string[]
-  children: React.ReactNode
-  last?: boolean
-}) {
-  return (
-    <section className={`print-page ${last ? 'print-page-last' : ''}`}>
-      <header className="print-page-header">
-        <div>
-          <div className="print-page-brand">
-            <img
-              src="/brand/mono.png"
-              alt="Podcast Stats"
-              className="print-page-brand-logo"
-            />
-          </div>
-          <h1 className="print-page-title">{title}</h1>
-        </div>
-        <div className="print-page-meta">
-          <p>Экспорт: {exportDate}</p>
-          <p>Платформы: {platformLabels.length > 0 ? platformLabels.join(', ') : 'нет данных'}</p>
-        </div>
-      </header>
-      <div className="print-page-body">{children}</div>
-    </section>
-  )
-}
+// Дашборду на мобильном нужно +25px «воздуха» к высоте сцены.
+const MOBILE_SCENE_HEIGHT_OFFSET = 25
 
 export default function DashboardPage() {
   const { podcastId } = useParams<{ podcastId: string }>()
@@ -138,108 +61,38 @@ export default function DashboardPage() {
     [uploadedPlatformKeys]
   )
 
-  const [dashboardSceneIndex, setDashboardSceneIndex] = useState(0)
-  const [mobileViewportHeight, setMobileViewportHeight] = useState(0)
-  const [mobileChromeHeight, setMobileChromeHeight] = useState(0)
+  // ---- Состояние страницы ----
   const [episodeSortKey, setEpisodeSortKey] = useState<EpisodeSortKey>('total')
   const [episodeSortDesc, setEpisodeSortDesc] = useState(true)
-  const [episodeListMode, setEpisodeListMode] = useState<'top' | 'all'>('top')
+  const [episodeListMode, setEpisodeListMode] = useState<EpisodeListMode>('top')
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null)
-  const [citiesExpanded, setCitiesExpanded] = useState(false)
-  const [enabledPlatforms, setEnabledPlatforms] = useState<Set<Platform>>(
-    () => new Set(uploadedPlatformKeys)
-  )
-  const [youtubeRefreshing, setYoutubeRefreshing] = useState(false)
-  const [youtubeMessage, setYoutubeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [episodesRefreshing, setEpisodesRefreshing] = useState(false)
-  const [episodesMessage, setEpisodesMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [, setNowTick] = useState(0)
-  const [pdfGenerating, setPdfGenerating] = useState(false)
-  const [pdfError, setPdfError] = useState<string | null>(null)
-  const printRootRef = useRef<HTMLDivElement | null>(null)
-  const youtubeCallbackHandledRef = useRef(false)
-  const mobileChromeRef = useRef<HTMLDivElement | null>(null)
-  const mobileSceneContentRefs = useRef<Array<HTMLDivElement | null>>([])
-  const mobileTouchStartRef = useRef<{ x: number; y: number } | null>(null)
-  const previousPodcastIdRef = useRef<string | null>(null)
-  const exportDate = formatExportDate()
+  const { enabledPlatforms, togglePlatform } = useEnabledPlatforms(podcastId, uploadedPlatformKeys)
+  const { printRootRef, pdfGenerating, pdfError, handlePrintPdf } = useDashboardPdfExport(podcastTitle)
 
   const youtubeUploaded = uploadedPlatformsArray.find(p => p.platform === 'youtube')
   const showYoutubeRefresh = !isDemo && Boolean(youtubeUploaded)
   const showEpisodesRefresh = !isDemo && Boolean(podcast?.rssUrl) && podcast?.rssUrl !== 'https://demo' && episodes.length > 0
 
-  // Re-render every 60s so "N minutes ago" stays fresh.
-  useEffect(() => {
-    if (!showYoutubeRefresh) return
-    const interval = window.setInterval(() => setNowTick(t => t + 1), 60_000)
-    return () => window.clearInterval(interval)
-  }, [showYoutubeRefresh])
+  const { youtubeRefreshing, youtubeMessage } = useYouTubeRefresh({
+    podcastId,
+    searchParams,
+    uploadPlays,
+    active: showYoutubeRefresh,
+  })
+  const { episodesRefreshing, episodesMessage, handleRefreshEpisodes } = useEpisodesRefresh({
+    podcastId,
+    rssUrl: podcast?.rssUrl,
+    refreshEpisodes,
+  })
 
-  // Handle YouTube OAuth callback (?youtube=success|error&reason=...)
-  // Runs once per mount thanks to youtubeCallbackHandledRef guard. setState calls
-  // are part of reacting to a one-shot navigation event, so the lint warning
-  // about sync setState in effect doesn't apply here.
-  useEffect(() => {
-    const status = searchParams.get('youtube')
-    if (!status || youtubeCallbackHandledRef.current) return
-    youtubeCallbackHandledRef.current = true
-
-    // Strip query params from URL without re-triggering the effect.
-    window.history.replaceState({}, '', `/${podcastId}/dashboard`)
-
-    if (status === 'error') {
-      const reason = searchParams.get('reason') || 'unknown'
-      setYoutubeMessage({ type: 'error', text: `Не удалось обновить YouTube: ${reason}` })
-      return
-    }
-
-    if (status === 'success') {
-      setYoutubeRefreshing(true)
-      setYoutubeMessage(null)
-
-      fetchYouTubeImport()
-        .then(({ plays, uploadedPlatform }) => {
-          uploadPlays(podcastId, plays, uploadedPlatform)
-          setYoutubeMessage({ type: 'success', text: `Обновлено ${plays.length} видео` })
-        })
-        .catch(e => {
-          const text = e instanceof Error ? e.message : 'Ошибка импорта YouTube'
-          setYoutubeMessage({ type: 'error', text })
-        })
-        .finally(() => setYoutubeRefreshing(false))
-    }
-  }, [searchParams, podcastId, uploadPlays])
-
-  async function handleRefreshEpisodes() {
-    const rssUrl = podcast?.rssUrl
-    if (!rssUrl || rssUrl === 'https://demo') return
-    setEpisodesRefreshing(true)
-    setEpisodesMessage(null)
-    try {
-      const fresh = await fetchRssEpisodes(rssUrl)
-      if (fresh.length === 0) {
-        setEpisodesMessage({ type: 'error', text: 'Лента пуста — попробуйте позже' })
-        return
-      }
-      const { added } = refreshEpisodes(podcastId, fresh)
-      setEpisodesMessage({
-        type: 'success',
-        text: added > 0
-          ? `Добавлено выпусков: ${added}. Обновите статистику платформ, чтобы подтянуть цифры.`
-          : 'Лента актуальна',
-      })
-    } catch (e) {
-      setEpisodesMessage({ type: 'error', text: e instanceof Error ? e.message : 'Не удалось обновить ленту' })
-    } finally {
-      setEpisodesRefreshing(false)
-    }
-  }
-
+  // ---- Производные данные ----
   const uploadedPlatformLabels = PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key))
     .map(platform => platform.label)
-  const activePlatformLabels = PLATFORMS
+  const activePlatforms = PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key) && enabledPlatforms.has(platform.key))
+  const disabledPlatformLabels = PLATFORMS
+    .filter(platform => uploadedPlatforms.has(platform.key) && !enabledPlatforms.has(platform.key))
     .map(platform => platform.label)
   const topEpisodes = [...episodes]
     .sort((a, b) => b.plays.total - a.plays.total)
@@ -250,48 +103,31 @@ export default function DashboardPage() {
   const filteredEpisodes = getFilteredEpisodes(episodes, enabledPlatforms)
   const filteredTotals = getPlatformTotals(episodes, rawPlays, enabledPlatforms)
   const filteredTotal = getTotalPlays(filteredEpisodes)
-  const sortedFilteredEpisodesForPdf = [...filteredEpisodes].sort((a, b) => {
-    if (episodeSortKey === 'publishDate') {
-      const av = new Date(a.publishDate).getTime()
-      const bv = new Date(b.publishDate).getTime()
-      return episodeSortDesc ? bv - av : av - bv
-    }
-
-    const av = a.plays[episodeSortKey]
-    const bv = b.plays[episodeSortKey]
-    return episodeSortDesc ? bv - av : av - bv
-  })
-  const filteredTopEpisodes = sortedFilteredEpisodesForPdf.slice(0, PDF_EPISODE_LIMIT)
   const filteredAveragePerEpisode = episodes.length > 0 ? Math.round(filteredTotal / episodes.length) : 0
+  const sortedFilteredEpisodes = sortEpisodes(filteredEpisodes, episodeSortKey, episodeSortDesc)
   const filterActive = uploadedPlatformKeys.some(platform => !enabledPlatforms.has(platform))
-  const disabledPlatformLabels = PLATFORMS
-    .filter(platform => uploadedPlatforms.has(platform.key) && !enabledPlatforms.has(platform.key))
-    .map(platform => platform.label)
-  const printTablePlatforms = PLATFORMS
-    .filter(platform => uploadedPlatforms.has(platform.key) && enabledPlatforms.has(platform.key))
   const canCompare = comparablePodcastCount >= 2
+  const statCardMeta = buildStatCardMeta(uploadedPlatformsArray, rawPlays, episodes)
 
-  const statCardMeta = Object.fromEntries(
-    uploadedPlatformsArray.map(platform => {
-      const fallback = getPeriodFromPlays(rawPlays.filter(play => play.platform === platform.platform))
-      const period = formatCompactPeriod(platform.periodStart ?? fallback.periodStart, platform.periodEnd ?? fallback.periodEnd)
-      const episodeRange = platform.platform === 'yandex'
-        ? getEpisodeRangeFromNormalized(episodes, 'yandex')
-        : {}
-      const releases = platform.platform === 'yandex'
-        ? formatCompactPeriod(episodeRange.periodStart, episodeRange.periodEnd)
-        : null
+  const sortedEpisodes = sortEpisodes(episodes, episodeSortKey, episodeSortDesc)
+  const visibleEpisodes = episodeListMode === 'top' ? sortedEpisodes.slice(0, 10) : sortedEpisodes
+  const audience = podcast?.yandexAudience ?? null
+  const { genderData, ageData } = buildAudienceChartData(audience)
+  const selectedEpisode = selectedEpisodeId
+    ? episodes.find(episode => episode.id === selectedEpisodeId) ?? null
+    : null
 
-      return [platform.platform, {
-        label: PLATFORMS.find(item => item.key === platform.platform)?.label ?? platform.platform,
-        period: period ?? undefined,
-        releases: releases ?? undefined,
-      }]
-    })
-  )
+  const mobilePlatformCards = PLATFORMS
+    .map(platform => ({
+      ...platform,
+      value: totals[platform.key],
+      pct: total > 0 ? Math.round(totals[platform.key] / total * 100) : 0,
+    }))
+    .filter(platform => platform.value > 0)
 
-  const mobileDashboardScenes = useMemo(() => {
-    const scenes = [
+  // ---- Мобильные сцены ----
+  const mobileDashboardScenes = useMemo<MobileScene[]>(() => {
+    const scenes: MobileScene[] = [
       { id: 'overview', label: 'Управление' },
       { id: 'summary', label: 'Сводка' },
       { id: 'charts', label: 'Графики' },
@@ -309,623 +145,89 @@ export default function DashboardPage() {
     return scenes
   }, [podcast?.yandexAudience])
 
-  const dashboardTotalScenes = mobileDashboardScenes.length
-  const mobileSceneViewportHeight = mobileViewportHeight > 0
-    ? Math.max(mobileViewportHeight - mobileChromeHeight + 25, 0)
-    : 0
-
-  const mobilePlatformCards = PLATFORMS
-    .map(platform => ({
-      ...platform,
-      value: totals[platform.key],
-      pct: total > 0 ? Math.round(totals[platform.key] / total * 100) : 0,
-      meta: statCardMeta[platform.key],
-    }))
-    .filter(platform => platform.value > 0)
-
-  const sortedEpisodes = [...episodes].sort((a, b) => {
-    if (episodeSortKey === 'publishDate') {
-      const av = new Date(a.publishDate).getTime()
-      const bv = new Date(b.publishDate).getTime()
-      return episodeSortDesc ? bv - av : av - bv
-    }
-
-    const aValue = episodeSortKey === 'total' ? a.plays.total : a.plays[episodeSortKey]
-    const bValue = episodeSortKey === 'total' ? b.plays.total : b.plays[episodeSortKey]
-    return episodeSortDesc ? bValue - aValue : aValue - bValue
+  const mobile = useMobileScenes({
+    totalScenes: mobileDashboardScenes.length,
+    remeasureKey: `${uploadedPlatformKeys.length}|${isDemo}|${podcastTitle}|${episodes.length}`,
+    sceneHeightOffset: MOBILE_SCENE_HEIGHT_OFFSET,
   })
 
-  const visibleEpisodes = episodeListMode === 'top' ? sortedEpisodes.slice(0, 10) : sortedEpisodes
-  const audience = podcast?.yandexAudience ?? null
-  const genderData = audience?.gender
-    ? [
-        { name: 'Женщины', value: audience.gender.female, color: GENDER_COLORS['Женщины'] },
-        { name: 'Мужчины', value: audience.gender.male, color: GENDER_COLORS['Мужчины'] },
-        ...(audience.gender.unknown > 0 ? [{ name: 'Не определён', value: audience.gender.unknown, color: GENDER_COLORS['Не определён'] }] : []),
-      ].filter(item => item.value > 0)
-    : []
-  const ageData = audience?.age
-    ? audience.age.map((item, index) => ({ name: item.range, value: item.count, color: AGE_COLORS[index % AGE_COLORS.length] })).filter(item => item.value > 0)
-    : []
-  const activeDashboardSceneIndex = Math.min(dashboardSceneIndex, Math.max(dashboardTotalScenes - 1, 0))
-  const selectedEpisode = selectedEpisodeId
-    ? episodes.find(episode => episode.id === selectedEpisodeId) ?? null
-    : null
-  const isOverviewScene = activeDashboardSceneIndex === 0
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const html = document.documentElement
-    const body = document.body
-    const previousHtmlOverflow = html.style.overflow
-    const previousBodyOverflow = body.style.overflow
-    const previousBodyOverscroll = body.style.overscrollBehaviorY
-
-    const syncMobileViewportLock = () => {
-      if (window.matchMedia('(max-width: 767px)').matches) {
-        html.style.overflow = 'hidden'
-        body.style.overflow = 'hidden'
-        body.style.overscrollBehaviorY = 'none'
-      } else {
-        html.style.overflow = previousHtmlOverflow
-        body.style.overflow = previousBodyOverflow
-        body.style.overscrollBehaviorY = previousBodyOverscroll
-      }
-    }
-
-    syncMobileViewportLock()
-    window.addEventListener('resize', syncMobileViewportLock)
-
-    return () => {
-      window.removeEventListener('resize', syncMobileViewportLock)
-      html.style.overflow = previousHtmlOverflow
-      body.style.overflow = previousBodyOverflow
-      body.style.overscrollBehaviorY = previousBodyOverscroll
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const syncMobileHeights = () => {
-      // Prefer visualViewport.height — it's the only source that correctly
-      // reflects the floating Safari iOS URL bar in real time. 100dvh can
-      // briefly report the no-URL-bar height during the first render even
-      // when the URL bar is visible, pushing content under it.
-      const visual = window.visualViewport?.height
-
-      // Fallback: measure 100dvh via probe (works on browsers without
-      // visualViewport API).
-      const probe = document.createElement('div')
-      probe.style.cssText = 'position:fixed;top:0;height:100dvh;pointer-events:none;visibility:hidden'
-      document.body.appendChild(probe)
-      const dvh = probe.offsetHeight
-      document.body.removeChild(probe)
-
-      setMobileViewportHeight(visual || dvh || window.innerHeight)
-      setMobileChromeHeight(mobileChromeRef.current?.offsetHeight ?? 0)
-    }
-
-    syncMobileHeights()
-    window.addEventListener('resize', syncMobileHeights)
-    window.addEventListener('orientationchange', syncMobileHeights)
-    window.visualViewport?.addEventListener('resize', syncMobileHeights)
-
-    return () => {
-      window.removeEventListener('resize', syncMobileHeights)
-      window.removeEventListener('orientationchange', syncMobileHeights)
-      window.visualViewport?.removeEventListener('resize', syncMobileHeights)
-    }
-  }, [dashboardTotalScenes, uploadedPlatformKeys.length, isDemo, podcastTitle, episodes.length])
-
-  useEffect(() => {
-    setEnabledPlatforms(prev => {
-      if (previousPodcastIdRef.current !== podcastId) {
-        previousPodcastIdRef.current = podcastId
-        return new Set(uploadedPlatformKeys)
-      }
-
-      let changed = false
-      const next = new Set(prev)
-      for (const platform of uploadedPlatformKeys) {
-        if (!next.has(platform)) {
-          next.add(platform)
-          changed = true
-        }
-      }
-      return changed ? next : prev
-    })
-  }, [podcastId, uploadedPlatformKeys])
-
-  function handleTogglePlatform(platform: Platform) {
-    setEnabledPlatforms(prev => {
-      if (!uploadedPlatforms.has(platform)) {
-        return prev
-      }
-
-      const enabledUploadedCount = uploadedPlatformKeys.reduce((count, key) => {
-        return prev.has(key) ? count + 1 : count
-      }, 0)
-
-      if (prev.has(platform) && enabledUploadedCount <= 1) {
-        return prev
-      }
-
-      const next = new Set(prev)
-      if (next.has(platform)) {
-        next.delete(platform)
-      } else {
-        next.add(platform)
-      }
-      return next
-    })
-  }
-
-  const handlePrintPdf = async () => {
-    if (typeof window === 'undefined') return
-
-    const printTitle = `${sanitizePrintTitle(podcastTitle)}_${formatPrintTimestamp()}`
-
-    // Mobile (incl. Arc and other WKWebView wrappers) — generate PDF in JS
-    // because window.print() is unreliable there.
-    if (isMobileViewport()) {
-      const root = printRootRef.current
-      if (!root) {
-        setPdfError('Не нашли блок для экспорта')
-        return
-      }
-
-      setPdfGenerating(true)
-      setPdfError(null)
-      try {
-        await exportDashboardToPdf(root, { filename: printTitle })
-      } catch (e) {
-        setPdfError(e instanceof Error ? e.message : 'Не удалось собрать PDF')
-      } finally {
-        setPdfGenerating(false)
-      }
-      return
-    }
-
-    // Desktop — native browser print preserves crisp typography and respects
-    // the existing @media print stylesheet.
-    const originalTitle = document.title
-    let restored = false
-
-    const restoreTitle = () => {
-      if (restored) return
-      restored = true
-      document.title = originalTitle
-      window.removeEventListener('afterprint', restoreTitle)
-    }
-
-    document.title = printTitle
-    window.addEventListener('afterprint', restoreTitle, { once: true })
-    window.setTimeout(restoreTitle, 1500)
-    window.print()
-  }
-
-  function handleMobileTouchStart(event: React.TouchEvent<HTMLDivElement>) {
-    const touch = event.changedTouches[0]
-    mobileTouchStartRef.current = { x: touch.clientX, y: touch.clientY }
-  }
-
-  function handleMobileTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
-    const start = mobileTouchStartRef.current
-    mobileTouchStartRef.current = null
-    if (!start) return
-
-    const touch = event.changedTouches[0]
-    const deltaX = touch.clientX - start.x
-    const deltaY = touch.clientY - start.y
-
-    if (Math.abs(deltaY) < 56 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return
-
-    // A "decisive" swipe (>180px) always advances the scene, even when the
-    // content is scrollable inside. Otherwise users could get stuck on scenes
-    // whose content exceeds the viewport (e.g. when the browser URL bar
-    // squeezes 100dvh on Arc/Telegram WebView).
-    const FORCE_SWITCH_THRESHOLD_PX = 180
-    const isDecisive = Math.abs(deltaY) > FORCE_SWITCH_THRESHOLD_PX
-
-    const currentContent = mobileSceneContentRefs.current[activeDashboardSceneIndex]
-    const canScrollInside = Boolean(currentContent && currentContent.scrollHeight > currentContent.clientHeight + 4)
-    const scrollTop = currentContent?.scrollTop ?? 0
-    const nearBottom = !currentContent || scrollTop + currentContent.clientHeight >= currentContent.scrollHeight - 4
-
-    if (deltaY < 0) {
-      if (canScrollInside && !nearBottom && !isDecisive) return
-      if (activeDashboardSceneIndex < dashboardTotalScenes - 1) {
-        setDashboardSceneIndex(prev => prev + 1)
-      } else {
-        setDashboardSceneIndex(0)
-      }
-      return
-    }
-
-    if (scrollTop > 4 && !isDecisive) return
-    if (activeDashboardSceneIndex > 0) {
-      setDashboardSceneIndex(prev => prev - 1)
-    }
-  }
-
-  const renderMobileOverviewScene = () => (
-    <div className="h-full">
-      <div className="flex h-full min-h-0 flex-col rounded-[28px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,244,255,0.94)_48%,rgba(247,249,255,0.97))] px-4 py-4 shadow-[0_18px_38px_rgba(29,29,31,0.07)]">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/85 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[#7b57c8] shadow-sm">
-            Dashboard
-          </div>
-          <h2 className="mt-3 text-[25px] font-bold leading-[0.95] tracking-tight text-[#1d1d1f]">
-            Вся картина
-            <br /> по подкасту
-            <br /> на {dashboardTotalScenes} экранах
-          </h2>
-          <p className="mt-2.5 max-w-[280px] text-[13px] leading-snug text-[#4a4a52]">
-            Свайпай вверх: сводка, графики, эпизоды.
-          </p>
-        </div>
-
-        <div className="flex flex-1 flex-col justify-center">
-          {total > 0 ? (
-            <div className="rounded-[22px] bg-gradient-to-br from-[#7b57c8] to-[#9b6fe3] px-5 py-5 text-center shadow-[0_12px_28px_rgba(123,87,200,0.25)]">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-white/70">Всего прослушиваний</p>
-              <p className="mt-2 text-[40px] font-bold leading-none text-white">{total.toLocaleString('ru')}</p>
-              <p className="mt-1.5 text-[13px] text-white/60">ср. {averagePerEpisode.toLocaleString('ru')} / эп.</p>
-            </div>
-          ) : (
-            <div className="rounded-[22px] border border-dashed border-[#d4c4f0] bg-[#f8f4ff] px-5 py-5 text-center">
-              <p className="text-[14px] font-medium text-[#7b57c8]">Загрузите CSV</p>
-              <p className="mt-1 text-[12px] text-[#8e8e93]">чтобы увидеть статистику</p>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="rounded-[22px] border border-[#efe5ff] bg-white/82 px-4 py-3 shadow-[0_10px_24px_rgba(177,80,226,0.05)]">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[#8e8e93]">Эпизоды</p>
-            <p className="mt-1.5 text-[22px] font-semibold leading-none text-[#1d1d1f]">{episodes.length}</p>
-            <p className="mt-1 text-[11px] text-[#8e8e93]">выпусков</p>
-          </div>
-          <div className="rounded-[22px] border border-[#efe5ff] bg-white/82 px-4 py-3 shadow-[0_10px_24px_rgba(177,80,226,0.05)]">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[#8e8e93]">Платформы</p>
-            <p className="mt-1.5 text-[22px] font-semibold leading-none text-[#1d1d1f]">{uploadedPlatformLabels.length}</p>
-            <p className="mt-1 truncate text-[11px] text-[#8e8e93]">{uploadedPlatformLabels.join(', ') || '—'}</p>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <button
-            onClick={handlePrintPdf}
-            disabled={pdfGenerating}
-            className={getCtaClasses({ tone: 'dark', fullWidth: true, disabled: pdfGenerating })}
-          >
-            {pdfGenerating ? 'Готовим PDF…' : 'Экспорт в PDF'}
-          </button>
-          {pdfError && (
-            <p className="mt-2 text-[12px] text-[#d70015]">{pdfError}</p>
-          )}
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button
-              onClick={() => router.push('/compare')}
-              disabled={!canCompare}
-              className={[
-                getCtaClasses({
-                  tone: 'secondary',
-                  size: 'compact',
-                  fullWidth: true,
-                  disabled: !canCompare,
-                }),
-                'text-[13px] text-[#6e6e73]',
-              ].join(' ')}
-            >
-              Сравнить
-            </button>
-            <button
-              onClick={() => router.push(`/${podcastId}/setup`)}
-              className={`${getCtaClasses({ tone: 'secondary', size: 'compact', fullWidth: true })} text-[13px]`}
-            >
-              + Данные
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderMobileSummaryScene = () => (
-    <div className="flex h-full flex-col gap-2.5">
-      {/* Hero — компактный */}
-      <div className="rounded-[22px] bg-[#b150e2] px-4 py-3 text-white shadow-[0_16px_34px_rgba(177,80,226,0.24)]">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/60">Всего</p>
-            <p className="mt-1 text-[32px] font-bold leading-none">{total.toLocaleString('ru')}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[12px] text-white/60">ср. {averagePerEpisode.toLocaleString('ru')} / эп.</p>
-            <p className="text-[12px] text-white/60">{episodes.length} выпусков</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Платформы — компактная сетка */}
-      <div className="grid grid-cols-2 gap-2">
-        {mobilePlatformCards.map(platform => (
-          <div key={platform.key} className="rounded-2xl border border-[#e5e5ea] bg-white p-3 shadow-sm">
-            <div className="flex items-baseline justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6e6e73]">{platform.label}</p>
-              <p className="text-[11px] font-medium text-[#8e8e93]">{platform.pct}%</p>
-            </div>
-            <p className="mt-1.5 text-[21px] font-bold leading-none text-[#1d1d1f]">{platform.value.toLocaleString('ru')}</p>
-            <div className="mt-2 h-[4px] overflow-hidden rounded-full bg-[#f0f0f0]">
-              <div
-                className="h-full rounded-full"
-                style={{ width: `${platform.pct}%`, backgroundColor: platform.color }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Топ эпизоды — заполняет остаток */}
-      {topEpisodes.length > 0 && (
-        <div className="flex flex-1 flex-col rounded-2xl border border-[#e5e5ea] bg-white shadow-sm">
-          <p className="px-4 pt-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6e6e73]">Топ эпизоды</p>
-          <div className="flex flex-1 flex-col">
-            {topEpisodes.slice(0, 3).map((episode, index) => (
-              <div key={episode.id} className={`flex items-center gap-3 px-4 py-2.5 ${index < 2 ? 'border-b border-[#f0f0f0]' : ''}`}>
-                <span className="text-[13px] font-semibold text-[#b150e2]">{index + 1}</span>
-                <p className="flex-1 truncate text-[13px] text-[#1d1d1f]">{episode.title}</p>
-                <p className="shrink-0 text-[13px] font-semibold text-[#1d1d1f]">{episode.plays.total.toLocaleString('ru')}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
-  const renderMobileChartsScene = () => (
-    <div className="flex flex-col gap-4">
-      <TrendChart episodes={episodes} compact />
-      <PlatformChart episodes={episodes} rawPlays={rawPlays} compact />
-    </div>
-  )
-
-  const renderMobileAiScene = () => (
-    <AIInsights
-      episodes={episodes}
-      podcastTitle={podcastTitle}
-      initialInsights={DEMO_INSIGHTS_MAP[podcastId]}
-      compact
-    />
-  )
-
-  const renderMobileEpisodesScene = () => (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Эпизоды</h2>
-          <span className="text-[12px] text-[#8e8e93]">{episodes.length}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-full border border-[#e5e5ea] bg-[#f5f5f7] p-0.5">
-            {(['total', 'publishDate'] as const).map(key => (
-              <button
-                key={key}
-                onClick={() => {
-                  setEpisodeSortKey(key)
-                  setEpisodeSortDesc(true)
-                }}
-                className={[
-                  'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
-                  episodeSortKey === key
-                    ? 'bg-white text-[#7b57c8] shadow-sm'
-                    : 'text-[#8e8e93]',
-                ].join(' ')}
-              >
-                {key === 'total' ? 'Итого' : 'Дата'}
-              </button>
-            ))}
-          </div>
-          <div className="inline-flex rounded-full border border-[#e5e5ea] bg-[#f5f5f7] p-0.5">
-            {(['top', 'all'] as const).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setEpisodeListMode(mode)}
-                className={[
-                  'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
-                  episodeListMode === mode
-                    ? 'bg-white text-[#7b57c8] shadow-sm'
-                    : 'text-[#8e8e93]',
-                ].join(' ')}
-              >
-                {mode === 'top' ? 'Топ' : 'Все'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        {visibleEpisodes.map((episode, index) => (
-          <button
-            key={episode.id}
-            type="button"
-            onClick={() => setSelectedEpisodeId(episode.id)}
-            className="w-full rounded-xl border border-[#e5e5ea] bg-white px-3.5 py-2.5 text-left shadow-sm transition-colors hover:border-[#d8c5ff]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#b150e2]/12 text-[11px] font-semibold text-[#7b57c8]">
-                {index + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-medium text-[#1d1d1f]">{episode.title}</p>
-                <p className="text-[11px] text-[#8e8e93]">{formatShortDate(episode.publishDate)}</p>
-              </div>
-              <p className="shrink-0 text-[15px] font-bold text-[#b150e2]">{episode.plays.total.toLocaleString('ru')}</p>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-
-  const renderMobileEpisodeDetailScene = () => {
-    if (!selectedEpisode) return null
-
-    const fullBreakdown = PLATFORMS.filter(platform => uploadedPlatforms.has(platform.key))
-
-    return (
-      <div className="space-y-2.5">
-        <button
-          type="button"
-          onClick={() => setSelectedEpisodeId(null)}
-          className="inline-flex items-center gap-2 rounded-full border border-[#e5e5ea] bg-white px-3 py-2 text-[13px] font-medium text-[#7b57c8] shadow-sm"
-        >
-          ← К списку эпизодов
-        </button>
-
-        <div className="rounded-[26px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,244,255,0.94)_45%,rgba(247,249,255,0.96))] p-4 shadow-[0_16px_36px_rgba(29,29,31,0.08)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8e8e93]">Эпизод</p>
-              <p className="mt-2 text-[24px] font-bold leading-tight text-[#1d1d1f]">{selectedEpisode.title}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8e8e93]">Итого</p>
-              <p className="mt-2 text-[28px] font-bold leading-none text-[#b150e2]">
-                {selectedEpisode.plays.total.toLocaleString('ru')}
-              </p>
-            </div>
-          </div>
-          <p className="mt-3 text-[13px] text-[#6e6e73]">{formatShortDate(selectedEpisode.publishDate)}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {fullBreakdown.map(platform => (
-            <div key={platform.key} className="rounded-2xl border border-[#e5e5ea] bg-white p-3 shadow-sm">
-              <p className="text-[11px] uppercase tracking-[0.1em] text-[#8e8e93]">{platform.label}</p>
-              <p className="mt-2 text-[20px] font-semibold leading-none text-[#1d1d1f]">
-                {selectedEpisode.plays[platform.key] > 0 ? selectedEpisode.plays[platform.key].toLocaleString('ru') : '—'}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  const renderMobileAudienceScene = () => {
-    const renderBarSection = (title: string, data: { name: string; value: number; color: string }[]) => {
-      const total = data.reduce((s, d) => s + d.value, 0)
-      if (total === 0) return null
-      const maxPct = Math.max(...data.map(d => d.value / total))
-
-      return (
-        <div className="flex flex-1 flex-col rounded-2xl border border-[#e5e5ea] bg-white p-4 shadow-sm">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8e8e93]">{title}</h3>
-          <div className="mt-3 flex flex-1 flex-col justify-center gap-2.5">
-            {data.map(item => {
-              const pct = Math.round(item.value / total * 100)
-              const barWidth = maxPct > 0 ? (item.value / total / maxPct) * 100 : 0
-              return (
-                <div key={item.name} className="flex items-center gap-3">
-                  <span className="w-[72px] shrink-0 text-[13px] text-[#1d1d1f]">{item.name}</span>
-                  <div className="flex-1 h-[20px] overflow-hidden rounded-full bg-[#f0f0f0]">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${barWidth}%`, backgroundColor: item.color }}
-                    />
-                  </div>
-                  <span className="w-[32px] shrink-0 text-right text-[13px] font-semibold text-[#1d1d1f]">{pct}%</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="flex h-full flex-col gap-2.5">
-        <div className="flex items-center gap-2 rounded-2xl border border-[#e5e5ea] bg-white px-4 py-2.5 shadow-sm">
-          <span className="h-3 w-3 flex-shrink-0 rounded-full bg-[#ff9f0a]" />
-          <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Яндекс Музыка — аудитория</h2>
-        </div>
-        {genderData.length > 0 && renderBarSection('Пол', genderData)}
-        {ageData.length > 0 && renderBarSection('Возраст', ageData)}
-      </div>
-    )
-  }
-
-  const renderMobileCitiesScene = () => {
-    const cities = audience?.cities ?? []
-    const maxListeners = cities.length > 0 ? cities[0].listeners : 1
-
-    return (
-      <div className="flex h-full flex-col gap-2.5">
-        <div className="flex items-center justify-between rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm">
-          <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Топ городов</h2>
-          <span className="text-[12px] text-[#8e8e93]">топ {Math.min(cities.length, 10)}</span>
-        </div>
-
-        <div className="flex flex-1 flex-col justify-center rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm">
-          <div className="space-y-3">
-            {cities.slice(0, 10).map(city => (
-              <div key={city.rank}>
-                <div className="flex items-baseline justify-between">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-[12px] font-semibold text-[#8e8e93]">{city.rank}</span>
-                    <span className="text-[14px] font-semibold text-[#1d1d1f]">{city.city}</span>
-                  </div>
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-[13px] font-medium text-[#1d1d1f]">{city.listeners.toLocaleString('ru')}</span>
-                    <span className="w-[40px] text-right text-[12px] text-[#8e8e93]">{city.completion.toFixed(0)}%</span>
-                  </div>
-                </div>
-                <div className="mt-1 h-[6px] overflow-hidden rounded-full bg-[#f0f0f0]">
-                  <div
-                    className="h-full rounded-full bg-[#ff9f0a]"
-                    style={{ width: `${(city.listeners / maxListeners) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setDashboardSceneIndex(0)}
-          className="w-full rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 text-[13px] font-medium text-[#7b57c8] shadow-sm"
-        >
-          Вернуться в начало
-        </button>
-      </div>
-    )
-  }
+  const goToSetup = () => router.push(`/${podcastId}/setup`)
+  const goToCompare = () => router.push('/compare')
+  const goHome = () => router.push('/')
 
   const renderMobileScene = (sceneId: string) => {
     switch (sceneId) {
       case 'overview':
-        return renderMobileOverviewScene()
+        return (
+          <MobileOverviewScene
+            totalScenes={mobileDashboardScenes.length}
+            total={total}
+            averagePerEpisode={averagePerEpisode}
+            episodesCount={episodes.length}
+            uploadedPlatformLabels={uploadedPlatformLabels}
+            pdfGenerating={pdfGenerating}
+            pdfError={pdfError}
+            canCompare={canCompare}
+            onPrintPdf={handlePrintPdf}
+            onCompare={goToCompare}
+            onAddData={goToSetup}
+          />
+        )
       case 'summary':
-        return renderMobileSummaryScene()
+        return (
+          <MobileSummaryScene
+            total={total}
+            averagePerEpisode={averagePerEpisode}
+            episodesCount={episodes.length}
+            platformCards={mobilePlatformCards}
+            topEpisodes={topEpisodes}
+          />
+        )
       case 'charts':
-        return renderMobileChartsScene()
+        return (
+          <div className="flex flex-col gap-4">
+            <TrendChart episodes={episodes} compact />
+            <PlatformChart episodes={episodes} rawPlays={rawPlays} compact />
+          </div>
+        )
       case 'ai':
-        return renderMobileAiScene()
+        return (
+          <AIInsights
+            episodes={episodes}
+            podcastTitle={podcastTitle}
+            initialInsights={DEMO_INSIGHTS_MAP[podcastId]}
+            compact
+          />
+        )
       case 'episodes':
-        return renderMobileEpisodesScene()
       case 'episode-detail':
-        return selectedEpisode ? renderMobileEpisodeDetailScene() : renderMobileEpisodesScene()
+        if (sceneId === 'episode-detail' && selectedEpisode) {
+          return (
+            <MobileEpisodeDetailScene
+              episode={selectedEpisode}
+              platforms={PLATFORMS.filter(platform => uploadedPlatforms.has(platform.key))}
+              onBack={() => setSelectedEpisodeId(null)}
+            />
+          )
+        }
+        return (
+          <MobileEpisodesScene
+            episodesCount={episodes.length}
+            visibleEpisodes={visibleEpisodes}
+            sortKey={episodeSortKey}
+            listMode={episodeListMode}
+            onSortKeyChange={key => {
+              setEpisodeSortKey(key)
+              setEpisodeSortDesc(true)
+            }}
+            onListModeChange={setEpisodeListMode}
+            onSelectEpisode={setSelectedEpisodeId}
+          />
+        )
       case 'audience':
-        return audience ? renderMobileAudienceScene() : null
+        return audience ? <MobileAudienceScene genderData={genderData} ageData={ageData} /> : null
       case 'cities':
-        return audience ? renderMobileCitiesScene() : null
+        return audience ? <MobileCitiesScene cities={audience.cities ?? []} onBackToStart={() => mobile.setSceneIndex(0)} /> : null
       default:
         return null
     }
@@ -935,7 +237,7 @@ export default function DashboardPage() {
     return (
       <main className="max-w-4xl mx-auto px-4 py-16 text-center">
         <p className="text-[#6e6e73]">Подкаст не найден</p>
-        <button onClick={() => router.push('/')} className="mt-4 text-[#b150e2] text-sm hover:underline">На главную</button>
+        <button onClick={goHome} className="mt-4 text-[#b150e2] text-sm hover:underline">На главную</button>
       </main>
     )
   }
@@ -947,322 +249,79 @@ export default function DashboardPage() {
           : scene
       ))
     : mobileDashboardScenes
-  const dashboardRenderTotalScenes = mobileDashboardRenderScenes.length
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] print:bg-white">
-      <div
-        className="md:hidden mobile-viewport-shell bg-[#f5f5f7] print:hidden"
-        onTouchStart={handleMobileTouchStart}
-        onTouchEnd={handleMobileTouchEnd}
-        style={{ touchAction: 'manipulation', height: mobileViewportHeight || undefined }}
-      >
-        <div
-          ref={mobileChromeRef}
-          className="shrink-0 border-b border-[#e8e8ed] bg-white/92 backdrop-blur-md"
-        >
-          <div
-            className="px-4 pb-3"
-            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
-          >
-            <div
-              className={[
-                'overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                isOverviewScene ? 'max-h-[140px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1',
-              ].join(' ')}
-              aria-hidden={!isOverviewScene}
-            >
-              <div className="flex items-center justify-between">
-                <button onClick={() => router.push('/')} className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity">
-                  ← Назад
-                </button>
-                {isDemo && (
-                  <span className="rounded-md border border-[#b150e2]/20 bg-[#b150e2]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#b150e2]">
-                    ДЕМО
-                  </span>
-                )}
-              </div>
-              <div className="mt-2.5 flex items-center gap-3">
-                {podcastImageUrl && (
-                  <SafePodcastImage src={podcastImageUrl} alt={podcastTitle} width={36} height={36} className="rounded-xl object-cover shadow-sm" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <h1 className="truncate text-[16px] font-semibold text-[#1d1d1f]">{podcastTitle}</h1>
-                  <p className="mt-0.5 text-[12px] text-[#6e6e73]">{episodes.length} эпизодов</p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={[
-                'overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                isOverviewScene ? 'max-h-0 opacity-0 translate-y-1' : 'max-h-[52px] opacity-100 translate-y-0',
-              ].join(' ')}
-              aria-hidden={isOverviewScene}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <button onClick={() => router.push('/')} className="text-[#b150e2] text-[13px] font-medium hover:opacity-70 transition-opacity">
-                  ← Назад
-                </button>
-                <div className="min-w-0 flex-1 text-center">
-                  <p className="truncate text-[14px] font-semibold text-[#1d1d1f]">{selectedEpisode ? 'Детали эпизода' : podcastTitle}</p>
-                </div>
-                <div className="w-[56px]" />
-              </div>
-            </div>
-
-            {episodes.length > 0 && (
-              <div
-                className="flex justify-center transition-[margin-top] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                style={{ marginTop: isOverviewScene ? 16 : 12 }}
-              >
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 shadow-[inset_0_0_0_1px_rgba(229,229,234,1)]">
-                  {mobileDashboardRenderScenes.map((scene, index) => (
-                    <span
-                      key={scene.id}
-                      className={[
-                        'block h-1.5 rounded-full transition-all duration-300',
-                        activeDashboardSceneIndex === index ? 'w-10 bg-[#b150e2]' : 'w-5 bg-[#d8d8dd]',
-                      ].join(' ')}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden" style={{ height: mobileSceneViewportHeight || undefined }}>
-          {episodes.length === 0 ? (
-            <div className="px-4 py-6">
-              <div className="rounded-2xl border border-[#e5e5ea] bg-white px-6 py-12 text-center shadow-sm">
-                <p className="text-[15px] text-[#6e6e73]">Данных пока нет</p>
-                <button
-                  onClick={() => router.push(`/${podcastId}/setup`)}
-                  className={`${getCtaClasses({ tone: 'primary', fullWidth: true })} mt-4`}
-                >
-                  Загрузить CSV
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-              style={{
-                height: mobileSceneViewportHeight > 0 ? mobileSceneViewportHeight * dashboardRenderTotalScenes : undefined,
-                transform: mobileSceneViewportHeight > 0
-                  ? `translateY(-${activeDashboardSceneIndex * mobileSceneViewportHeight}px)`
-                  : `translateY(-${activeDashboardSceneIndex * 100}%)`,
-              }}
-            >
-              {mobileDashboardRenderScenes.map((scene, index) => (
-                <section
-                  key={scene.id}
-                  className="shrink-0 px-4 py-3"
-                  style={{ height: mobileSceneViewportHeight || undefined }}
-                >
-                  <div
-                    ref={element => { mobileSceneContentRefs.current[index] = element }}
-                    className={[
-                      'h-full overscroll-contain',
-                      // Only intrinsically long lists scroll; "single-screen"
-                      // scenes (summary/charts/ai/audience) must fit as-is —
-                      // that's the UX intent.
-                      scene.id === 'overview' || scene.id === 'episodes' || scene.id === 'episode-detail' || scene.id === 'cities'
-                        ? 'overflow-y-auto'
-                        : 'overflow-hidden',
-                    ].join(' ')}
-                    style={{
-                      // Long lists get extra room under the Safari iOS URL bar
-                      // so scroll-end doesn't sit underneath it. Single-screen
-                      // scenes use minimal padding to preserve the design.
-                      paddingBottom: scene.id === 'episodes' || scene.id === 'episode-detail' || scene.id === 'cities'
-                        ? 'max(env(safe-area-inset-bottom), 92px)'
-                        : 'max(env(safe-area-inset-bottom), 16px)',
-                    }}
-                  >
-                    {renderMobileScene(scene.id)}
-                  </div>
-                </section>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <MobileDashboardShell
+        scenes={mobileDashboardRenderScenes}
+        activeSceneIndex={mobile.activeSceneIndex}
+        viewportHeight={mobile.viewportHeight}
+        sceneViewportHeight={mobile.sceneViewportHeight}
+        chromeRef={mobile.chromeRef}
+        sceneContentRefs={mobile.sceneContentRefs}
+        onTouchStart={mobile.onTouchStart}
+        onTouchEnd={mobile.onTouchEnd}
+        podcastTitle={podcastTitle}
+        podcastImageUrl={podcastImageUrl}
+        isDemo={isDemo}
+        episodesCount={episodes.length}
+        episodeDetailOpen={Boolean(selectedEpisode)}
+        onBack={goHome}
+        onLoadCsv={goToSetup}
+        renderScene={renderMobileScene}
+      />
 
       <div className="hidden md:block print:!block">
-        <div className="bg-white border-b border-[#e5e5ea] print:hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-start sm:items-center gap-3">
-            <button onClick={() => router.push('/')} className="text-[#b150e2] text-[14px] font-medium hover:opacity-70 transition-opacity flex-shrink-0">
-              ← Назад
-            </button>
-            {podcastImageUrl && (
-              <SafePodcastImage src={podcastImageUrl} alt={podcastTitle} width={36} height={36} className="rounded-xl object-cover shadow-sm flex-shrink-0" />
-            )}
-            <div className="flex-1 min-w-0 basis-[calc(100%-52px)] sm:basis-auto">
-              <div className="flex items-center gap-2">
-                <h1 className="text-[15px] sm:text-[17px] font-semibold text-[#1d1d1f] truncate">{podcastTitle}</h1>
-                {isDemo && (
-                  <span className="text-[10px] font-semibold bg-[#b150e2]/10 text-[#b150e2] px-1.5 py-0.5 rounded-md border border-[#b150e2]/20 flex-shrink-0">
-                    ДЕМО
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                {isDemo && <span className="text-[11px] text-[#aeaeb2]">Демо-данные ·</span>}
-                {PLATFORMS.map(platform => {
-                  const isUploaded = uploadedPlatforms.has(platform.key)
-
-                  return (
-                    <span
-                      key={platform.key}
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-                      style={isUploaded
-                        ? {
-                            background: platform.color + '20',
-                            color: platform.color,
-                            border: `1px solid ${platform.color}40`,
-                          }
-                        : {
-                            background: '#f5f5f7',
-                            color: '#aeaeb2',
-                            border: '1px solid #d2d2d7',
-                            textDecoration: 'line-through',
-                            textDecorationThickness: '1.5px',
-                          }}
-                    >
-                      {platform.label}
-                    </span>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              {episodes.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 sm:flex-none">
-                  <button
-                    onClick={handlePrintPdf}
-                    className={`${getCtaClasses({ tone: 'dark', size: 'compact' })} flex-1 sm:flex-none`}
-                  >
-                    Экспорт в PDF
-                  </button>
-                  <p className="text-[11px] text-[#8e8e93] sm:max-w-[220px] leading-[1.35]">
-                    Перед сохранением PDF отключи `Headers and footers` в окне печати браузера.
-                  </p>
-                </div>
-              )}
-              <button
-                onClick={() => router.push('/compare')}
-                className={`${getCtaClasses({ tone: 'secondary', size: 'compact' })} flex-1 text-[#6e6e73] sm:flex-none`}
-              >
-                Сравнить
-              </button>
-              <button
-                onClick={() => router.push(`/${podcastId}/setup`)}
-                className={`${getCtaClasses({ tone: 'secondary', size: 'compact' })} flex-1 sm:flex-none`}
-              >
-                + Данные
-              </button>
-            </div>
-          </div>
-        </div>
+        <DashboardHeader
+          podcastTitle={podcastTitle}
+          podcastImageUrl={podcastImageUrl}
+          isDemo={isDemo}
+          uploadedPlatforms={uploadedPlatforms}
+          hasEpisodes={episodes.length > 0}
+          onBack={goHome}
+          onPrintPdf={handlePrintPdf}
+          onCompare={goToCompare}
+          onAddData={goToSetup}
+        />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 screen-only">
           {episodes.length === 0 ? (
             <div className="text-center py-24">
               <p className="text-[#6e6e73] mb-4 text-[15px]">Данных пока нет</p>
-              <button onClick={() => router.push(`/${podcastId}/setup`)} className="text-[#b150e2] hover:underline text-[14px]">
+              <button onClick={goToSetup} className="text-[#b150e2] hover:underline text-[14px]">
                 Загрузить CSV
               </button>
             </div>
           ) : (
             <>
               {showEpisodesRefresh && (
-                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm print:hidden">
-                  <div className="min-w-0 flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#b150e2' }} />
-                      <p className="text-[13px] font-semibold text-[#1d1d1f]">Выпуски</p>
-                      <p className="text-[12px] text-[#8e8e93]">{episodes.length} в дашборде</p>
-                    </div>
-                    {episodesMessage && (
-                      <p
-                        className={[
-                          'mt-1 text-[12px]',
-                          episodesMessage.type === 'success' ? 'text-[#30a14e]' : 'text-[#d70015]',
-                        ].join(' ')}
-                      >
-                        {episodesMessage.text}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleRefreshEpisodes}
-                    disabled={episodesRefreshing}
-                    className={[
-                      'inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px] font-medium transition-colors',
-                      episodesRefreshing
-                        ? 'cursor-not-allowed border-[#e5e5ea] bg-[#f5f5f7] text-[#aeaeb2]'
-                        : 'border-[#b150e2]/30 bg-white text-[#b150e2] hover:bg-[#b150e2]/5',
-                    ].join(' ')}
-                  >
-                    {episodesRefreshing ? (
-                      <>
-                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#aeaeb2] border-t-transparent" />
-                        Обновляем…
-                      </>
-                    ) : (
-                      <>↻ Обновить выпуски</>
-                    )}
-                  </button>
-                </div>
+                <RefreshPanel
+                  dotColor="#b150e2"
+                  title="Выпуски"
+                  subtitle={`${episodes.length} в дашборде`}
+                  message={episodesMessage}
+                  refreshing={episodesRefreshing}
+                  activeClassName="border-[#b150e2]/30 bg-white text-[#b150e2] hover:bg-[#b150e2]/5"
+                  actionLabel="↻ Обновить выпуски"
+                  onClick={handleRefreshEpisodes}
+                />
               )}
               {showYoutubeRefresh && youtubeUploaded && (
-                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm print:hidden">
-                  <div className="min-w-0 flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#ff453a' }} />
-                      <p className="text-[13px] font-semibold text-[#1d1d1f]">YouTube</p>
-                      <p className="text-[12px] text-[#8e8e93]">
-                        обновлено {formatTimeAgo(youtubeUploaded.uploadedAt)}
-                      </p>
-                    </div>
-                    {youtubeMessage && (
-                      <p
-                        className={[
-                          'mt-1 text-[12px]',
-                          youtubeMessage.type === 'success' ? 'text-[#30a14e]' : 'text-[#d70015]',
-                        ].join(' ')}
-                      >
-                        {youtubeMessage.text}
-                      </p>
-                    )}
-                  </div>
-                  <a
-                    href={youtubeRefreshing ? undefined : `/api/youtube/auth?podcastId=${podcastId}&returnTo=dashboard`}
-                    aria-disabled={youtubeRefreshing}
-                    className={[
-                      'inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px] font-medium transition-colors',
-                      youtubeRefreshing
-                        ? 'cursor-not-allowed border-[#e5e5ea] bg-[#f5f5f7] text-[#aeaeb2]'
-                        : 'border-[#ff453a]/30 bg-white text-[#ff453a] hover:bg-[#ff453a]/5',
-                    ].join(' ')}
-                  >
-                    {youtubeRefreshing ? (
-                      <>
-                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#aeaeb2] border-t-transparent" />
-                        Обновляем…
-                      </>
-                    ) : (
-                      <>↻ Обновить</>
-                    )}
-                  </a>
-                </div>
+                <RefreshPanel
+                  dotColor="#ff453a"
+                  title="YouTube"
+                  subtitle={<>обновлено {formatTimeAgo(youtubeUploaded.uploadedAt)}</>}
+                  message={youtubeMessage}
+                  refreshing={youtubeRefreshing}
+                  activeClassName="border-[#ff453a]/30 bg-white text-[#ff453a] hover:bg-[#ff453a]/5"
+                  actionLabel="↻ Обновить"
+                  href={`/api/youtube/auth?podcastId=${podcastId}&returnTo=dashboard`}
+                />
               )}
               <PlatformFilters
                 uploadedPlatforms={uploadedPlatformKeys}
                 enabledPlatforms={enabledPlatforms}
-                onToggle={handleTogglePlatform}
+                onToggle={togglePlatform}
               />
               <StatCards
                 episodes={episodes}
@@ -1286,7 +345,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <EpisodeTable
-                key={printTablePlatforms.map(platform => platform.key).join(',')}
+                key={activePlatforms.map(platform => platform.key).join(',')}
                 episodes={filteredEpisodes}
                 enabledPlatforms={enabledPlatforms}
                 sortKey={episodeSortKey}
@@ -1305,113 +364,22 @@ export default function DashboardPage() {
       </div>
 
       {episodes.length > 0 && (
-        <div ref={printRootRef} className="print-only print-report-root">
-          <PrintPage
-            title={podcastTitle}
-            exportDate={exportDate}
-            platformLabels={activePlatformLabels}
-          >
-            <div className="space-y-3">
-              <div className="print-summary-grid">
-                <div className="print-summary-card print-summary-card--total">
-                  <p className="print-summary-label">Всего</p>
-                  <p className="print-summary-value">{filteredTotal.toLocaleString('ru')}</p>
-                  <p className="print-summary-subvalue">ср. {filteredAveragePerEpisode.toLocaleString('ru')} / эп.</p>
-                </div>
-                {printTablePlatforms
-                  .filter(platform => filteredTotals[platform.key] > 0)
-                  .map(platform => (
-                    <div key={platform.key} className="print-summary-card">
-                      <p className="print-summary-label">{platform.label}</p>
-                      <p className="print-summary-value text-[#1d1d1f]">
-                        {filteredTotals[platform.key].toLocaleString('ru')}
-                      </p>
-                      <p className="print-summary-subvalue">
-                        {filteredTotal > 0 ? Math.round(filteredTotals[platform.key] / filteredTotal * 100) : 0}%
-                      </p>
-                    </div>
-                  ))}
-              </div>
-              <PrintTrendChart episodes={filteredEpisodes} />
-              <div className="w-full max-w-[320px] print:break-inside-avoid-page">
-                <PrintPlatformChart
-                  episodes={episodes}
-                  rawPlays={rawPlays}
-                  enabledPlatforms={enabledPlatforms}
-                />
-              </div>
-            </div>
-          </PrintPage>
-
-          <PrintPage
-            title={podcastTitle}
-            exportDate={exportDate}
-            platformLabels={activePlatformLabels}
-            last={!audience || !enabledPlatforms.has('yandex')}
-          >
-            <section className="bg-white rounded-2xl border border-[#e5e5ea] overflow-visible">
-              <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-                <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Топ-{PDF_EPISODE_LIMIT} эпизодов</h2>
-                <span className="text-[12px] text-[#8e8e93]">
-                  {episodeSortKey === 'total' && 'по суммарным прослушиваниям'}
-                  {episodeSortKey === 'publishDate' && (episodeSortDesc ? 'по дате публикации (новые сверху)' : 'по дате публикации (старые сверху)')}
-                  {episodeSortKey !== 'total' && episodeSortKey !== 'publishDate' && `по платформе ${PLATFORMS.find(platform => platform.key === episodeSortKey)?.label ?? episodeSortKey}`}
-                </span>
-              </div>
-              <table className="w-full text-[11px]">
-                <thead>
-                  <tr className="text-[#8e8e93] text-[10px] uppercase tracking-wide">
-                    <th className="text-left px-3 py-2 font-medium w-[24px]">#</th>
-                    <th className="text-left px-2 py-2 font-medium">Эпизод</th>
-                    <th className="text-right px-2 py-2 font-medium">Дата</th>
-                    <th className="text-right px-2 py-2 font-medium">Итого</th>
-                    {printTablePlatforms.map(platform => (
-                        <th key={platform.key} className="text-right px-2 py-2 font-medium">
-                          {platform.label}
-                        </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTopEpisodes.map((episode, index) => (
-                    <tr key={episode.id} className={index === filteredTopEpisodes.length - 1 ? '' : 'border-b border-[#f5f5f7]'}>
-                      <td className="px-3 py-2 text-[#8e8e93]">{index + 1}</td>
-                      <td className="px-2 py-2 text-[#1d1d1f]">{episode.title}</td>
-                      <td className="px-2 py-2 text-right text-[#8e8e93] whitespace-nowrap">
-                        {episode.publishDate
-                          ? new Date(episode.publishDate).toLocaleDateString('ru', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: '2-digit',
-                            })
-                          : '—'}
-                      </td>
-                      <td className="px-2 py-2 text-right font-semibold text-[#b150e2] whitespace-nowrap">
-                        {episode.plays.total.toLocaleString('ru')}
-                      </td>
-                      {printTablePlatforms.map(platform => (
-                        <td key={platform.key} className="px-2 py-2 text-right whitespace-nowrap">
-                          {episode.plays[platform.key] > 0 ? episode.plays[platform.key].toLocaleString('ru') : '—'}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          </PrintPage>
-
-          {audience && enabledPlatforms.has('yandex') && (
-            <PrintPage
-              title={podcastTitle}
-              exportDate={exportDate}
-              platformLabels={activePlatformLabels}
-              last
-            >
-              <PrintYandexAudienceSection audience={audience} />
-            </PrintPage>
-          )}
-        </div>
+        <DashboardPrintReport
+          printRootRef={printRootRef}
+          podcastTitle={podcastTitle}
+          activePlatforms={activePlatforms}
+          episodes={episodes}
+          filteredEpisodes={filteredEpisodes}
+          sortedFilteredEpisodes={sortedFilteredEpisodes}
+          rawPlays={rawPlays}
+          enabledPlatforms={enabledPlatforms}
+          filteredTotals={filteredTotals}
+          filteredTotal={filteredTotal}
+          filteredAveragePerEpisode={filteredAveragePerEpisode}
+          sortKey={episodeSortKey}
+          sortDesc={episodeSortDesc}
+          audience={audience}
+        />
       )}
     </div>
   )

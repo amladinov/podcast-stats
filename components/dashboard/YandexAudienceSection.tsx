@@ -3,17 +3,11 @@
 import { useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import type { YandexAudience } from '@/types'
+import { AGE_COLORS, GENDER_COLORS } from '@/lib/chartColors'
 import { renderDonutShape } from '@/components/dashboard/donutActiveShape'
 
 const YANDEX_COLOR = '#ff9f0a'
 
-const GENDER_COLORS: Record<string, string> = {
-  'Женщины': '#ff6b9d',
-  'Мужчины': '#0a84ff',
-  'Не определён': '#aeaeb2',
-}
-
-const AGE_COLORS = ['#b150e2', '#0a84ff', '#ff9f0a', '#30d158', '#ff6b9d', '#ff453a', '#aeaeb2']
 
 function DonutSection({ title, data }: { title: string; data: { name: string; value: number; color: string }[] }) {
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined)
