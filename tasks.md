@@ -27,8 +27,8 @@
 - [x] Развести `Mave CSV` timeline и `Mave Paste` snapshot без двойного суммирования
 
 ## Notes
-- Подробный продуктовый разбор и исходный backlog перенесён в `MAVE_SCREENSHOT_IMPORT_SPEC.md`
-- Каноническая логика по форматам импорта и их иерархии зафиксирована в `IMPORT_FORMAT_STRATEGY.md`
-- Каноническая UX-схема setup-экрана и ролей `Основной / Альтернатива` зафиксирована в `IMPORT_SETUP_UX_SPEC.md`
+- Подробный продуктовый разбор и исходный backlog перенесён в `docs/specs/MAVE_SCREENSHOT_IMPORT_SPEC.md`
+- Каноническая логика по форматам импорта и их иерархии зафиксирована в `docs/specs/IMPORT_FORMAT_STRATEGY.md`
+- Каноническая UX-схема setup-экрана и ролей `Основной / Альтернатива` зафиксирована в `docs/specs/IMPORT_SETUP_UX_SPEC.md`
 - Альтернативный `Mave Paste Snapshot` уже реализован как более дешёвый и надёжный fallback до screenshot/OCR этапа
 - Screenshot/OCR путь остаётся внутренним research-направлением и не обещается пользователю как часть текущего setup flow
