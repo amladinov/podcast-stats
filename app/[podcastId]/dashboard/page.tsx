@@ -26,15 +26,7 @@ import { fetchYouTubeImport } from '@/lib/youtubeImport'
 import { fetchRssEpisodes } from '@/lib/podcastRss'
 import { exportDashboardToPdf, isMobileViewport } from '@/lib/pdfExport'
 import type { Platform } from '@/types'
-
-const DASHBOARD_PLATFORMS = [
-  { key: 'mave', label: 'Mave', color: '#b150e2' },
-  { key: 'yandex', label: 'Яндекс', color: '#ff9f0a' },
-  { key: 'spotify', label: 'Spotify', color: '#30d158' },
-  { key: 'vk', label: 'VK', color: '#0a84ff' },
-  { key: 'vkvideo', label: 'VK Video', color: '#00B6FF' },
-  { key: 'youtube', label: 'YouTube', color: '#ff453a' },
-] as const
+import { PLATFORMS } from '@/lib/platforms'
 
 const GENDER_COLORS: Record<string, string> = {
   'Женщины': '#ff6b9d',
@@ -243,10 +235,10 @@ export default function DashboardPage() {
     }
   }
 
-  const uploadedPlatformLabels = DASHBOARD_PLATFORMS
+  const uploadedPlatformLabels = PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key))
     .map(platform => platform.label)
-  const activePlatformLabels = DASHBOARD_PLATFORMS
+  const activePlatformLabels = PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key) && enabledPlatforms.has(platform.key))
     .map(platform => platform.label)
   const topEpisodes = [...episodes]
@@ -272,10 +264,10 @@ export default function DashboardPage() {
   const filteredTopEpisodes = sortedFilteredEpisodesForPdf.slice(0, PDF_EPISODE_LIMIT)
   const filteredAveragePerEpisode = episodes.length > 0 ? Math.round(filteredTotal / episodes.length) : 0
   const filterActive = uploadedPlatformKeys.some(platform => !enabledPlatforms.has(platform))
-  const disabledPlatformLabels = DASHBOARD_PLATFORMS
+  const disabledPlatformLabels = PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key) && !enabledPlatforms.has(platform.key))
     .map(platform => platform.label)
-  const printTablePlatforms = DASHBOARD_PLATFORMS
+  const printTablePlatforms = PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key) && enabledPlatforms.has(platform.key))
   const canCompare = comparablePodcastCount >= 2
 
@@ -291,7 +283,7 @@ export default function DashboardPage() {
         : null
 
       return [platform.platform, {
-        label: DASHBOARD_PLATFORMS.find(item => item.key === platform.platform)?.label ?? platform.platform,
+        label: PLATFORMS.find(item => item.key === platform.platform)?.label ?? platform.platform,
         period: period ?? undefined,
         releases: releases ?? undefined,
       }]
@@ -322,7 +314,7 @@ export default function DashboardPage() {
     ? Math.max(mobileViewportHeight - mobileChromeHeight + 25, 0)
     : 0
 
-  const mobilePlatformCards = DASHBOARD_PLATFORMS
+  const mobilePlatformCards = PLATFORMS
     .map(platform => ({
       ...platform,
       value: totals[platform.key],
@@ -784,7 +776,7 @@ export default function DashboardPage() {
   const renderMobileEpisodeDetailScene = () => {
     if (!selectedEpisode) return null
 
-    const fullBreakdown = DASHBOARD_PLATFORMS.filter(platform => uploadedPlatforms.has(platform.key))
+    const fullBreakdown = PLATFORMS.filter(platform => uploadedPlatforms.has(platform.key))
 
     return (
       <div className="space-y-2.5">
@@ -1118,7 +1110,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-1.5 flex-wrap mt-1">
                 {isDemo && <span className="text-[11px] text-[#aeaeb2]">Демо-данные ·</span>}
-                {DASHBOARD_PLATFORMS.map(platform => {
+                {PLATFORMS.map(platform => {
                   const isUploaded = uploadedPlatforms.has(platform.key)
 
                   return (
@@ -1363,7 +1355,7 @@ export default function DashboardPage() {
                 <span className="text-[12px] text-[#8e8e93]">
                   {episodeSortKey === 'total' && 'по суммарным прослушиваниям'}
                   {episodeSortKey === 'publishDate' && (episodeSortDesc ? 'по дате публикации (новые сверху)' : 'по дате публикации (старые сверху)')}
-                  {episodeSortKey !== 'total' && episodeSortKey !== 'publishDate' && `по платформе ${DASHBOARD_PLATFORMS.find(platform => platform.key === episodeSortKey)?.label ?? episodeSortKey}`}
+                  {episodeSortKey !== 'total' && episodeSortKey !== 'publishDate' && `по платформе ${PLATFORMS.find(platform => platform.key === episodeSortKey)?.label ?? episodeSortKey}`}
                 </span>
               </div>
               <table className="w-full text-[11px]">

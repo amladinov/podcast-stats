@@ -4,16 +4,8 @@ import { useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import type { NormalizedEpisode, Platform, PlayRecord } from '@/types'
 import { getPlatformTotals } from '@/lib/podcastMetrics'
+import { PLATFORMS } from '@/lib/platforms'
 import { renderDonutShape } from '@/components/dashboard/donutActiveShape'
-
-const PLATFORMS = [
-  { key: 'mave' as const, label: 'Mave', color: '#b150e2' },
-  { key: 'yandex' as const, label: 'Яндекс', color: '#ff9f0a' },
-  { key: 'spotify' as const, label: 'Spotify', color: '#30d158' },
-  { key: 'vk' as const, label: 'VK', color: '#0a84ff' },
-  { key: 'vkvideo' as const, label: 'VK Video', color: '#00B6FF' },
-  { key: 'youtube' as const, label: 'YouTube', color: '#ff0000' },
-]
 
 interface Props {
   episodes: NormalizedEpisode[]

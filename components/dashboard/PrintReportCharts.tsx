@@ -12,15 +12,7 @@ import {
 } from 'recharts'
 import type { NormalizedEpisode, Platform, PlayRecord, YandexAudience } from '@/types'
 import { getPlatformTotals } from '@/lib/podcastMetrics'
-
-const PLATFORM_CONFIG = [
-  { key: 'mave' as const, label: 'Mave', color: '#b150e2' },
-  { key: 'yandex' as const, label: 'Яндекс', color: '#ff9f0a' },
-  { key: 'spotify' as const, label: 'Spotify', color: '#30d158' },
-  { key: 'vk' as const, label: 'VK', color: '#0a84ff' },
-  { key: 'vkvideo' as const, label: 'VK Video', color: '#00B6FF' },
-  { key: 'youtube' as const, label: 'YouTube', color: '#ff0000' },
-]
+import { PLATFORMS } from '@/lib/platforms'
 
 const GENDER_COLORS: Record<string, string> = {
   'Женщины': '#ff6b9d',
@@ -94,7 +86,7 @@ export function PrintPlatformChart({
   enabledPlatforms?: Set<Platform>
 }) {
   const totals = getPlatformTotals(episodes, rawPlays, enabledPlatforms)
-  const data = PLATFORM_CONFIG
+  const data = PLATFORMS
     .map(platform => ({
       name: platform.label,
       value: totals[platform.key],

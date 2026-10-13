@@ -1,15 +1,7 @@
 'use client'
 
 import type { Platform } from '@/types'
-
-const DASHBOARD_PLATFORMS = [
-  { key: 'mave' as const, label: 'Mave', color: '#b150e2' },
-  { key: 'yandex' as const, label: 'Яндекс', color: '#ff9f0a' },
-  { key: 'spotify' as const, label: 'Spotify', color: '#30d158' },
-  { key: 'vk' as const, label: 'VK', color: '#0a84ff' },
-  { key: 'vkvideo' as const, label: 'VK Video', color: '#00B6FF' },
-  { key: 'youtube' as const, label: 'YouTube', color: '#ff453a' },
-]
+import { PLATFORMS } from '@/lib/platforms'
 
 interface Props {
   uploadedPlatforms: Platform[]
@@ -27,7 +19,7 @@ export function PlatformFilters({ uploadedPlatforms, enabledPlatforms, onToggle 
         Источники для расчёта
       </p>
       <div className="flex flex-wrap gap-2">
-        {DASHBOARD_PLATFORMS.filter(platform => uploaded.has(platform.key)).map(platform => {
+        {PLATFORMS.filter(platform => uploaded.has(platform.key)).map(platform => {
           const active = enabledPlatforms.has(platform.key)
           const disableToggle = active && enabledCount <= 1
 

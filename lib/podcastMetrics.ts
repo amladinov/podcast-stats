@@ -1,4 +1,5 @@
 import type { NormalizedEpisode, Platform, PlayRecord } from '@/types'
+import { PLATFORM_KEYS, emptyPlatformTotals } from '@/lib/platforms'
 
 type PlatformTotals = Record<Platform, number>
 
@@ -8,53 +9,29 @@ export function getPlatformTotals(
   enabledPlatforms?: Set<Platform>
 ): PlatformTotals {
   const hasMaveSnapshot = rawPlays.some(record => record.platform === 'mave' && record.sourceKind === 'paste')
-  const rawTotals: PlatformTotals = {
-    mave: 0,
-    yandex: 0,
-    spotify: 0,
-    vk: 0,
-    vkvideo: 0,
-    youtube: 0,
-  }
+  const rawTotals = emptyPlatformTotals()
 
   for (const record of rawPlays) {
     rawTotals[record.platform] += record.plays
   }
 
-  let totals: PlatformTotals
+  const totals = emptyPlatformTotals()
 
-  if (rawPlays.length > 0) {
-    totals = {
-      mave: hasMaveSnapshot ? sumEpisodePlays(episodes, 'mave') : (rawTotals.mave > 0 ? rawTotals.mave : sumEpisodePlays(episodes, 'mave')),
-      yandex: rawTotals.yandex > 0 ? rawTotals.yandex : sumEpisodePlays(episodes, 'yandex'),
-      spotify: rawTotals.spotify > 0 ? rawTotals.spotify : sumEpisodePlays(episodes, 'spotify'),
-      vk: rawTotals.vk > 0 ? rawTotals.vk : sumEpisodePlays(episodes, 'vk'),
-      vkvideo: rawTotals.vkvideo > 0 ? rawTotals.vkvideo : sumEpisodePlays(episodes, 'vkvideo'),
-      youtube: rawTotals.youtube > 0 ? rawTotals.youtube : sumEpisodePlays(episodes, 'youtube'),
-    }
-  } else {
-    totals = {
-      mave: sumEpisodePlays(episodes, 'mave'),
-      yandex: sumEpisodePlays(episodes, 'yandex'),
-      spotify: sumEpisodePlays(episodes, 'spotify'),
-      vk: sumEpisodePlays(episodes, 'vk'),
-      vkvideo: sumEpisodePlays(episodes, 'vkvideo'),
-      youtube: sumEpisodePlays(episodes, 'youtube'),
-    }
+  for (const platform of PLATFORM_KEYS) {
+    // Mave paste snapshot is already folded into normalized episodes; raw rows would double count.
+    const useRaw = rawPlays.length > 0 && rawTotals[platform] > 0 && !(platform === 'mave' && hasMaveSnapshot)
+    totals[platform] = useRaw ? rawTotals[platform] : sumEpisodePlays(episodes, platform)
   }
 
   if (!enabledPlatforms) {
     return totals
   }
 
-  return {
-    mave: enabledPlatforms.has('mave') ? totals.mave : 0,
-    yandex: enabledPlatforms.has('yandex') ? totals.yandex : 0,
-    spotify: enabledPlatforms.has('spotify') ? totals.spotify : 0,
-    vk: enabledPlatforms.has('vk') ? totals.vk : 0,
-    vkvideo: enabledPlatforms.has('vkvideo') ? totals.vkvideo : 0,
-    youtube: enabledPlatforms.has('youtube') ? totals.youtube : 0,
+  for (const platform of PLATFORM_KEYS) {
+    if (!enabledPlatforms.has(platform)) totals[platform] = 0
   }
+
+  return totals
 }
 
 function sumEpisodePlays(episodes: NormalizedEpisode[], platform: Platform): number {
@@ -78,25 +55,17 @@ export function getFilteredEpisodes(
   enabledPlatforms: Set<Platform>
 ): NormalizedEpisode[] {
   return episodes.map(episode => {
-    const mave = enabledPlatforms.has('mave') ? episode.plays.mave : 0
-    const yandex = enabledPlatforms.has('yandex') ? episode.plays.yandex : 0
-    const spotify = enabledPlatforms.has('spotify') ? episode.plays.spotify : 0
-    const vk = enabledPlatforms.has('vk') ? episode.plays.vk : 0
-    const vkvideo = enabledPlatforms.has('vkvideo') ? episode.plays.vkvideo : 0
-    const youtube = enabledPlatforms.has('youtube') ? episode.plays.youtube : 0
+    const plays = { ...episode.plays }
+    let total = 0
+
+    for (const platform of PLATFORM_KEYS) {
+      plays[platform] = enabledPlatforms.has(platform) ? episode.plays[platform] : 0
+      total += plays[platform]
+    }
 
     return {
       ...episode,
-      plays: {
-        ...episode.plays,
-        mave,
-        yandex,
-        spotify,
-        vk,
-        vkvideo,
-        youtube,
-        total: mave + yandex + spotify + vk + vkvideo + youtube,
-      },
+      plays: { ...plays, total },
       timeline: enabledPlatforms.has('mave') ? [...episode.timeline] : [],
     }
   })

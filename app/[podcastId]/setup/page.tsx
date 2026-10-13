@@ -17,17 +17,20 @@ import { parseYandexAge } from '@/lib/parsers/yandexAge'
 import { parseYandexCities } from '@/lib/parsers/yandexCities'
 import { getCtaClasses } from '@/lib/ctaStyles'
 import { formatPeriod, getEpisodeRangeFromNormalized, getPeriodFromPlays } from '@/lib/platformPeriods'
-import type { MavePasteEpisode, PlayRecord, YandexAudience } from '@/types'
+import type { MavePasteEpisode, Platform, PlayRecord, YandexAudience } from '@/types'
+import { PLATFORMS as PLATFORM_META, PLATFORM_BY_KEY, PLATFORM_KEYS, type PlatformMeta } from '@/lib/platforms'
 
 type GuidePart = { t: 'text'; v: string } | { t: 'link'; label: string; url: string }
 type GuideStep = GuidePart[]
 
-const PLATFORMS = [
-  {
-    key: 'mave' as const,
-    label: 'Mave',
+type CsvPlatform = Exclude<Platform, 'youtube'>
+
+type PlatformGuide = { desc: string; guide: GuideStep[]; note?: string }
+
+// Инструкции по выгрузке CSV. Имена и цвета платформ берутся из lib/platforms.
+const PLATFORM_GUIDES: Record<CsvPlatform, PlatformGuide> = {
+  mave: {
     desc: 'CSV с ежедневной статистикой или вставка списка выпусков из ЛК Mave',
-    dot: '#b150e2',
     guide: [
       [{ t: 'text' as const, v: 'В личном кабинете mave.digital перейди в раздел «Аналитика»' }],
       [{ t: 'text' as const, v: 'Выбери нужный период, например «Год»' }],
@@ -36,11 +39,8 @@ const PLATFORMS = [
     ] as GuideStep[],
     note: '⚠ Для экспорта нужна платная подписка Mave+',
   },
-  {
-    key: 'yandex' as const,
-    label: 'Яндекс Музыка',
+  yandex: {
     desc: 'CSV из DataLens (разделитель — точка с запятой)',
-    dot: '#ff9f0a',
     guide: [
       [
         { t: 'text' as const, v: 'Открой ' },
@@ -54,11 +54,8 @@ const PLATFORMS = [
       [{ t: 'text' as const, v: 'Выбери «Сохранить как» → CSV, не меняй настройки → «Сохранить»' }],
     ] as GuideStep[],
   },
-  {
-    key: 'spotify' as const,
-    label: 'Spotify',
+  spotify: {
     desc: 'CSV из Spotify for Podcasters',
-    dot: '#30d158',
     guide: [
       [
         { t: 'text' as const, v: 'Открой ' },
@@ -71,11 +68,8 @@ const PLATFORMS = [
       [{ t: 'text' as const, v: 'Нажми кружок со стрелкой рядом с фильтром периода — скачается CSV' }],
     ] as GuideStep[],
   },
-  {
-    key: 'vk' as const,
-    label: 'ВКонтакте',
+  vk: {
     desc: 'CSV из статистики VK (разделитель — точка с запятой)',
-    dot: '#0a84ff',
     guide: [
       [{ t: 'text' as const, v: 'Зайди в сообщество, к которому привязан подкаст' }],
       [{ t: 'text' as const, v: 'Перейди в «Статистика» → «Подкасты» → «Эпизоды»' }],
@@ -84,11 +78,8 @@ const PLATFORMS = [
       [{ t: 'text' as const, v: 'Выбери нужный период и нажми «Экспортировать»' }],
     ] as GuideStep[],
   },
-  {
-    key: 'vkvideo' as const,
-    label: 'VK Video',
+  vkvideo: {
     desc: 'CSV из статистики VK Video (разделитель — точка с запятой)',
-    dot: '#00B6FF',
     guide: [
       [{ t: 'text' as const, v: 'Зайди в сообщество, к которому привязан канал VK Video' }],
       [{ t: 'text' as const, v: 'Перейди в «Статистика» → «Видео» → «Контент»' }],
@@ -96,26 +87,30 @@ const PLATFORMS = [
       [{ t: 'text' as const, v: 'Выбери период и формат CSV — нажми «Экспортировать»' }],
     ] as GuideStep[],
   },
-]
+}
+
+const PLATFORMS = PLATFORM_META
+  .filter((platform): platform is PlatformMeta & { key: CsvPlatform } => platform.key !== 'youtube')
+  .map(platform => ({
+    key: platform.key,
+    label: platform.fullLabel,
+    dot: platform.color,
+    ...PLATFORM_GUIDES[platform.key],
+  }))
 
 const YOUTUBE_PLATFORM = {
   key: 'youtube' as const,
-  label: 'YouTube',
+  label: PLATFORM_BY_KEY.youtube.fullLabel,
   desc: 'Подключи канал через Google-аккаунт',
-  dot: '#ff0000',
+  dot: PLATFORM_BY_KEY.youtube.color,
 }
 
-const MOBILE_SETUP_PLATFORM_ORDER = ['mave', 'yandex', 'spotify', 'vk', 'vkvideo', 'youtube'] as const
+const MOBILE_SETUP_PLATFORM_ORDER = PLATFORM_KEYS
 
-const MOBILE_SETUP_SCENES = [
-  { id: 'mave', label: 'Mave' },
-  { id: 'yandex', label: 'Яндекс' },
-  { id: 'spotify', label: 'Spotify' },
-  { id: 'vk', label: 'VK' },
-  { id: 'vkvideo', label: 'VK Video' },
-  { id: 'youtube', label: 'YouTube' },
+const MOBILE_SETUP_SCENES: ReadonlyArray<{ id: Platform | 'done'; label: string }> = [
+  ...PLATFORM_META.map(platform => ({ id: platform.key, label: platform.label })),
   { id: 'done', label: 'Готово' },
-] as const
+]
 
 function parsePlatform(platform: string, text: string): PlayRecord[] {
   if (platform === 'mave') return parseMave(text)
@@ -391,14 +386,9 @@ export default function SetupPage() {
     : 0
 
   const mobilePlatformStatuses = MOBILE_SETUP_PLATFORM_ORDER.map(key => {
-    const base =
-      key === 'youtube'
-        ? YOUTUBE_PLATFORM
-        : PLATFORMS.find(platform => platform.key === key)!
-
     return {
       key,
-      label: key === 'yandex' ? 'Яндекс' : base.label,
+      label: PLATFORM_BY_KEY[key].label,
       isDone: uploadedKeys.has(key),
       isCurrent: MOBILE_SETUP_SCENES[setupSceneIndex]?.id === key,
     }

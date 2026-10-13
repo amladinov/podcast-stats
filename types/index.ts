@@ -38,15 +38,7 @@ export interface NormalizedEpisode {
   id: string         // RSS guid or generated
   title: string
   publishDate: string
-  plays: {
-    mave: number
-    yandex: number
-    spotify: number
-    vk: number
-    vkvideo: number
-    youtube: number
-    total: number
-  }
+  plays: Record<Platform, number> & { total: number }
   // Daily timeline from Mave (only Mave provides this)
   timeline: Array<{ date: string; plays: number }>
   maveVideoViews?: number

@@ -7,6 +7,7 @@ import { getCtaClasses } from '@/lib/ctaStyles'
 import { resolvePodcastCoverUrl } from '@/lib/podcastCover'
 import { usePodcastStore } from '@/lib/store'
 import { getPlatformTotals, getTotalPlays } from '@/lib/podcastMetrics'
+import { PLATFORMS } from '@/lib/platforms'
 import {
   BarChart,
   Bar,
@@ -160,12 +161,8 @@ export default function ComparePage() {
   }
 
   // Build platform bar chart data
-  const platforms = ['Mave', 'Яндекс', 'Spotify', 'VK', 'VK Video', 'YouTube']
-  const platformKeys = ['mave', 'yandex', 'spotify', 'vk', 'vkvideo', 'youtube'] as const
-
-  const barChartData = platforms.map((name, pi) => {
-    const key = platformKeys[pi]
-    const entry: Record<string, string | number> = { platform: name }
+  const barChartData = PLATFORMS.map(({ key, label }) => {
+    const entry: Record<string, string | number> = { platform: label }
     summaries.forEach(summary => {
       entry[summary.id] = summary.totals[key]
     })
@@ -240,19 +237,10 @@ export default function ComparePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {summaries.map((summary, i) => {
                 const { totals, totalPlays } = summary
-                const maveTotal = totals.mave
-                const yandexTotal = totals.yandex
-                const spotifyTotal = totals.spotify
-                const vkTotal = totals.vk
-                const vkvideoTotal = totals.vkvideo
-                const youtubeTotal = totals.youtube
-
-                const pctMave    = totalPlays > 0 ? Math.round(maveTotal    / totalPlays * 100) : 0
-                const pctYandex  = totalPlays > 0 ? Math.round(yandexTotal  / totalPlays * 100) : 0
-                const pctSpotify = totalPlays > 0 ? Math.round(spotifyTotal / totalPlays * 100) : 0
-                const pctVk      = totalPlays > 0 ? Math.round(vkTotal      / totalPlays * 100) : 0
-                const pctVkvideo = totalPlays > 0 ? Math.round(vkvideoTotal / totalPlays * 100) : 0
-                const pctYoutube = totalPlays > 0 ? Math.round(youtubeTotal / totalPlays * 100) : 0
+                const platformShares = PLATFORMS.map(platform => ({
+                  label: platform.label,
+                  pct: totalPlays > 0 ? Math.round(totals[platform.key] / totalPlays * 100) : 0,
+                }))
 
                 const color = PODCAST_COLORS[i % PODCAST_COLORS.length]
 
@@ -282,14 +270,7 @@ export default function ComparePage() {
                     </div>
 
                     <div className="space-y-1 mt-3">
-                      {[
-                        { label: 'Mave',     pct: pctMave    },
-                        { label: 'Яндекс',   pct: pctYandex  },
-                        { label: 'Spotify',  pct: pctSpotify },
-                        { label: 'VK',       pct: pctVk      },
-                        { label: 'VK Video', pct: pctVkvideo },
-                        { label: 'YouTube',  pct: pctYoutube },
-                      ].map(({ label, pct }) => (
+                      {platformShares.map(({ label, pct }) => (
                         <div key={label} className="flex items-center gap-2">
                           <span className="text-[11px] text-[#6e6e73] w-16 sm:w-14 flex-shrink-0">{label}</span>
                           <div className="flex-1 bg-[#f5f5f7] rounded-full h-1.5 overflow-hidden">

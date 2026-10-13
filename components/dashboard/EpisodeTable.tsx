@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import type { NormalizedEpisode, Platform } from '@/types'
+import { PLATFORMS } from '@/lib/platforms'
 
 interface Props {
   episodes: NormalizedEpisode[]
@@ -11,16 +12,7 @@ interface Props {
   onSortChange: (key: SortKey, desc: boolean) => void
 }
 
-type SortKey = 'total' | 'mave' | 'yandex' | 'spotify' | 'vk' | 'vkvideo' | 'youtube' | 'publishDate'
-
-const PLATFORM_COLUMNS = [
-  { key: 'mave' as const, label: 'Mave' },
-  { key: 'yandex' as const, label: 'Яндекс' },
-  { key: 'spotify' as const, label: 'Spotify' },
-  { key: 'vk' as const, label: 'VK' },
-  { key: 'vkvideo' as const, label: 'VK Video' },
-  { key: 'youtube' as const, label: 'YouTube' },
-]
+type SortKey = 'total' | 'publishDate' | Platform
 
 interface SortHeaderProps {
   active: boolean
@@ -49,7 +41,7 @@ export function EpisodeTable({ episodes, enabledPlatforms, sortKey, desc, onSort
   const [showAll, setShowAll] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const visiblePlatformColumns = PLATFORM_COLUMNS.filter(
+  const visiblePlatformColumns = PLATFORMS.filter(
     platform => !enabledPlatforms || enabledPlatforms.has(platform.key)
   )
   const effectiveSortKey: SortKey = (
