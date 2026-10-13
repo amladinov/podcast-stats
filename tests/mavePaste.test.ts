@@ -80,3 +80,23 @@ test('parseMavePaste parses date-first Mave cards and optional "Видеовып
   assert.equal(result.episodes[1]?.plays, 793)
   assert.equal(result.episodes[1]?.videoViews, 40)
 })
+
+test('parseMavePaste accepts missing video views line and defaults to zero', () => {
+  const input = `
+1 сезон
+27 нояб. 2024
+
+1. Что такое любовь?
+
+29:20
+231
+  `
+
+  const result = parseMavePaste(input)
+
+  assert.equal(result.episodes.length, 1)
+  assert.equal(result.warnings.length, 0)
+  assert.equal(result.episodes[0]?.publishDate, '2024-11-27')
+  assert.equal(result.episodes[0]?.plays, 231)
+  assert.equal(result.episodes[0]?.videoViews, 0)
+})

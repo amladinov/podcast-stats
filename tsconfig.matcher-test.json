@@ -11,6 +11,7 @@
   },
   "include": [
     "lib/matcher.ts",
+    "lib/episodeRefresh.ts",
     "lib/storePersist.ts",
     "lib/parsers/mavePaste.ts",
     "lib/parsers/vk.ts",
@@ -24,6 +25,7 @@
     "lib/parsers/mave.ts",
     "types/index.ts",
     "tests/matcher.test.ts",
+    "tests/episodeRefresh.test.ts",
     "tests/mavePaste.test.ts",
     "tests/vkParser.test.ts",
     "tests/vkVideoParser.test.ts",

@@ -47,6 +47,110 @@ const episodes = [
     strict_1.default.equal(matched.plays.yandex, 55);
     strict_1.default.equal(matched.yandexCompletionRate, 66.6);
 });
+(0, node_test_1.default)('yandex duplicate rows are accumulated with weighted completion rate', () => {
+    const localEpisodes = [
+        {
+            guid: 'ep-yandex',
+            title: 'Рынок труда глазами хедхантера / Роман Мазур',
+            publishDate: '2024-01-10',
+        },
+    ];
+    const plays = [
+        {
+            episodeTitle: 'Роман Мазур: рынок труда глазами хедхантера',
+            platform: 'yandex',
+            date: '',
+            plays: 349,
+            listeners: 177,
+            streams: 212,
+            completionRate: 35.38,
+        },
+        {
+            episodeTitle: 'Рынок труда глазами хедхантера / Роман Мазур',
+            platform: 'yandex',
+            date: '',
+            plays: 258,
+            listeners: 139,
+            streams: 168,
+            completionRate: 38.69,
+        },
+    ];
+    const normalized = (0, matcher_1.normalizePodcastData)(localEpisodes, plays);
+    const matched = normalized.find(item => item.id === 'ep-yandex');
+    strict_1.default.ok(matched);
+    strict_1.default.equal(matched.plays.yandex, 607);
+    strict_1.default.equal(matched.yandexStarts, 607);
+    strict_1.default.equal(matched.yandexListeners, 316);
+    strict_1.default.equal(matched.yandexHours, 380);
+    const expectedCompletionRate = (35.38 * 349 + 38.69 * 258) / 607;
+    strict_1.default.ok(matched.yandexCompletionRate !== undefined);
+    strict_1.default.ok(Math.abs((matched.yandexCompletionRate ?? 0) - expectedCompletionRate) < 1e-9);
+});
+(0, node_test_1.default)('ambiguous yandex match falls back to the best score when anchor is absent', () => {
+    const localEpisodes = [
+        {
+            guid: 'ep-b',
+            title: 'Рынок труда глазами эйчар / Роман Мазур',
+            publishDate: '2024-01-03',
+        },
+        {
+            guid: 'ep-a',
+            title: 'Рынок труда глазами хедхантера / Роман Мазур',
+            publishDate: '2024-01-02',
+        },
+    ];
+    const plays = [
+        {
+            episodeTitle: 'Роман Мазур: рынок труда глазами',
+            platform: 'yandex',
+            date: '',
+            plays: 40,
+            listeners: 20,
+            streams: 8,
+            completionRate: 30,
+        },
+    ];
+    const normalized = (0, matcher_1.normalizePodcastData)(localEpisodes, plays);
+    strict_1.default.equal(normalized.find(item => item.id === 'ep-b')?.plays.yandex, 40);
+    strict_1.default.equal(normalized.find(item => item.id === 'ep-a')?.plays.yandex, 0);
+});
+(0, node_test_1.default)('ambiguous yandex match uses anchor from a confident duplicate', () => {
+    const localEpisodes = [
+        {
+            guid: 'ep-b',
+            title: 'Рынок труда глазами эйчар / Роман Мазур',
+            publishDate: '2024-01-03',
+        },
+        {
+            guid: 'ep-a',
+            title: 'Рынок труда глазами хедхантера / Роман Мазур',
+            publishDate: '2024-01-02',
+        },
+    ];
+    const plays = [
+        {
+            episodeTitle: 'Рынок труда глазами хедхантера / Роман Мазур',
+            platform: 'yandex',
+            date: '',
+            plays: 100,
+            listeners: 50,
+            streams: 20,
+            completionRate: 50,
+        },
+        {
+            episodeTitle: 'Роман Мазур: рынок труда глазами',
+            platform: 'yandex',
+            date: '',
+            plays: 40,
+            listeners: 20,
+            streams: 8,
+            completionRate: 30,
+        },
+    ];
+    const normalized = (0, matcher_1.normalizePodcastData)(localEpisodes, plays);
+    strict_1.default.equal(normalized.find(item => item.id === 'ep-a')?.plays.yandex, 140);
+    strict_1.default.equal(normalized.find(item => item.id === 'ep-b')?.plays.yandex, 0);
+});
 (0, node_test_1.default)('partial title containment still matches the intended episode', () => {
     const plays = [
         {

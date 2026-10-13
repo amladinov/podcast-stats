@@ -55,6 +55,16 @@ function parseInteger(value: string): number {
   return Number.parseInt(value.replace(/\s/g, ''), 10)
 }
 
+function isBoundaryLine(line: string | undefined): boolean {
+  if (!line) return true
+  return Boolean(
+    SEASON_LINE.test(line) ||
+    NO_SEASON_LINE.test(line) ||
+    EPISODE_LINE.test(line) ||
+    parseRuDate(line)
+  )
+}
+
 function toPlayRecord(episode: MavePasteEpisode): PlayRecord {
   return {
     episodeTitle: episode.title,
@@ -134,9 +144,20 @@ export function parseMavePaste(text: string): MavePasteParseResult {
     }
 
     const playsLine = lines[index]
-    const videoViewsLine = lines[index + 1]
 
-    if (!playsLine || !NUMBER_LINE.test(playsLine) || !videoViewsLine || !NUMBER_LINE.test(videoViewsLine)) {
+    if (!playsLine || !NUMBER_LINE.test(playsLine)) {
+      warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` })
+      continue
+    }
+
+    const maybeVideoViewsLine = lines[index + 1]
+    let videoViews = 0
+    let consumedStatLines = 1
+
+    if (maybeVideoViewsLine && NUMBER_LINE.test(maybeVideoViewsLine)) {
+      videoViews = parseInteger(maybeVideoViewsLine)
+      consumedStatLines = 2
+    } else if (maybeVideoViewsLine && !isBoundaryLine(maybeVideoViewsLine)) {
       warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` })
       continue
     }
@@ -144,7 +165,7 @@ export function parseMavePaste(text: string): MavePasteParseResult {
     const title = titleLines.join(' ').replace(/\s+/g, ' ').trim()
     if (!title) {
       warnings.push({ index, reason: `Пустой заголовок у выпуска на дате ${dateLine}` })
-      index += 3
+      index += consumedStatLines
       continue
     }
 
@@ -155,10 +176,10 @@ export function parseMavePaste(text: string): MavePasteParseResult {
       title,
       durationLabel,
       plays: parseInteger(playsLine),
-      videoViews: parseInteger(videoViewsLine),
+      videoViews,
     })
 
-    index += 2
+    index += consumedStatLines
   }
 
   return {

@@ -173,7 +173,7 @@ async function readTextWithLimit(res: Response, maxBytes: number): Promise<strin
   return text
 }
 
-async function fetchFeed(url: URL, redirectCount = 0): Promise<Response> {
+async function fetchFeed(url: URL, redirectCount = 0, noStore = false): Promise<Response> {
   if (redirectCount > MAX_REDIRECTS) {
     throw new Error('Слишком много редиректов при загрузке RSS')
   }
@@ -187,7 +187,8 @@ async function fetchFeed(url: URL, redirectCount = 0): Promise<Response> {
     },
     redirect: 'manual',
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    next: { revalidate: 3600 },
+    // Manual refresh (fresh=1) bypasses the hourly cache to actually pick up new episodes.
+    ...(noStore ? { cache: 'no-store' as const } : { next: { revalidate: 3600 } }),
   })
 
   if (res.status >= 300 && res.status < 400) {
@@ -197,7 +198,7 @@ async function fetchFeed(url: URL, redirectCount = 0): Promise<Response> {
     }
 
     const nextUrl = parseAndValidateUrl(new URL(location, url).toString())
-    return fetchFeed(nextUrl, redirectCount + 1)
+    return fetchFeed(nextUrl, redirectCount + 1, noStore)
   }
 
   return res
@@ -232,7 +233,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const url = parseAndValidateUrl(rawUrl)
-    const res = await fetchFeed(url)
+    const noStore = req.nextUrl.searchParams.get('fresh') === '1'
+    const res = await fetchFeed(url, 0, noStore)
     if (!res.ok) throw new Error(`Feed returned ${res.status}`)
 
     const contentType = res.headers.get('content-type')?.toLowerCase() ?? ''

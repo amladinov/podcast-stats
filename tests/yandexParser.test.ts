@@ -79,6 +79,20 @@ test('parseYandexGender handles missing categories with zero', () => {
   assert.deepEqual(result, { female: 1000, male: 0, unknown: 0 })
 })
 
+test('parseYandexGender parses new 2026 format with dedicated value column', () => {
+  const csv = [
+    'Пол;Авторизованные слушатели;Пол',
+    'Женщины;527480;Женщины',
+    'Мужчины;;Женщины',
+    'Не определен;;Женщины',
+    'Мужчины;459211;Мужчины',
+    'Не определен;183811;Не определен',
+  ].join('\n')
+
+  const result = parseYandexGender(csv)
+  assert.deepEqual(result, { female: 527480, male: 459211, unknown: 183811 })
+})
+
 test('parseYandexAge sorts ranges in ascending order', () => {
   const csv = [
     'Возраст;Не определен;55-99;45-54;35-44;25-34;18-24;0-17',
@@ -106,6 +120,23 @@ test('parseYandexAge skips zero-count rows', () => {
   const result = parseYandexAge(csv)
   assert.equal(result.length, 1)
   assert.equal(result[0].range, '25-34')
+})
+
+test('parseYandexAge parses new 2026 format with dedicated value column', () => {
+  const csv = [
+    'Возраст;Авторизованные слушатели;Возраст',
+    'Не определен;139878;Не определен',
+    '25-34;463387;25-34',
+    '35-44;;25-34',
+    '0-17;55288;0-17',
+  ].join('\n')
+
+  const result = parseYandexAge(csv)
+  assert.equal(result.length, 3)
+  assert.equal(result[0].range, '0-17')
+  assert.equal(result[0].count, 55288)
+  assert.equal(result[1].range, '25-34')
+  assert.equal(result[result.length - 1].range, 'Не определен')
 })
 
 test('parseYandexCities parses city rows with russian floats', () => {

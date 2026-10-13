@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.episodeMatchKey = episodeMatchKey;
 exports.normalizePodcastData = normalizePodcastData;
+const MIN_TITLE_MATCH_SCORE = 0.6;
+const AMBIGUOUS_MATCH_DELTA = 0.05;
 function normalize(str) {
     return str
         .toLowerCase()
@@ -9,8 +12,15 @@ function normalize(str) {
         .replace(/\s+/g, ' ')
         .trim();
 }
+// Stable key for matching the same episode across refreshes (resilient to guid changes).
+function episodeMatchKey(title, publishDate) {
+    return `${normalize(title)}|${publishDate}`;
+}
 function getTokens(normalized) {
     return new Set(normalized.split(' ').filter(word => word.length > 3));
+}
+function getTokenSignature(tokens) {
+    return Array.from(tokens).sort().join('|');
 }
 function similarity(queryNormalized, queryTokens, candidate) {
     if (queryNormalized === candidate.normalizedTitle)
@@ -68,6 +78,135 @@ function buildEpisodeIndex(episodes) {
     });
     return { exactTitle, publishDate, tokenIndex, ordered };
 }
+function getCandidatePool(index, queryTokens) {
+    const narrowed = new Map();
+    for (const token of queryTokens) {
+        for (const candidate of index.tokenIndex.get(token) ?? []) {
+            narrowed.set(candidate.episode.guid, candidate);
+        }
+    }
+    return narrowed.size > 0 ? Array.from(narrowed.values()) : index.ordered;
+}
+function rankCandidates(index, queryNormalized, queryTokens) {
+    const candidatePool = getCandidatePool(index, queryTokens);
+    return candidatePool
+        .map(candidate => ({
+        candidate,
+        score: similarity(queryNormalized, queryTokens, candidate),
+    }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => (b.score - a.score) || (a.candidate.order - b.candidate.order));
+}
+function buildYandexTitleVariants(title) {
+    const rawVariants = [title];
+    rawVariants.push(...title
+        .split(/[:/]/g)
+        .map(part => part.trim())
+        .filter(Boolean));
+    const variants = [];
+    const seenNormalized = new Set();
+    for (const raw of rawVariants) {
+        const normalizedTitle = normalize(raw);
+        if (!normalizedTitle || seenNormalized.has(normalizedTitle))
+            continue;
+        seenNormalized.add(normalizedTitle);
+        const tokens = getTokens(normalizedTitle);
+        variants.push({
+            normalizedTitle,
+            tokens,
+            signature: getTokenSignature(tokens),
+        });
+    }
+    return variants;
+}
+function findYandexEpisode(index, title, anchorsBySignature) {
+    const variants = buildYandexTitleVariants(title);
+    if (variants.length === 0) {
+        return {
+            episode: null,
+            score: 0,
+            signatures: [],
+            isAmbiguous: false,
+            resolvedByAnchor: false,
+        };
+    }
+    const candidateScores = new Map();
+    for (const variant of variants) {
+        const ranked = rankCandidates(index, variant.normalizedTitle, variant.tokens);
+        for (const scored of ranked) {
+            const guid = scored.candidate.episode.guid;
+            const existing = candidateScores.get(guid);
+            if (!existing || scored.score > existing.score) {
+                candidateScores.set(guid, scored);
+            }
+        }
+    }
+    const ranked = Array.from(candidateScores.values())
+        .sort((a, b) => (b.score - a.score) || (a.candidate.order - b.candidate.order));
+    if (ranked.length === 0) {
+        return {
+            episode: null,
+            score: 0,
+            signatures: variants.map(variant => variant.signature).filter(Boolean),
+            isAmbiguous: false,
+            resolvedByAnchor: false,
+        };
+    }
+    const best = ranked[0];
+    if (best.score < MIN_TITLE_MATCH_SCORE) {
+        return {
+            episode: null,
+            score: best.score,
+            signatures: variants.map(variant => variant.signature).filter(Boolean),
+            isAmbiguous: false,
+            resolvedByAnchor: false,
+        };
+    }
+    const secondBest = ranked[1];
+    const isAmbiguous = !!secondBest && (best.score - secondBest.score) <= AMBIGUOUS_MATCH_DELTA;
+    const signatures = variants.map(variant => variant.signature).filter(Boolean);
+    if (!isAmbiguous) {
+        return {
+            episode: best.candidate.episode,
+            score: best.score,
+            signatures,
+            isAmbiguous: false,
+            resolvedByAnchor: false,
+        };
+    }
+    for (const signature of signatures) {
+        const anchoredGuid = anchorsBySignature.get(signature);
+        if (!anchoredGuid)
+            continue;
+        const anchoredCandidate = candidateScores.get(anchoredGuid);
+        if (anchoredCandidate) {
+            return {
+                episode: anchoredCandidate.candidate.episode,
+                score: anchoredCandidate.score,
+                signatures,
+                isAmbiguous: true,
+                resolvedByAnchor: true,
+            };
+        }
+        const anchoredEpisode = index.ordered.find(item => item.episode.guid === anchoredGuid);
+        if (anchoredEpisode) {
+            return {
+                episode: anchoredEpisode.episode,
+                score: best.score,
+                signatures,
+                isAmbiguous: true,
+                resolvedByAnchor: true,
+            };
+        }
+    }
+    return {
+        episode: best.candidate.episode,
+        score: best.score,
+        signatures,
+        isAmbiguous: true,
+        resolvedByAnchor: false,
+    };
+}
 function chooseBestCandidate(candidates, targetTimestamp) {
     if (candidates.length === 0)
         return null;
@@ -100,15 +239,9 @@ function findEpisodeByTitle(index, title, isoDate) {
         return chooseBestCandidate(exactMatches, targetTimestamp)?.episode ?? null;
     }
     const queryTokens = getTokens(normalizedTitle);
-    const narrowed = new Map();
-    for (const token of queryTokens) {
-        for (const candidate of index.tokenIndex.get(token) ?? []) {
-            narrowed.set(candidate.episode.guid, candidate);
-        }
-    }
-    const candidatePool = narrowed.size > 0 ? Array.from(narrowed.values()) : index.ordered;
+    const candidatePool = getCandidatePool(index, queryTokens);
     let best = null;
-    let bestScore = 0.6; // minimum threshold
+    let bestScore = MIN_TITLE_MATCH_SCORE; // minimum threshold
     for (const candidate of candidatePool) {
         const score = similarity(normalizedTitle, queryTokens, candidate);
         if (score > bestScore) {
@@ -164,6 +297,8 @@ function findEpisodeByISODate(index, isoDate) {
 }
 function normalizePodcastData(episodes, plays) {
     const index = buildEpisodeIndex(episodes);
+    const yandexAnchorsBySignature = new Map();
+    const yandexCompletionAccumulators = new Map();
     // Build map keyed by episode guid
     const map = new Map();
     for (const indexed of index.ordered) {
@@ -172,19 +307,25 @@ function normalizePodcastData(episodes, plays) {
             id: episode.guid,
             title: episode.title,
             publishDate: episode.publishDate,
-            plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, youtube: 0, total: 0 },
+            plays: { mave: 0, yandex: 0, spotify: 0, vk: 0, vkvideo: 0, youtube: 0, total: 0 },
             timeline: [],
             maveVideoViews: undefined,
         });
     }
     for (const record of plays) {
         let episode = null;
+        let yandexMatch = null;
         if (record.platform === 'vk') {
             // VK has no title — match by date
             episode = findEpisodeByDate(index, record.date);
         }
-        else if (record.platform === 'youtube') {
-            // YouTube: try title first, fallback to date ±2 days
+        else if (record.platform === 'yandex') {
+            yandexMatch = findYandexEpisode(index, record.episodeTitle, yandexAnchorsBySignature);
+            episode = yandexMatch.episode;
+        }
+        else if (record.platform === 'youtube' || record.platform === 'vkvideo') {
+            // Video platforms: try title first, fallback to date ±2 days
+            // (own video publish date may differ from RSS date by 1-2 days)
             episode = findEpisodeByTitle(index, record.episodeTitle, record.date);
             if (!episode && record.date) {
                 episode = findEpisodeByISODate(index, record.date);
@@ -198,6 +339,15 @@ function normalizePodcastData(episodes, plays) {
         const norm = map.get(episode.guid);
         if (!norm)
             continue;
+        if (record.platform === 'yandex' && yandexMatch) {
+            const canAnchor = yandexMatch.score >= MIN_TITLE_MATCH_SCORE &&
+                (!yandexMatch.isAmbiguous || yandexMatch.resolvedByAnchor);
+            if (canAnchor) {
+                for (const signature of yandexMatch.signatures) {
+                    yandexAnchorsBySignature.set(signature, episode.guid);
+                }
+            }
+        }
         if (record.platform === 'mave') {
             if (record.sourceKind === 'paste') {
                 norm.plays.mave = record.plays;
@@ -210,11 +360,20 @@ function normalizePodcastData(episodes, plays) {
             }
         }
         else if (record.platform === 'yandex') {
-            norm.plays.yandex = record.plays; // total starts
-            norm.yandexStarts = record.plays;
-            norm.yandexListeners = record.listeners;
-            norm.yandexHours = record.streams; // Яндекс "Стримы" → reuse streams field
-            norm.yandexCompletionRate = record.completionRate;
+            norm.plays.yandex += record.plays;
+            norm.yandexStarts = (norm.yandexStarts ?? 0) + record.plays;
+            norm.yandexListeners = (norm.yandexListeners ?? 0) + (record.listeners ?? 0);
+            norm.yandexHours = (norm.yandexHours ?? 0) + (record.streams ?? 0); // Яндекс "Стримы" → reuse streams field
+            if (record.completionRate !== undefined && record.plays > 0) {
+                const completion = yandexCompletionAccumulators.get(episode.guid) ?? {
+                    weightedSum: 0,
+                    weight: 0,
+                };
+                completion.weightedSum += record.completionRate * record.plays;
+                completion.weight += record.plays;
+                yandexCompletionAccumulators.set(episode.guid, completion);
+                norm.yandexCompletionRate = completion.weightedSum / completion.weight;
+            }
         }
         else if (record.platform === 'spotify') {
             norm.plays.spotify = record.plays;
@@ -223,6 +382,9 @@ function normalizePodcastData(episodes, plays) {
         }
         else if (record.platform === 'vk') {
             norm.plays.vk += record.plays;
+        }
+        else if (record.platform === 'vkvideo') {
+            norm.plays.vkvideo += record.plays;
         }
         else if (record.platform === 'youtube') {
             norm.plays.youtube = record.plays;
@@ -234,7 +396,7 @@ function normalizePodcastData(episodes, plays) {
     // Recalculate totals and sort timeline
     for (const norm of map.values()) {
         norm.plays.total =
-            norm.plays.mave + norm.plays.yandex + norm.plays.spotify + norm.plays.vk + norm.plays.youtube;
+            norm.plays.mave + norm.plays.yandex + norm.plays.spotify + norm.plays.vk + norm.plays.vkvideo + norm.plays.youtube;
         norm.timeline.sort((a, b) => a.date.localeCompare(b.date));
     }
     return Array.from(map.values()).sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());

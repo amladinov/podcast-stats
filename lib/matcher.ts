@@ -12,6 +12,11 @@ function normalize(str: string): string {
     .trim()
 }
 
+// Stable key for matching the same episode across refreshes (resilient to guid changes).
+export function episodeMatchKey(title: string, publishDate: string): string {
+  return `${normalize(title)}|${publishDate}`
+}
+
 type IndexedEpisode = {
   episode: RSSEpisode
   normalizedTitle: string

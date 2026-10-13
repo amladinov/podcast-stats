@@ -47,3 +47,52 @@ const mavePaste_1 = require("../lib/parsers/mavePaste");
     strict_1.default.equal(result.episodes[1]?.publishDate, '2022-10-04');
     strict_1.default.equal(result.episodes[1]?.title, 'Трейлер подкаста «Совет Директоров»');
 });
+(0, node_test_1.default)('parseMavePaste parses date-first Mave cards and optional "Видеовыпуск" line', () => {
+    const input = `
+5 сезон
+16 апр. 2026
+
+«АМБИЦИИ или ТРЕВОГА?» мы правда хотим больше или боимся быть обычными?
+
+41:47
+517
+
+0
+11 февр. 2026
+
+«ОН СТАРШЕ НА 10 ЛЕТ!»: как строить отношения с большой разницей в возрасте?
+
+30:02
+Видеовыпуск
+793
+
+40
+  `;
+    const result = (0, mavePaste_1.parseMavePaste)(input);
+    strict_1.default.equal(result.episodes.length, 2);
+    strict_1.default.equal(result.warnings.length, 0);
+    strict_1.default.equal(result.episodes[0]?.seasonLabel, '5 сезон');
+    strict_1.default.equal(result.episodes[0]?.publishDate, '2026-04-16');
+    strict_1.default.equal(result.episodes[0]?.plays, 517);
+    strict_1.default.equal(result.episodes[0]?.videoViews, 0);
+    strict_1.default.equal(result.episodes[1]?.publishDate, '2026-02-11');
+    strict_1.default.equal(result.episodes[1]?.plays, 793);
+    strict_1.default.equal(result.episodes[1]?.videoViews, 40);
+});
+(0, node_test_1.default)('parseMavePaste accepts missing video views line and defaults to zero', () => {
+    const input = `
+1 сезон
+27 нояб. 2024
+
+1. Что такое любовь?
+
+29:20
+231
+  `;
+    const result = (0, mavePaste_1.parseMavePaste)(input);
+    strict_1.default.equal(result.episodes.length, 1);
+    strict_1.default.equal(result.warnings.length, 0);
+    strict_1.default.equal(result.episodes[0]?.publishDate, '2024-11-27');
+    strict_1.default.equal(result.episodes[0]?.plays, 231);
+    strict_1.default.equal(result.episodes[0]?.videoViews, 0);
+});

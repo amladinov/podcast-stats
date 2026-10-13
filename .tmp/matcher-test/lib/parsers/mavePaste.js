@@ -23,6 +23,7 @@ const EPISODE_LINE = /^(\d+)\s+выпуск$/i;
 const SEASON_LINE = /^(\d+)\s+сезон$/i;
 const NO_SEASON_LINE = /^без сезона$/i;
 const DURATION_LINE = /^\d{1,2}:\d{2}(?::\d{2})?$/;
+const VIDEO_RELEASE_LINE = /^видеовыпуск$/i;
 const NUMBER_LINE = /^\d[\d ]*$/;
 function normalizeMonth(month) {
     return MONTHS[month.toLowerCase().replace(/\.$/, '')] ?? null;
@@ -38,6 +39,14 @@ function parseRuDate(value) {
 }
 function parseInteger(value) {
     return Number.parseInt(value.replace(/\s/g, ''), 10);
+}
+function isBoundaryLine(line) {
+    if (!line)
+        return true;
+    return Boolean(SEASON_LINE.test(line) ||
+        NO_SEASON_LINE.test(line) ||
+        EPISODE_LINE.test(line) ||
+        parseRuDate(line));
 }
 function toPlayRecord(episode) {
     return {
@@ -67,7 +76,7 @@ function parseMavePaste(text) {
             continue;
         }
         const episodeMatch = line.match(EPISODE_LINE);
-        const startsWithoutSeason = currentSeason === 'Без сезона' && parseRuDate(line);
+        const maybeDate = parseRuDate(line);
         let episodeNumber;
         let dateLine = null;
         const titleLines = [];
@@ -76,7 +85,7 @@ function parseMavePaste(text) {
             dateLine = lines[index + 1] ?? null;
             index += 2;
         }
-        else if (startsWithoutSeason) {
+        else if (maybeDate) {
             dateLine = line;
             index += 1;
         }
@@ -98,16 +107,34 @@ function parseMavePaste(text) {
             index += 1;
         }
         const durationLabel = lines[index];
-        const playsLine = lines[index + 1];
-        const videoViewsLine = lines[index + 2];
-        if (!durationLabel || !DURATION_LINE.test(durationLabel) || !playsLine || !NUMBER_LINE.test(playsLine) || !videoViewsLine || !NUMBER_LINE.test(videoViewsLine)) {
+        if (!durationLabel || !DURATION_LINE.test(durationLabel)) {
+            warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` });
+            continue;
+        }
+        index += 1;
+        if (VIDEO_RELEASE_LINE.test(lines[index] ?? '')) {
+            index += 1;
+        }
+        const playsLine = lines[index];
+        if (!playsLine || !NUMBER_LINE.test(playsLine)) {
+            warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` });
+            continue;
+        }
+        const maybeVideoViewsLine = lines[index + 1];
+        let videoViews = 0;
+        let consumedStatLines = 1;
+        if (maybeVideoViewsLine && NUMBER_LINE.test(maybeVideoViewsLine)) {
+            videoViews = parseInteger(maybeVideoViewsLine);
+            consumedStatLines = 2;
+        }
+        else if (maybeVideoViewsLine && !isBoundaryLine(maybeVideoViewsLine)) {
             warnings.push({ index, reason: `Не удалось распознать блок выпуска на дате ${dateLine}` });
             continue;
         }
         const title = titleLines.join(' ').replace(/\s+/g, ' ').trim();
         if (!title) {
             warnings.push({ index, reason: `Пустой заголовок у выпуска на дате ${dateLine}` });
-            index += 3;
+            index += consumedStatLines;
             continue;
         }
         episodes.push({
@@ -117,9 +144,9 @@ function parseMavePaste(text) {
             title,
             durationLabel,
             plays: parseInteger(playsLine),
-            videoViews: parseInteger(videoViewsLine),
+            videoViews,
         });
-        index += 3;
+        index += consumedStatLines;
     }
     return {
         episodes,

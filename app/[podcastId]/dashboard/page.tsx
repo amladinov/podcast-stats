@@ -23,6 +23,7 @@ import {
 import { formatCompactPeriod, getEpisodeRangeFromNormalized, getPeriodFromPlays } from '@/lib/platformPeriods'
 import { formatTimeAgo } from '@/lib/timeAgo'
 import { fetchYouTubeImport } from '@/lib/youtubeImport'
+import { fetchRssEpisodes } from '@/lib/podcastRss'
 import { exportDashboardToPdf, isMobileViewport } from '@/lib/pdfExport'
 import type { Platform } from '@/types'
 
@@ -124,6 +125,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const uploadPlays = usePodcastStore(s => s.uploadPlays)
+  const refreshEpisodes = usePodcastStore(s => s.refreshEpisodes)
   const podcast = usePodcastStore(s => s.getPodcast(podcastId))
   const comparablePodcastCount = usePodcastStore(s => s.podcasts.filter(item => item.uploadedPlatforms.length > 0).length)
   const isDemo = podcast ? DEMO_IDS.has(podcastId) : false
@@ -157,6 +159,8 @@ export default function DashboardPage() {
   )
   const [youtubeRefreshing, setYoutubeRefreshing] = useState(false)
   const [youtubeMessage, setYoutubeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [episodesRefreshing, setEpisodesRefreshing] = useState(false)
+  const [episodesMessage, setEpisodesMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [, setNowTick] = useState(0)
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
@@ -170,6 +174,7 @@ export default function DashboardPage() {
 
   const youtubeUploaded = uploadedPlatformsArray.find(p => p.platform === 'youtube')
   const showYoutubeRefresh = !isDemo && Boolean(youtubeUploaded)
+  const showEpisodesRefresh = !isDemo && Boolean(podcast?.rssUrl) && podcast?.rssUrl !== 'https://demo' && episodes.length > 0
 
   // Re-render every 60s so "N minutes ago" stays fresh.
   useEffect(() => {
@@ -212,6 +217,31 @@ export default function DashboardPage() {
         .finally(() => setYoutubeRefreshing(false))
     }
   }, [searchParams, podcastId, uploadPlays])
+
+  async function handleRefreshEpisodes() {
+    const rssUrl = podcast?.rssUrl
+    if (!rssUrl || rssUrl === 'https://demo') return
+    setEpisodesRefreshing(true)
+    setEpisodesMessage(null)
+    try {
+      const fresh = await fetchRssEpisodes(rssUrl)
+      if (fresh.length === 0) {
+        setEpisodesMessage({ type: 'error', text: 'Лента пуста — попробуйте позже' })
+        return
+      }
+      const { added } = refreshEpisodes(podcastId, fresh)
+      setEpisodesMessage({
+        type: 'success',
+        text: added > 0
+          ? `Добавлено выпусков: ${added}. Обновите статистику платформ, чтобы подтянуть цифры.`
+          : 'Лента актуальна',
+      })
+    } catch (e) {
+      setEpisodesMessage({ type: 'error', text: e instanceof Error ? e.message : 'Не удалось обновить ленту' })
+    } finally {
+      setEpisodesRefreshing(false)
+    }
+  }
 
   const uploadedPlatformLabels = DASHBOARD_PLATFORMS
     .filter(platform => uploadedPlatforms.has(platform.key))
@@ -1155,6 +1185,46 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
+              {showEpisodesRefresh && (
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm print:hidden">
+                  <div className="min-w-0 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#b150e2' }} />
+                      <p className="text-[13px] font-semibold text-[#1d1d1f]">Выпуски</p>
+                      <p className="text-[12px] text-[#8e8e93]">{episodes.length} в дашборде</p>
+                    </div>
+                    {episodesMessage && (
+                      <p
+                        className={[
+                          'mt-1 text-[12px]',
+                          episodesMessage.type === 'success' ? 'text-[#30a14e]' : 'text-[#d70015]',
+                        ].join(' ')}
+                      >
+                        {episodesMessage.text}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleRefreshEpisodes}
+                    disabled={episodesRefreshing}
+                    className={[
+                      'inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px] font-medium transition-colors',
+                      episodesRefreshing
+                        ? 'cursor-not-allowed border-[#e5e5ea] bg-[#f5f5f7] text-[#aeaeb2]'
+                        : 'border-[#b150e2]/30 bg-white text-[#b150e2] hover:bg-[#b150e2]/5',
+                    ].join(' ')}
+                  >
+                    {episodesRefreshing ? (
+                      <>
+                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#aeaeb2] border-t-transparent" />
+                        Обновляем…
+                      </>
+                    ) : (
+                      <>↻ Обновить выпуски</>
+                    )}
+                  </button>
+                </div>
+              )}
               {showYoutubeRefresh && youtubeUploaded && (
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#e5e5ea] bg-white px-4 py-3 shadow-sm print:hidden">
                   <div className="min-w-0 flex flex-col">

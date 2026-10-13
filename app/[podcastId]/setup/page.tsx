@@ -11,6 +11,7 @@ import { parseYandex } from '@/lib/parsers/yandex'
 import { parseVK } from '@/lib/parsers/vk'
 import { parseVKVideo } from '@/lib/parsers/vkVideo'
 import { fetchYouTubeImport } from '@/lib/youtubeImport'
+import { fetchRssEpisodes } from '@/lib/podcastRss'
 import { parseYandexGender } from '@/lib/parsers/yandexGender'
 import { parseYandexAge } from '@/lib/parsers/yandexAge'
 import { parseYandexCities } from '@/lib/parsers/yandexCities'
@@ -135,6 +136,7 @@ export default function SetupPage() {
   const searchParams = useSearchParams()
   const podcast = usePodcastStore(s => s.getPodcast(podcastId))
   const uploadPlays = usePodcastStore(s => s.uploadPlays)
+  const refreshEpisodes = usePodcastStore(s => s.refreshEpisodes)
   const uploadYandexAudience = usePodcastStore(s => s.uploadYandexAudience)
 
   const [uploading, setUploading] = useState<string | null>(null)
@@ -295,7 +297,7 @@ export default function SetupPage() {
     setMavePasteWarnings(result.warnings.map(item => item.reason))
   }, [mavePasteText])
 
-  const handleMavePasteImport = useCallback(() => {
+  const handleMavePasteImport = useCallback(async () => {
     if (mavePastePreview.length === 0) return
 
     const playRecords: PlayRecord[] = mavePastePreview.map(episode => ({
@@ -311,21 +313,38 @@ export default function SetupPage() {
     const hasCsvTimeline = existingMave?.sourceKind === 'csv' || existingMave?.timelineSourceKind === 'csv'
     const dates = mavePastePreview.map(episode => episode.publishDate).sort((a, b) => a.localeCompare(b))
 
-    uploadPlays(podcastId, playRecords, {
-      platform: 'mave',
-      fileName: 'Mave Paste Snapshot',
-      recordsCount: playRecords.length,
-      uploadedAt: new Date().toISOString(),
-      sourceKind: 'paste',
-      timelineSourceKind: hasCsvTimeline ? 'csv' : undefined,
-      periodStart: dates[0],
-      periodEnd: getTodayISODate(),
-    })
+    setUploading('mave')
+    try {
+      // Refresh the RSS skeleton first so episodes published after the podcast was added exist
+      // before we attach plays — otherwise new episodes get silently dropped by the matcher.
+      const rssUrl = podcast?.rssUrl
+      if (rssUrl && rssUrl !== 'https://demo') {
+        try {
+          const fresh = await fetchRssEpisodes(rssUrl)
+          if (fresh.length > 0) refreshEpisodes(podcastId, fresh)
+        } catch {
+          // RSS unavailable — proceed with the existing skeleton, don't block the import.
+        }
+      }
 
-    setPreviews(prev => ({ ...prev, mave: playRecords.length }))
-    setLastUploadedKey('mave')
-    setMavePasteWarnings([])
-  }, [mavePastePreview, podcast?.uploadedPlatforms, podcastId, uploadPlays])
+      uploadPlays(podcastId, playRecords, {
+        platform: 'mave',
+        fileName: 'Mave Paste Snapshot',
+        recordsCount: playRecords.length,
+        uploadedAt: new Date().toISOString(),
+        sourceKind: 'paste',
+        timelineSourceKind: hasCsvTimeline ? 'csv' : undefined,
+        periodStart: dates[0],
+        periodEnd: getTodayISODate(),
+      })
+
+      setPreviews(prev => ({ ...prev, mave: playRecords.length }))
+      setLastUploadedKey('mave')
+      setMavePasteWarnings([])
+    } finally {
+      setUploading(null)
+    }
+  }, [mavePastePreview, podcast?.uploadedPlatforms, podcast?.rssUrl, podcastId, uploadPlays, refreshEpisodes])
 
   const handleAudienceFile = useCallback(async (type: 'gender' | 'age' | 'cities', file: File) => {
     setAudienceUploading(type)

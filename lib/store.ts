@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Podcast, PlayRecord, RSSEpisode, UploadedPlatform, YandexAudience } from '@/types'
 import { normalizePodcastData } from './matcher'
+import { applyEpisodeRefresh } from './episodeRefresh'
 import { DEMO_PODCASTS } from './demoData'
 import { resolvePodcastCoverUrl } from './podcastCover'
 import { deserializeStoreFromStorage, getStorageVersion, serializeStoreForStorage, type PersistedStoreV2 } from './storePersist'
@@ -9,6 +10,7 @@ import { deserializeStoreFromStorage, getStorageVersion, serializeStoreForStorag
 interface PodcastStore {
   podcasts: Podcast[]
   addPodcast: (rssUrl: string, title: string, description: string | undefined, imageUrl: string | undefined, episodes: RSSEpisode[]) => string
+  refreshEpisodes: (podcastId: string, fresh: RSSEpisode[]) => { added: number; total: number }
   uploadPlays: (podcastId: string, plays: PlayRecord[], platform: UploadedPlatform) => void
   uploadYandexAudience: (podcastId: string, data: YandexAudience) => void
   removePodcast: (podcastId: string) => void
@@ -43,6 +45,19 @@ export const usePodcastStore = create<PodcastStore>()(
         }
         set(state => ({ podcasts: [...state.podcasts, podcast] }))
         return id
+      },
+
+      refreshEpisodes: (podcastId, fresh) => {
+        let result = { added: 0, total: 0 }
+        set(state => ({
+          podcasts: state.podcasts.map(p => {
+            if (p.id !== podcastId) return p
+            const { episodes, normalized, added } = applyEpisodeRefresh(p, fresh)
+            result = { added, total: episodes.length }
+            return { ...p, episodes, normalized }
+          }),
+        }))
+        return result
       },
 
       uploadPlays: (podcastId, newPlays, platformInfo) => {
