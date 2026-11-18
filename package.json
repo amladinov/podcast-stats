@@ -16,8 +16,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0",
     "@sparticuz/chromium-min": "^148.0.0",
-    "@xmldom/xmldom": "^0.8.12",
-    "next": "16.1.7",
+    "@xmldom/xmldom": "^0.8.15",
+    "next": "16.4.6",
     "papaparse": "^5.5.3",
     "puppeteer-core": "^24.42.0",
     "react": "19.2.3",
@@ -33,6 +33,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.7",
+    "eslint-plugin-react-hooks": "7.0.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
