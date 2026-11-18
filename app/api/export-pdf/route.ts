@@ -38,6 +38,26 @@ async function launchBrowser() {
   })
 }
 
+/** Origins the rendered report may load resources from: only the app itself. */
+function getAllowedOrigins(req: NextRequest): Set<string> {
+  const origins = new Set<string>([req.nextUrl.origin])
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host')
+  if (host) {
+    const proto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() || req.nextUrl.protocol.replace(':', '')
+    origins.add(`${proto}://${host}`)
+  }
+  return origins
+}
+
+function isAllowedResourceUrl(rawUrl: string, allowedOrigins: Set<string>): boolean {
+  if (rawUrl.startsWith('data:') || rawUrl.startsWith('about:')) return true
+  try {
+    return allowedOrigins.has(new URL(rawUrl).origin)
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: NextRequest) {
   let body: ExportPdfBody
   try {
@@ -59,6 +79,20 @@ export async function POST(req: NextRequest) {
   try {
     browser = await launchBrowser()
     const page = await browser.newPage()
+
+    // The report is a static DOM snapshot (SVG charts already rendered), so it needs
+    // no scripts. Disabling JS and restricting network to our own origin keeps this
+    // public endpoint from being used to run arbitrary pages or reach other hosts.
+    await page.setJavaScriptEnabled(false)
+    const allowedOrigins = getAllowedOrigins(req)
+    await page.setRequestInterception(true)
+    page.on('request', request => {
+      if (isAllowedResourceUrl(request.url(), allowedOrigins)) {
+        void request.continue()
+      } else {
+        void request.abort()
+      }
+    })
 
     // Activate @media print rules during render so all our existing print
     // styles apply without any class hacks.
