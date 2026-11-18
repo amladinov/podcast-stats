@@ -47,6 +47,26 @@ test('parseVKVideo filters out non-video sections if present', () => {
   assert.equal(result[0].episodeTitle, 'Real video')
 })
 
+test('parseVKVideo parses the 2026-11 layout (Мой контент / Видео, Приватность column)', () => {
+  const csv = [
+    'Раздел;Подраздел;Дата;Время;Описание;Приватность;Просмотры;Лайки;Комментарии;Поделились',
+    'Мой контент;Видео;19.06.2026;18:44;МИФЫ О МАТЕРИНСТВЕ: про женский опыт;Все пользователи;1947;2;0;2',
+    'Мой контент;Видео;10.06.2026;20:25;Как перестать сравнивать себя с другими;Все пользователи;148;2;0;3',
+    'Мой контент;Видео;01.06.2026;10:00;Без просмотров;Все пользователи;0;0;0;0',
+    'Мой контент;Клипы;02.06.2026;10:00;Клип;Все пользователи;500;1;0;0',
+  ].join('\n')
+
+  const result = parseVKVideo(csv)
+  assert.equal(result.length, 2)
+  assert.deepEqual(result[0], {
+    episodeTitle: 'МИФЫ О МАТЕРИНСТВЕ: про женский опыт',
+    platform: 'vkvideo',
+    date: '2026-06-19',
+    plays: 1947,
+  })
+  assert.equal(result[1].plays, 148)
+})
+
 test('parseVKVideo handles empty input', () => {
   assert.deepEqual(parseVKVideo(''), [])
   assert.deepEqual(parseVKVideo('Раздел;Подраздел\n'), [])

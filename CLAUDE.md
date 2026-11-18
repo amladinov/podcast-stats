@@ -1,7 +1,7 @@
 # Podcast Stats — агрегатор статистики подкастов
 
 ## О проекте
-Веб-приложение для сбора статистики подкастов с разных платформ в единый дашборд. RSS + CSV-загрузка из Яндекс Музыки, Spotify, ВК, Mave. AI-инсайты через Claude.
+Веб-приложение для сбора статистики подкастов с разных платформ в единый дашборд. RSS + CSV-загрузка из Mave, Яндекс Музыки, Spotify, ВК и VK Video, YouTube через OAuth. AI-инсайты через Claude, экспорт отчёта в PDF.
 
 ## Стек
 - **Next.js 16** (App Router) + React 19 + TypeScript
@@ -10,6 +10,7 @@
 - **Recharts** (графики, D3-based)
 - **Anthropic Claude SDK** (haiku-4-5, для AI-инсайтов)
 - **PapaParse** (CSV) + @xmldom/xmldom (RSS)
+- **puppeteer-core + @sparticuz/chromium-min** (серверная сборка PDF)
 - **Деплой:** Vercel (проект `podcast-stats`)
 
 ## Структура
@@ -23,6 +24,7 @@ app/
   api/
     rss/route.ts          — парсинг RSS-ленты
     ai/route.ts           — генерация инсайтов через Claude
+    export-pdf/route.ts   — сборка PDF из HTML через headless Chromium
     youtube/
       auth/route.ts       — YouTube OAuth redirect
       callback/route.ts   — OAuth callback, обмен code на token
@@ -39,26 +41,45 @@ components/
     print/                — печатный отчёт (PDF)
 
 lib/
-  store.ts                — Zustand (добавление подкастов, загрузка прослушиваний)
+  store.ts                — Zustand (добавление подкастов, загрузка прослушиваний, обновление выпусков)
+  storePersist.ts         — сжатый формат хранения в localStorage (версия 2); демо-подкасты не сохраняются
+  episodeRefresh.ts       — обновление списка выпусков из RSS с переносом данных платформ
+  podcastRss.ts           — повторная загрузка RSS с клиента в обход кеша
+  podcastMetrics.ts       — суммы прослушиваний по платформам
+  platformPeriods.ts      — период данных по каждой платформе
+  youtubeImport.ts        — преобразование видео YouTube в записи прослушиваний
+  pdfExport.ts            — клиентская часть PDF-экспорта (собирает HTML и шлёт в /api/export-pdf)
   dashboardMetrics.ts     — сортировка эпизодов, подписи периодов, данные диаграмм аудитории
   hooks/useMobileScenes.ts — полноэкранные мобильные сцены со свайпом (общий хук)
   demoData.ts             — демо-подкасты (Совет Директоров, Скоро 30, НЖО)
   platforms.ts            — единый справочник платформ (ключ, имя, цвет); новая платформа добавляется здесь + в тип Platform
   matcher.ts              — мэтчинг эпизодов, нормализация данных
   parsers/
-    yandex.ts, spotify.ts, vk.ts, mave.ts — парсеры CSV для каждой платформы
+    mave.ts, yandex.ts, spotify.ts, vk.ts, vkVideo.ts — парсеры CSV для каждой платформы
+    mavePaste.ts          — разбор текста, вставленного из кабинета Mave (альтернатива CSV)
+    yandexGender.ts, yandexAge.ts, yandexCities.ts — CSV аудитории Яндекса (общее в yandexCommon.ts)
+
+tests/                    — тесты парсеров, мэтчера, хранения и обновления выпусков (`npm run test:matcher`)
+docs/specs/               — спецификации форматов импорта и UX мастера загрузки
+lessons.md                — грабли, читать в начале сессии
+tasks.md                  — бэклог
 ```
 
 ## Ключевое
 - Данные хранятся в localStorage (нет БД)
 - Демо-режим с предзагруженными данными
 - AI-инсайты на русском (топ-5 эпизодов, аутлаеры, 4-5 рекомендаций)
+- Инвариант: `normalized.id` всегда равен `guid` соответствующего выпуска из `episodes`. На нём держится слияние данных платформ в `uploadPlays`; при пересборке списка выпусков данные переносить по ключу «заголовок + дата», а id брать из свежего guid
+- `rawPlays` не сохраняется в localStorage, после перезагрузки страницы остаются только `normalized`
+- Mave: CSV даёт динамику по дням, вставка текста даёт актуальные итоги; источники не суммируются дважды
+- PDF: на десктопе системная печать браузера, на мобильных серверная сборка через `/api/export-pdf`
 
 ## Env-переменные (`.env.local`)
 - `ANTHROPIC_API_KEY` - Claude AI инсайты
 - `GOOGLE_CLIENT_ID` - YouTube OAuth 2.0
 - `GOOGLE_CLIENT_SECRET` - YouTube OAuth 2.0
 - `GOOGLE_REDIRECT_URI` - `http://localhost:3000/api/youtube/callback`
+- `PUPPETEER_EXECUTABLE_PATH` - необязательно, путь к Chrome для локального PDF-экспорта (по умолчанию системный Google Chrome)
 
 ## YouTube интеграция
 - OAuth 2.0 через Google (scope: `youtube.readonly`)
@@ -68,8 +89,10 @@ lib/
 - Refresh token не сохраняется - каждый импорт = новый логин
 
 ## Текущий статус
-- Основной функционал работает: RSS, загрузка CSV, YouTube OAuth, дашборд, сравнение, AI-инсайты
-- 5 платформ: Mave, Яндекс Музыка, Spotify, VK (CSV), YouTube (OAuth)
+- Основной функционал работает: RSS, загрузка CSV, YouTube OAuth, дашборд (десктоп и мобильный), сравнение, AI-инсайты, PDF-отчёт, обновление выпусков из RSS
+- 6 платформ: Mave (CSV или вставка текста), Яндекс Музыка, Spotify, VK, VK Video (CSV), YouTube (OAuth)
+- В работе: полировка импорта Mave по вставленному тексту (см. `tasks.md`)
+- Автосбор статистики «Хакни мозг»: ранбук в `.claude/skills/hackni-mozg-stats/SKILL.md`
 
 ## Vercel guardrails (чтобы не путать аккаунты/проекты)
 - Аккаунты:
