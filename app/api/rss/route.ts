@@ -295,7 +295,16 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    return NextResponse.json({ title, description, imageUrl, episodes })
+    return NextResponse.json(
+      { title, description, imageUrl, episodes },
+      {
+        headers: {
+          // CDN keeps a parsed feed for an hour; browsers always revalidate.
+          // Manual refresh (fresh=1) must never be served from cache.
+          'Cache-Control': noStore ? 'no-store' : 'public, max-age=0, s-maxage=3600',
+        },
+      }
+    )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })
