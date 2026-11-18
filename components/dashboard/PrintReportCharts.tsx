@@ -54,7 +54,7 @@ export function PrintTrendChart({ episodes }: { episodes: NormalizedEpisode[] })
             tickMargin={6}
             padding={{ right: 18 }}
           />
-          <YAxis tick={{ fill: '#8e8e93', fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+          <YAxis tick={{ fill: '#8e8e93', fontSize: 11 }} tickLine={false} axisLine={false} width={52} />
           <Area
             type="monotone"
             dataKey="plays"
